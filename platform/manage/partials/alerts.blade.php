@@ -1,0 +1,1 @@
+{{-- manage/partials/alerts.blade.php --}}

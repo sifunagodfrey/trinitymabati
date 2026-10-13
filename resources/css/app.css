@@ -1,0 +1,487 @@
+/* -------------------
+   Suweka Software
+   https://suweka.com
+   Copyright (c) 2026 Suweka Software. All rights reserved.
+   Project: Custom Web Application UI Theme
+------------------- */
+
+/* -------------------
+   Fonts
+   Headings (H1, H2): Nunito Bold
+   Subheaders: Nunito Semi-Bold
+   Body text: Quicksand Regular
+   Buttons and labels: Rubik Medium
+------------------- */
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Quicksand:wght@400;500;600&family=Rubik:wght@400;500;600&display=swap");
+
+/* -------------------
+   Font Awesome 
+------------------- */
+@import "@fortawesome/fontawesome-free/css/all.min.css";
+
+/* -------------------
+   Tailwind
+------------------- */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* -------------------
+   Theme Variables (HEX BASED)
+   Single source of truth for brand colors and fonts.
+------------------- */
+:root {
+    --primary-color: #713FCE;
+    --primary-dark: #5A32A5;
+    --primary-light: #F1ECFA;
+    --secondary-color: #AD70D4;
+    --secondary-dark: #8A5AAA;
+    --secondary-light: #F7F1FB;
+    --tertiary-color: #201436;
+    --tertiary-dark: #1A102B;
+    --tertiary-light: #F4F1F7;
+    --background-color: #FAF8FE;
+    --text-color: #111827;
+    --footer-color: var(--tertiary-color);
+
+    /* UI Colors */
+    --muted-color: #6b7280;
+    --border-color: #e5e7eb;
+
+    /* Section band fill */
+    --band-grey: #F8F5FC;
+
+    /* Typography */
+    --font-heading: "Nunito", ui-sans-serif, system-ui, sans-serif;
+    --font-body: "Quicksand", ui-sans-serif, system-ui, sans-serif;
+    --font-ui: "Rubik", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Reusable brand surfaces. Pages and partials should use these classes or
+   Tailwind theme tokens instead of embedding brand hex values. */
+@layer components {
+    .brand-gradient {
+        background-image: linear-gradient(135deg, var(--primary-dark), var(--primary-color) 58%, var(--secondary-color));
+    }
+
+    .brand-soft-gradient {
+        background-image: linear-gradient(135deg, var(--primary-light), var(--secondary-light));
+    }
+
+    .site-footer {
+        background-color: var(--footer-color);
+        color: white;
+    }
+
+    .hero-copy-panel {
+        background-color: color-mix(in srgb, var(--primary-color) 94%, transparent);
+    }
+
+    .storefront-main {
+        background-color: var(--background-color);
+    }
+
+    /* Page bands use the pale theme surface; cards remain explicitly white. */
+    .storefront-main .bg-gray-50 {
+        background-color: var(--background-color);
+    }
+
+    .storefront-card {
+        background-color: #ffffff;
+        border-color: var(--border-color);
+    }
+
+    .admin-sidebar {
+        background: linear-gradient(180deg, var(--tertiary-dark), var(--tertiary-color));
+        box-shadow: 10px 0 30px color-mix(in srgb, var(--tertiary-color) 16%, transparent);
+    }
+
+    .admin-sidebar nav > div > div,
+    .admin-sidebar nav [class*="bg-gray-50"] {
+        background-color: color-mix(in srgb, var(--tertiary-dark) 82%, black) !important;
+        border-color: color-mix(in srgb, white 10%, transparent) !important;
+    }
+
+    .admin-sidebar nav i,
+    .admin-sidebar nav a:hover i,
+    .admin-sidebar nav button:hover i {
+        color: currentColor !important;
+    }
+
+    .admin-topbar {
+        box-shadow: 0 8px 24px rgb(17 24 39 / 0.05);
+    }
+
+    .admin-main {
+        background-color: color-mix(in srgb, var(--primary-color) 4%, #f4f6fa);
+    }
+
+    .admin-stat-card {
+        display: flex;
+        min-height: 118px;
+        align-items: center;
+        gap: 1rem;
+        overflow: hidden;
+        border-radius: 8px;
+        padding: 1.25rem;
+        color: white;
+        box-shadow: 0 12px 28px rgb(17 24 39 / 0.12);
+        transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+    .admin-stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 18px 35px rgb(17 24 39 / 0.17);
+    }
+
+    .admin-stat-primary { background: linear-gradient(135deg, var(--primary-dark), var(--primary-color)); }
+    .admin-stat-secondary { background: linear-gradient(135deg, var(--secondary-dark), var(--secondary-color)); }
+    .admin-stat-tertiary { background: linear-gradient(135deg, var(--tertiary-dark), var(--tertiary-color)); }
+    .admin-stat-mixed { background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); }
+
+    .admin-stat-icon {
+        display: flex;
+        height: 3.5rem;
+        width: 3.5rem;
+        flex: none;
+        align-items: center;
+        justify-content: center;
+        border-radius: .9rem;
+        background: rgb(255 255 255 / .16);
+        font-size: 1.35rem;
+    }
+
+    .admin-stat-card strong { display: block; margin-top: .15rem; font-size: 1.35rem; line-height: 1.35; }
+    .admin-stat-card small { display: block; margin-top: .25rem; color: rgb(255 255 255 / .78); font-size: .72rem; }
+    .admin-stat-label { display: block; color: rgb(255 255 255 / .86); font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
+
+    .admin-panel {
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: white;
+        box-shadow: 0 10px 28px rgb(17 24 39 / .06);
+    }
+
+    .admin-panel-heading {
+        display: flex;
+        min-height: 74px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        padding: 1rem 1.25rem;
+    }
+
+    .admin-panel-heading h2 { color: var(--text-color); font-size: .95rem; font-weight: 700; }
+    .admin-panel-heading p { margin-top: .15rem; color: var(--muted-color); font-size: .75rem; }
+    .admin-panel-heading a { color: var(--primary-color); font-size: .75rem; font-weight: 600; }
+
+    .admin-activity-row { display: flex; align-items: center; gap: .75rem; border-radius: .85rem; padding: .75rem; transition: background-color .2s ease; }
+    .admin-activity-row:hover { background-color: var(--primary-light); }
+    .admin-activity-row > span { display: flex; height: 2.65rem; width: 2.65rem; flex: none; align-items: center; justify-content: center; border-radius: .8rem; }
+    .admin-activity-row > div { min-width: 0; flex: 1; }
+    .admin-activity-row strong { display: block; color: var(--text-color); font-size: .82rem; }
+    .admin-activity-row small { display: block; color: var(--muted-color); font-size: .7rem; }
+    .admin-activity-row b { color: var(--text-color); font-size: 1rem; }
+
+    .admin-dashboard table th { background: var(--background-color); padding: .85rem 1.25rem; color: var(--muted-color); font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+    .admin-dashboard table td { border-top: 1px solid var(--border-color); padding: 1rem 1.25rem; color: var(--muted-color); }
+    .admin-dashboard table tbody tr:hover { background: var(--primary-light); }
+
+    .product-editor-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1.5rem;
+        align-items: start;
+    }
+
+    .product-editor-main,
+    .product-editor-sidebar {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .product-editor-card {
+        border: 1px solid var(--border-color);
+        border-radius: 1.25rem;
+        background: white;
+        padding: 1.25rem;
+        box-shadow: 0 8px 24px rgb(17 24 39 / .045);
+    }
+
+    .product-editor-card input:not([type="checkbox"]):not([type="radio"]),
+    .product-editor-card textarea,
+    .product-editor-card select {
+        background-color: var(--background-color);
+    }
+
+    .product-editor-card-title {
+        display: flex;
+        grid-column: 1 / -1;
+        align-items: center;
+        gap: .6rem;
+        margin-bottom: .1rem;
+        color: var(--text-color);
+        font-size: .85rem;
+        font-weight: 700;
+    }
+
+    .product-editor-card-title i { color: var(--primary-color); }
+
+    @media (min-width: 1280px) {
+        .product-editor-layout { grid-template-columns: minmax(0, 1fr) 340px; }
+        .product-editor-sidebar { position: sticky; top: 1.5rem; }
+    }
+}
+
+/* -------------------
+   Consistent Card Radius
+   Keep cards and panels between 8px and 12px while preserving pills,
+   circular controls and badges that use rounded-[12px].
+------------------- */
+@layer utilities {
+    main :is(section, article, aside, form, div, a).rounded-[8px],
+    [role="dialog"].rounded-[8px] {
+        border-radius: 8px;
+    }
+
+    main :is(section, article, aside, form, div, a).rounded-[12px],
+    [role="dialog"].rounded-[12px] {
+        border-radius: 10px;
+    }
+
+    main :is(section, article, aside, form, div, a).rounded-[12px],
+    [role="dialog"].rounded-[12px] {
+        border-radius: 12px;
+    }
+}
+
+/* -------------------
+   Global Typography
+------------------- */
+@layer base {
+    html {
+        font-family: var(--font-body);
+        font-weight: 400;
+    }
+
+    h1,
+    h2 {
+        font-family: var(--font-heading);
+        font-weight: 700;
+    }
+
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-family: var(--font-heading);
+        font-weight: 600;
+    }
+
+    button,
+    label,
+    .btn,
+    input[type="submit"],
+    input[type="button"] {
+        font-family: var(--font-ui);
+        font-weight: 500;
+    }
+}
+
+/* Dark mode theme */
+.dark {
+    --primary-color: #4CB33B;
+    --secondary-color: #8FCF4F;
+    --tertiary-color: #172033;
+    --background-color: #111827;
+    --text-color: #f3f4f6;
+
+    --muted-color: #9ca3af;
+    --border-color: #374151;
+    --band-grey: #1B2435;
+}
+
+/* -------------------
+   Hide Scrollbar (Clean UI)
+------------------- */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* -------------------
+   Sidebar Transitions
+------------------- */
+.sidebar-transition {
+    transition: width 0.3s ease;
+}
+
+/* -------------------
+   Sidebar Icon System
+------------------- */
+aside i {
+    color: var(--muted-color);
+    transition: color 0.2s ease;
+}
+
+aside a:hover i,
+aside button:hover i {
+    color: var(--primary-color);
+}
+
+aside a.bg-primary-light i {
+    color: var(--primary-color);
+}
+
+/* -------------------
+   Dropdown / Hover Panel Elevation Fix
+------------------- */
+.dropdown-panel {
+    z-index: 9999;
+}
+
+/* -------------------
+   Alpine JS Cloak Fix
+------------------- */
+[x-cloak] {
+    display: none !important;
+}
+
+/* -------------------
+   Smooth Scroll Behavior
+------------------- */
+html {
+    scroll-behavior: smooth;
+}
+
+/* -------------------
+   Base Theme Application
+------------------- */
+body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    font-family: var(--font-body);
+}
+
+/* -------------------
+   Home Content Wrapper
+   Centered container used inside every section band so content never
+   touches the screen edge.
+------------------- */
+.hm-wrap {
+    max-width: 80rem;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+}
+
+/* -------------------
+   Section Bands
+   White is the page default. Grey bands carry a pale fill and an angled
+   top and bottom edge so the join reads as a trapezium. Vertical padding
+   is enlarged to absorb the diagonal so content never sits under the
+   slope, and a small negative margin overlaps the neighbouring band for
+   a seamless join.
+------------------- */
+.hm-band {
+    position: relative;
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+}
+
+.hm-band--grey {
+    background-color: var(--band-grey);
+    clip-path: polygon(0 2.2rem, 100% 0, 100% calc(100% - 2.2rem), 0 100%);
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+    margin-top: -2rem;
+    margin-bottom: -2rem;
+}
+
+@media (min-width: 768px) {
+    .hm-band {
+        padding-top: 5.5rem;
+        padding-bottom: 5.5rem;
+    }
+
+    .hm-band--grey {
+        clip-path: polygon(0 3.5rem, 100% 0, 100% calc(100% - 3.5rem), 0 100%);
+        padding-top: 8rem;
+        padding-bottom: 8rem;
+        margin-top: -3rem;
+        margin-bottom: -3rem;
+    }
+}
+
+/* -------------------
+   Home Rails and Type Helpers
+------------------- */
+.hm-rail {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 0.25rem;
+}
+
+.hm-rail::-webkit-scrollbar {
+    display: none;
+}
+
+.hm-rail>* {
+    scroll-snap-align: start;
+}
+
+.hm-card {
+    width: 78%;
+    flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+    .hm-card {
+        width: 44%;
+    }
+}
+
+@media (min-width: 768px) {
+    .hm-card {
+        width: 30%;
+    }
+}
+
+@media (min-width: 1024px) {
+    .hm-card {
+        width: 23.2%;
+    }
+}
+
+.hm-eyebrow {
+    font-family: var(--font-ui);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.hm-title {
+    font-family: var(--font-heading);
+    font-weight: 800;
+}
+
+.hm-head {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    color: var(--primary-dark);
+}

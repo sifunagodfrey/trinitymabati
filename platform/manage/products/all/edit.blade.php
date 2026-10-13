@@ -1,0 +1,869 @@
+@extends('manage.layouts.app')
+
+@section('title', 'Edit Product')
+
+@section('content')
+    {{-- manage/products/all/edit.blade.php --}}
+
+    {{-- ---------------
+    -- Breadcrumb & Page Header
+    -- --------------- --}}
+    <div class="mb-6">
+        <nav class="text-sm text-muted mb-3" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center gap-2">
+                <li><a href="{{ route('manage.dashboard.index') }}" class="hover:text-primary">Dashboard</a></li>
+                <li>/</li>
+                <li><a href="{{ route('manage.products.all.index') }}" class="hover:text-primary">Products</a></li>
+                <li>/</li>
+                <li class="text-text font-semibold">Edit Product</li>
+            </ol>
+        </nav>
+
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-2xl font-semibold text-text">Edit Product</h1>
+                <p class="text-sm text-muted">Update product details, pricing, and settings.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+                <a href="{{ route('manage.products.all.show', $product->id) }}"
+                    class="inline-flex items-center gap-2 rounded-[8px] border border-border bg-background px-4 py-2 text-sm font-medium text-text hover:bg-border transition">
+                    <i class="fa-solid fa-eye"></i>
+                    View Product
+                </a>
+                <a href="{{ route('manage.products.all.index') }}"
+                    class="inline-flex items-center gap-2 rounded-[8px] border border-border bg-background px-4 py-2 text-sm font-medium text-text hover:bg-border transition">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    Back to Products
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="product-editor-shell">
+
+        {{-- ---------------
+        -- Validation Error Summary
+        -- --------------- --}}
+        @if ($errors->any())
+            <div class="mb-6 rounded-[8px] border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                <p class="font-semibold">Please fix the errors below.</p>
+                <ul class="mt-2 space-y-1 list-disc list-inside">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <form action="{{ route('manage.products.all.update', $product->id) }}" method="POST" enctype="multipart/form-data"
+            id="productEditForm" class="product-editor-form">
+            @csrf
+            @method('PUT')
+
+            {{-- ---------------
+            -- Product Identity: Name and SKU
+            -- --------------- --}}
+            <div class="grid gap-6 lg:grid-cols-3">
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-text" for="name">Product Name</label>
+                    <input id="name" name="name" type="text" value="{{ old('name', $product->name) }}"
+                        class="w-full rounded-[8px] border border-border bg-background px-4 py-3 text-sm text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                    @error('name')<p class="text-sm text-red-500">{{ $message }}</p>@enderror
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-sm font-medium text-text" for="sku">SKU</label>
+                        <button type="button" id="regenerateSku"
+                            class="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                            <i class="fa-solid fa-rotate-right"></i> Regenerate
+                        </button>
+                    </div>
+                    <input id="sku" name="sku" type="text" value="{{ old('sku', $product->sku) }}"
+                        class="w-full rounded-[8px] border border-border bg-background px-4 py-3 text-sm text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        placeholder="Auto-generated from product name" />
+                    <p class="text-xs text-muted">Current SKU for this product. Use Regenerate to get a new unique one.</p>
+                    @error('sku')<p class="text-sm text-red-500">{{ $message }}</p>@enderror
+                </div>
+
+            </div>
+
+            {{-- ---------------
+            -- Classification: Category, Brand, Label
+            -- --------------- --}}
+            <div class="grid gap-6 lg:grid-cols-3">
+            @php
+                $categoryOptions = [];
+                foreach ($categories as $category) {
+                    $categoryOptions[] = ['id' => $category->id, 'name' => $category->name];
+                    foreach ($category->children as $child) {
+                        $categoryOptions[] = ['id' => $child->id, 'name' => '— ' . $child->name];
+                    }
+                }
+                $labelOptions = $labels->map(fn ($label) => ['id' => $label->id, 'name' => $label->name])->values()->toArray();
+            @endphp
+
+            @include('manage.products.partials.search-select', [
+                'name'        => 'category_ids',
+                'label'       => 'Categories',
+                'options'     => $categoryOptions,
+                'selected'    => old('category_ids', $product->categories->pluck('id')->toArray()),
+                'placeholder' => 'Search categories…',
+            ])
+
+            <div class="grid gap-6 lg:grid-cols-3">
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-text" for="brand_id">Brand</label>
+                    <select id="brand_id" name="brand_id"
+                        class="w-full rounded-[8px] border border-border bg-background px-4 py-3 text-sm text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20">
+                        <option value="">Select brand</option>
+                        @foreach ($brands as $brand)
+                            <option value="{{ $brand->id }}" {{ old('brand_id', $product->brand_id) == $brand->id ? 'selected' : '' }}>
+                                {{ $brand->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('brand_id')<p class="text-sm text-red-500">{{ $message }}</p>@enderror
+                </div>
+            </div>
+
+            @include('manage.products.partials.search-select', [
+                'name'        => 'label_ids',
+                'label'       => 'Labels',
+                'options'     => $labelOptions,
+                'selected'    => old('label_ids', $product->labels->pluck('id')->toArray()),
+                'placeholder' => 'Search labels…',
+            ])
+            </div>
+
+            {{-- ---------------
+            -- Product Type: Variant flag (placed before pricing)
+            -- --------------- --}}
+            <div class="rounded-[8px] border border-border bg-background p-5 space-y-3">
+                <div>
+                    <h3 class="text-sm font-semibold text-text">Product Type</h3>
+                    <p class="text-xs text-muted mt-1">Enable variants for products sold in multiple options such as size or color.</p>
+                </div>
+                <div class="flex flex-wrap gap-6">
+                    <label class="inline-flex items-center gap-2 text-sm text-text cursor-pointer">
+                        <input type="checkbox" id="is_variant_toggle" name="is_variant" value="1" {{ old('is_variant', $product->is_variant) ? 'checked' : '' }}
+                            class="h-4 w-4 rounded border-border text-primary focus:ring-primary" />
+                        Has Variants
+                    </label>
+                    <label class="inline-flex items-center gap-2 text-sm text-text cursor-pointer">
+                        <input type="checkbox" name="is_vat_exempt" value="1" {{ old('is_vat_exempt', $product->is_vat_exempt) ? 'checked' : '' }}
+                            class="h-4 w-4 rounded border-border text-primary focus:ring-primary" />
+                        VAT Exempt
+                    </label>
+                </div>
+            </div>
+
+            {{-- ---------------
+            -- Variants: Existing attributes pre-filled; regenerate to update the matrix
+            -- --------------- --}}
+            <div id="variantSection" class="{{ old('is_variant', $product->is_variant) ? '' : 'hidden' }} space-y-4 rounded-[8px] border border-border p-5">
+                <h3 class="text-sm font-semibold text-text">Product Attributes &amp; Variants</h3>
+                <p class="text-xs text-muted">Edit attributes and their values, then click <strong>Generate Variants</strong> to rebuild the variant table. Existing values are preserved when the same combination is re-generated.</p>
+
+                {{-- Attribute rows - pre-populated from saved data --}}
+                <div id="attributesContainer" class="space-y-3">
+                    @forelse (old('attributes', $product->attributes->toArray()) as $attrIndex => $attr)
+                        <div class="attribute-group grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                            <div class="sm:col-span-5">
+                                <input type="text" name="attributes[{{ $attrIndex }}][name]"
+                                    value="{{ is_array($attr) ? ($attr['name'] ?? '') : $attr->name }}"
+                                    class="w-full rounded-[8px] border border-border bg-background px-4 py-2 text-sm text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                    placeholder="Attribute name (e.g. Color)" />
+                            </div>
+                            <div class="sm:col-span-5">
+                                @php
+                                    $valStr = '';
+                                    if (is_array($attr)) {
+                                        $rawVal = $attr['values'] ?? '';
+                                        // DB toArray() gives a nested array of value records; old() gives a plain string
+                                        $valStr = is_array($rawVal)
+                                            ? collect($rawVal)->pluck('value')->join(', ')
+                                            : $rawVal;
+                                    } else {
+                                        $valStr = $attr->values->pluck('value')->join(', ');
+                                    }
+                                @endphp
+                                <input type="text" name="attributes[{{ $attrIndex }}][values]"
+                                    value="{{ $valStr }}"
+                                    class="w-full rounded-[8px] border border-border bg-background px-4 py-2 text-sm text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                    placeholder="Values comma-separated (e.g. Red,Blue)" />
+                            </div>
+                            <div class="sm:col-span-2 flex justify-end">
+                                <button type="button"
+                                    class="remove-attribute {{ $attrIndex === 0 ? 'hidden' : '' }} rounded-[8px] border border-red-300 bg-red-50 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-100 transition">
+                                    Remove
+                                </button>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="attribute-group grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                            <div class="sm:col-span-5">
+                                <input type="text" name="attributes[0][name]"
+                                    class="w-full rounded-[8px] border border-border bg-background px-4 py-2 text-sm text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                    placeholder="Attribute name (e.g. Color)" />
+                            </div>
+                            <div class="sm:col-span-5">
+                                <input type="text" name="attributes[0][values]"
+                                    class="w-full rounded-[8px] border border-border bg-background px-4 py-2 text-sm text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                    placeholder="Values comma-separated (e.g. Red,Blue)" />
+                            </div>
+                            <div class="sm:col-span-2 flex justify-end">
+                                <button type="button" class="remove-attribute hidden rounded-[8px] border border-red-300 bg-red-50 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-100 transition">Remove</button>
+                            </div>
+                        </div>
+                    @endforelse
+                </div>
+
+                <div class="flex flex-wrap gap-3">
+                    <button type="button" id="addAttribute"
+                        class="inline-flex items-center gap-2 rounded-[8px] border border-border bg-background px-4 py-2 text-sm font-medium text-text hover:bg-border transition">
+                        <i class="fa-solid fa-plus-circle"></i> Add Attribute
+                    </button>
+                    <button type="button" id="generateVariants"
+                        class="inline-flex items-center gap-2 rounded-[8px] bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90 transition">
+                        <i class="fa-solid fa-cogs"></i> Generate Variants
+                    </button>
+                </div>
+
+                {{-- Variant table - pre-populated from saved variants --}}
+                <div id="variantsTable" class="{{ $product->variants->isNotEmpty() ? '' : 'hidden' }} overflow-x-auto rounded-[8px] border border-border">
+                    <table class="min-w-[840px] divide-y divide-border text-sm">
+                        <thead class="bg-border/30">
+                            <tr>
+                                <th class="px-4 py-3 text-left font-medium text-text w-1/4">Variant</th>
+                                <th class="px-4 py-3 text-left font-medium text-text">SKU</th>
+                                <th class="px-4 py-3 text-left font-medium text-text">Cost Price</th>
+                                <th class="px-4 py-3 text-left font-medium text-text">Selling Price <span class="text-red-500">*</span></th>
+                                <th class="px-4 py-3 text-left font-medium text-text">Strike-through Price</th>
+                                <th class="px-4 py-3 text-left font-medium text-text w-24">Stock</th>
+                                <th class="px-4 py-3 text-left font-medium text-text">Image</th>
+                            </tr>
+                        </thead>
+                        <tbody id="variantRows" class="divide-y divide-border">
+                            @foreach ($product->variants as $vIdx => $variant)
+                                <tr data-label="{{ $variant->variant_code }}" class="divide-x divide-border">
+                                    <td class="px-4 py-2 font-medium text-text">
+                                        {{ $variant->variant_code }}
+                                        <input type="hidden" name="variants[{{ $vIdx }}][variant_code]" value="{{ $variant->variant_code }}" />
+                                    </td>
+                                    <td class="px-4 py-2">
+                                        <input type="text" name="variants[{{ $vIdx }}][sku]" value="{{ old('variants.' . $vIdx . '.sku', $variant->sku) }}"
+                                            class="w-full rounded-[8px] border border-border bg-background px-3 py-1.5 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                            placeholder="SKU" />
+                                    </td>
+                                    <td class="px-4 py-2">
+                                        <input type="number" name="variants[{{ $vIdx }}][cost_price]" step="0.01" min="0" value="{{ old('variants.' . $vIdx . '.cost_price', $variant->cost_price) }}"
+                                            class="w-full rounded-[8px] border border-border bg-background px-3 py-1.5 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                            placeholder="Cost" />
+                                    </td>
+                                    <td class="px-4 py-2">
+                                        <input type="number" name="variants[{{ $vIdx }}][selling_price]" step="0.01" min="0" required value="{{ old('variants.' . $vIdx . '.selling_price', $variant->sale_price ?? $variant->price) }}"
+                                            class="w-full rounded-[8px] border border-border bg-background px-3 py-1.5 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                            placeholder="Selling" />
+                                    </td>
+                                    <td class="px-4 py-2">
+                                        <input type="number" name="variants[{{ $vIdx }}][strikethrough_price]" step="0.01" min="0" value="{{ old('variants.' . $vIdx . '.strikethrough_price', $variant->sale_price ? $variant->price : '') }}"
+                                            class="w-full rounded-[8px] border border-border bg-background px-3 py-1.5 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                            placeholder="Strike-through" />
+                                    </td>
+                                    <td class="px-4 py-2">
+                                        <input type="number" name="variants[{{ $vIdx }}][stock]" min="0" value="{{ old('variants.' . $vIdx . '.stock', $variant->stock_quantity) }}"
+                                            class="w-full rounded-[8px] border border-border bg-background px-3 py-1.5 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                            placeholder="0" />
+                                    </td>
+                                    <td class="px-4 py-2">
+                                        @if ($variant->image)
+                                            <img src="{{ asset(str_starts_with($variant->image, 'uploads/') || str_starts_with($variant->image, 'storage/') ? $variant->image : (str_starts_with($variant->image, 'products/') ? 'storage/' . $variant->image : 'uploads/products/images/' . $variant->image)) }}" alt="{{ $variant->variant_code }}"
+                                                class="h-10 w-10 rounded-[8px] object-cover border border-border mb-1" />
+                                        @endif
+                                        <input type="file" name="variants[{{ $vIdx }}][image]" accept="image/jpeg,image/png,image/webp"
+                                            class="w-full text-xs text-muted file:rounded-[8px] file:border-none file:bg-primary/10 file:px-2 file:py-1 file:text-xs file:text-primary file:cursor-pointer" />
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {{-- ---------------
+            -- Pricing: Cost, Selling (mandatory) and Strike-through
+            -- --------------- --}}
+            <div>
+                <h3 class="text-sm font-semibold text-text">Pricing</h3>
+                <p class="text-xs text-muted mt-1">Selling price is what the customer pays. The strike-through price shows crossed out next to it. Cost price is internal and only used for profit reports. For variant products, set prices per variant above.</p>
+            </div>
+            <div class="grid gap-6 lg:grid-cols-3">
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-text" for="cost_price">Cost Price</label>
+                    <input id="cost_price" name="cost_price" type="number" step="0.01" min="0"
+                        value="{{ old('cost_price', $product->cost_price) }}"
+                        class="w-full rounded-[8px] border border-border bg-background px-4 py-3 text-sm text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                    <p class="text-xs text-muted">What you paid. Never shown to customers.</p>
+                    @error('cost_price')<p class="text-sm text-red-500">{{ $message }}</p>@enderror
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-text" for="selling_price">Selling Price <span class="text-red-500">*</span></label>
+                    <input id="selling_price" name="selling_price" type="number" step="0.01" min="0"
+                        value="{{ old('selling_price', $product->sale_price ?? $product->price) }}"
+                        class="w-full rounded-[8px] border border-border bg-background px-4 py-3 text-sm text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                    <p class="text-xs text-muted">Required for simple products. Variant products use per-variant prices.</p>
+                    @error('selling_price')<p class="text-sm text-red-500">{{ $message }}</p>@enderror
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-text" for="strikethrough_price">Strike-through Price</label>
+                    <input id="strikethrough_price" name="strikethrough_price" type="number" step="0.01" min="0"
+                        value="{{ old('strikethrough_price', $product->sale_price ? $product->price : '') }}"
+                        class="w-full rounded-[8px] border border-border bg-background px-4 py-3 text-sm text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                    <p class="text-xs text-muted">Optional. Must be higher than the selling price.</p>
+                    @error('strikethrough_price')<p class="text-sm text-red-500">{{ $message }}</p>@enderror
+                </div>
+            </div>
+
+            {{-- ---------------
+            -- Inventory: Stock Quantity, Currency (freight cost removed)
+            -- --------------- --}}
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-text" for="stock_quantity">Stock Quantity</label>
+                    <input id="stock_quantity" name="stock_quantity" type="number" value="{{ old('stock_quantity', $product->stock_quantity) }}"
+                        class="w-full rounded-[8px] border border-border bg-background px-4 py-3 text-sm text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                    @error('stock_quantity')<p class="text-sm text-red-500">{{ $message }}</p>@enderror
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-text" for="currency">Currency</label>
+                    <select id="currency" name="currency"
+                        class="w-full rounded-[8px] border border-border bg-background px-4 py-3 text-sm text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20">
+                        <option value="KES" {{ old('currency', $product->currency) == 'KES' ? 'selected' : '' }}>KES</option>
+                        <option value="USD" {{ old('currency', $product->currency) == 'USD' ? 'selected' : '' }}>USD</option>
+                    </select>
+                    @error('currency')<p class="text-sm text-red-500">{{ $message }}</p>@enderror
+                </div>
+            </div>
+
+            {{-- ---------------
+            -- Dimensions & Weight (used for shipping cost calculations)
+            -- --------------- --}}
+            <div class="grid gap-6 lg:grid-cols-4">
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-text" for="weight">Weight (kg)</label>
+                    <input id="weight" name="weight" type="number" step="0.01" value="{{ old('weight', $product->weight) }}"
+                        class="w-full rounded-[8px] border border-border bg-background px-4 py-3 text-sm text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                    @error('weight')<p class="text-sm text-red-500">{{ $message }}</p>@enderror
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-text" for="length">Length (cm)</label>
+                    <input id="length" name="length" type="number" step="0.01" value="{{ old('length', $product->length) }}"
+                        class="w-full rounded-[8px] border border-border bg-background px-4 py-3 text-sm text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                    @error('length')<p class="text-sm text-red-500">{{ $message }}</p>@enderror
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-text" for="width">Width (cm)</label>
+                    <input id="width" name="width" type="number" step="0.01" value="{{ old('width', $product->width) }}"
+                        class="w-full rounded-[8px] border border-border bg-background px-4 py-3 text-sm text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                    @error('width')<p class="text-sm text-red-500">{{ $message }}</p>@enderror
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-text" for="height">Height (cm)</label>
+                    <input id="height" name="height" type="number" step="0.01" value="{{ old('height', $product->height) }}"
+                        class="w-full rounded-[8px] border border-border bg-background px-4 py-3 text-sm text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20" />
+                    @error('height')<p class="text-sm text-red-500">{{ $message }}</p>@enderror
+                </div>
+            </div>
+
+            {{-- ---------------
+            -- Short Description (max 20 words)
+            -- --------------- --}}
+            <div class="max-w-2xl space-y-2">
+                <label class="block text-sm font-medium text-text" for="short_description">Short Description</label>
+                <textarea id="short_description" name="short_description" rows="3"
+                    class="w-full rounded-[8px] border border-border bg-background px-4 py-3 text-sm text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20">{{ old('short_description', $product->short_description) }}</textarea>
+                <div class="flex items-center justify-between">
+                    <p class="text-xs text-muted">A concise summary shown in product listings.</p>
+                    <p id="shortWordCount" class="text-xs text-muted">0 / 20 words</p>
+                </div>
+                @error('short_description')<p class="text-sm text-red-500">{{ $message }}</p>@enderror
+            </div>
+
+            {{-- ---------------
+            -- Detailed Description (full-width own row, rich text editor)
+            -- --------------- --}}
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-text">Detailed Description</label>
+                <p class="text-xs text-muted">Recommended 200–300 words for best SEO and buyer experience.</p>
+                <div id="detailed_description_editor"></div>
+                <input type="hidden" name="detailed_description" id="detailed_description_hidden"
+                    value="{{ old('detailed_description', $product->detailed_description) }}" />
+                <div class="flex justify-end">
+                    <p id="detailedWordCount" class="text-xs text-muted">0 words</p>
+                </div>
+                @error('detailed_description')<p class="text-sm text-red-500">{{ $message }}</p>@enderror
+            </div>
+
+            {{-- ---------------
+            -- Media: Product Image and Gallery (upload from device or choose from library)
+            -- --------------- --}}
+            <div class="grid gap-6 lg:grid-cols-2 bg-background">
+
+                {{-- Thumbnail --}}
+                <div class="rounded-[8px] border border-border bg-white p-5 space-y-2">
+                    <label class="block text-sm font-medium text-text">Product Image</label>
+                    <div class="flex flex-wrap gap-2">
+                        <label for="thumbnail"
+                            class="inline-flex items-center gap-2 cursor-pointer rounded-[8px] border border-border bg-background px-4 py-2 text-sm text-text hover:bg-border transition">
+                            <i class="fa-solid fa-upload"></i> Upload from device
+                        </label>
+                        <button type="button" data-library-target="thumbnail"
+                            class="open-media-library inline-flex items-center gap-2 rounded-[8px] border border-border bg-background px-4 py-2 text-sm text-text hover:bg-border transition">
+                            <i class="fa-solid fa-photo-film"></i> Choose from library
+                        </button>
+                    </div>
+                    <input id="thumbnail" name="thumbnail" type="file" accept="image/jpeg,image/png,image/webp"
+                        class="hidden" />
+                    <input type="hidden" name="thumbnail_library" id="thumbnail_library_input" />
+                    @if ($product->thumbnail)
+                        <div id="thumbnailPreview" class="mt-2">
+                            <img id="thumbnailPreviewImg" src="{{ asset(str_starts_with($product->thumbnail, 'uploads/') || str_starts_with($product->thumbnail, 'storage/') ? $product->thumbnail : (str_starts_with($product->thumbnail, 'products/') ? 'storage/' . $product->thumbnail : 'uploads/products/images/' . $product->thumbnail)) }}" alt="Thumbnail"
+                                class="h-24 w-24 rounded-[8px] object-cover border border-border" />
+                        </div>
+                    @else
+                        <div id="thumbnailPreview" class="hidden mt-2">
+                            <img id="thumbnailPreviewImg" src="" alt="Thumbnail preview"
+                                class="h-24 w-24 rounded-[8px] object-cover border border-border" />
+                        </div>
+                    @endif
+                    <p class="text-xs text-muted">Accepted: JPG, PNG, WebP - max 2 MB. Leave blank to keep the current image.</p>
+                    @error('thumbnail')<p class="text-sm text-red-500">{{ $message }}</p>@enderror
+                </div>
+
+                {{-- Gallery --}}
+                <div class="rounded-[8px] border border-border bg-white p-5 space-y-2">
+                    <label class="block text-sm font-medium text-text">Product Gallery</label>
+                    <div class="flex flex-wrap gap-2">
+                        <label for="gallery"
+                            class="inline-flex items-center gap-2 cursor-pointer rounded-[8px] border border-border bg-background px-4 py-2 text-sm text-text hover:bg-border transition">
+                            <i class="fa-solid fa-upload"></i> Upload from device
+                        </label>
+                        <button type="button" data-library-target="gallery"
+                            class="open-media-library inline-flex items-center gap-2 rounded-[8px] border border-border bg-background px-4 py-2 text-sm text-text hover:bg-border transition">
+                            <i class="fa-solid fa-photo-film"></i> Choose from library
+                        </button>
+                    </div>
+                    <input id="gallery" name="gallery[]" type="file" multiple accept="image/jpeg,image/png,image/webp"
+                        class="hidden" />
+                    <div id="galleryLibraryInputs"></div>
+                    {{-- Existing gallery images --}}
+                    <div id="galleryPreview" class="flex flex-wrap gap-2 mt-2">
+                        @foreach ($product->media->where('type', 'image') as $mediaItem)
+                            <img src="{{ asset(str_starts_with($mediaItem->file_path, 'uploads/') || str_starts_with($mediaItem->file_path, 'storage/') ? $mediaItem->file_path : (str_starts_with($mediaItem->file_path, 'products/') ? 'storage/' . $mediaItem->file_path : 'uploads/products/images/' . $mediaItem->file_path)) }}" alt="Gallery image"
+                                class="h-14 w-14 rounded-[8px] object-cover border border-border" />
+                        @endforeach
+                    </div>
+                    <p class="text-xs text-muted">New uploads are added to the existing gallery. Accepted: JPG, PNG, WebP - max 2 MB each.</p>
+                    @error('gallery.*')<p class="text-sm text-red-500">{{ $message }}</p>@enderror
+                </div>
+            </div>
+
+            {{-- ---------------
+            -- Form Actions
+            -- --------------- --}}
+            <div class="flex items-center justify-end gap-4 pt-6 border-t border-border">
+                <a href="{{ route('manage.products.all.show', $product->id) }}"
+                    class="inline-flex items-center gap-2 rounded-[8px] border border-border bg-background px-6 py-3 text-sm font-medium text-text transition hover:bg-border">
+                    Cancel
+                </a>
+                <button type="submit"
+                    class="inline-flex items-center gap-2 rounded-[8px] bg-primary px-6 py-3 text-sm font-medium text-white transition hover:bg-primary/90">
+                    <i class="fa-solid fa-save"></i>
+                    Update Product
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {{-- ---------------
+    -- Media Library Modal
+    -- --------------- --}}
+    <div id="mediaLibraryModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+        <div class="relative bg-background rounded-[12px] border border-border shadow-2xl w-full max-w-4xl flex flex-col"
+            style="max-height: 80vh;">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
+                <h2 class="text-sm font-semibold text-text">Media Library</h2>
+                <button type="button" id="closeMediaModal" class="text-muted hover:text-text transition text-lg leading-none">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div id="mediaLibraryGrid" class="grid grid-cols-3 sm:grid-cols-6 gap-3 p-5 overflow-y-auto flex-1">
+                <p class="col-span-full text-center text-sm text-muted py-8">Loading…</p>
+            </div>
+        </div>
+    </div>
+
+    @include('manage.products.partials.editor-layout', ['formId' => 'productEditForm'])
+@endsection
+
+@push('styles')
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet" />
+    <style>
+        .ql-toolbar.ql-snow { border-radius: 0.75rem 0.75rem 0 0; }
+        .ql-container.ql-snow { border-radius: 0 0 0.75rem 0.75rem; min-height: 220px; }
+        .ql-editor { min-height: 220px; font-size: 0.875rem; }
+    </style>
+@endpush
+
+@push('scripts')
+<script>window.__productDetailedDesc = @json(old('detailed_description', $product->detailed_description ?? ''));</script>
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script>
+(function () {
+    // ---------------
+    // SKU Regeneration
+    // ---------------
+    function buildSku(name) {
+        const prefix = name.replace(/[^a-zA-Z0-9]/g, '').substring(0, 3).toUpperCase() || 'PRD';
+        const chars  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let rand = '';
+        for (let i = 0; i < 6; i++) rand += chars.charAt(Math.floor(Math.random() * chars.length));
+        return 'NAW-' + prefix + '-' + rand;
+    }
+
+    document.getElementById('regenerateSku').addEventListener('click', function () {
+        if (!variantToggle.checked) {
+            document.getElementById('sku').value = buildSku(document.getElementById('name').value.trim());
+        }
+    });
+
+    // ---------------
+    // Variant toggle
+    // ---------------
+    const variantToggle  = document.getElementById('is_variant_toggle');
+    const variantSection = document.getElementById('variantSection');
+
+    variantToggle.addEventListener('change', function () {
+        variantSection.classList.toggle('hidden', !this.checked);
+        if (this.checked) document.getElementById('sku').value = '';
+    });
+
+    // ---------------
+    // Add Attribute Row
+    // ---------------
+    let attrIndex = document.querySelectorAll('.attribute-group').length;
+    document.getElementById('addAttribute').addEventListener('click', function () {
+        const container = document.getElementById('attributesContainer');
+        const row = document.createElement('div');
+        row.className = 'attribute-group grid grid-cols-1 sm:grid-cols-12 gap-3 items-center';
+        row.innerHTML = `
+            <div class="sm:col-span-5">
+                <input type="text" name="attributes[${attrIndex}][name]"
+                    class="w-full rounded-[8px] border border-border bg-background px-4 py-2 text-sm text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    placeholder="Attribute name (e.g. Size)" />
+            </div>
+            <div class="sm:col-span-5">
+                <input type="text" name="attributes[${attrIndex}][values]"
+                    class="w-full rounded-[8px] border border-border bg-background px-4 py-2 text-sm text-text outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    placeholder="Values comma-separated (e.g. S,M,L,XL)" />
+            </div>
+            <div class="sm:col-span-2 flex justify-end">
+                <button type="button" class="remove-attribute rounded-[8px] border border-red-300 bg-red-50 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-100 transition">Remove</button>
+            </div>`;
+        container.appendChild(row);
+        row.querySelector('.remove-attribute').addEventListener('click', () => row.remove());
+        attrIndex++;
+    });
+
+    document.getElementById('attributesContainer').addEventListener('click', function (e) {
+        if (e.target.classList.contains('remove-attribute')) e.target.closest('.attribute-group').remove();
+    });
+
+    // ---------------
+    // Generate Variants Table (with auto-SKU and image column)
+    // ---------------
+    document.getElementById('generateVariants').addEventListener('click', function () {
+        const groups = document.querySelectorAll('.attribute-group');
+        const attributeSets = [];
+        groups.forEach(group => {
+            const nameIn   = group.querySelector('input[name*="[name]"]');
+            const valuesIn = group.querySelector('input[name*="[values]"]');
+            const n = nameIn ? nameIn.value.trim() : '';
+            const v = valuesIn ? valuesIn.value.split(',').map(s => s.trim()).filter(Boolean) : [];
+            if (n && v.length) attributeSets.push(v);
+        });
+
+        if (!attributeSets.length) {
+            alert('Add at least one attribute with values before generating variants.');
+            return;
+        }
+
+        const combinations = attributeSets.reduce((acc, set) => {
+            const result = [];
+            acc.forEach(e => set.forEach(v => result.push([...e, v])));
+            return result;
+        }, [[]]);
+
+        const tbody = document.getElementById('variantRows');
+        const existingRows = {};
+        tbody.querySelectorAll('tr').forEach(tr => {
+            const label = tr.dataset.label;
+            if (label) {
+                existingRows[label] = {
+                    sku:     tr.querySelector('input[name*="[sku]"]')?.value || '',
+                    cost:    tr.querySelector('input[name*="[cost_price]"]')?.value || '',
+                    selling: tr.querySelector('input[name*="[selling_price]"]')?.value || '',
+                    strike:  tr.querySelector('input[name*="[strikethrough_price]"]')?.value || '',
+                    stock:   tr.querySelector('input[name*="[stock]"]')?.value || '',
+                };
+            }
+        });
+
+        tbody.innerHTML = '';
+        combinations.forEach((combo, i) => {
+            const label   = combo.join(' / ');
+            const prev    = existingRows[label] || {};
+            const autoSku = prev.sku || buildSku(label);
+            const tr      = document.createElement('tr');
+            tr.dataset.label = label;
+            tr.className     = 'divide-x divide-border';
+            tr.innerHTML = `
+                <td class="px-4 py-2 font-medium text-text text-sm">
+                    ${label}
+                    <input type="hidden" name="variants[${i}][variant_code]" value="${label}" />
+                </td>
+                <td class="px-4 py-2">
+                    <input type="text" name="variants[${i}][sku]" value="${autoSku}"
+                        class="w-full rounded-[8px] border border-border bg-background px-3 py-1.5 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        placeholder="SKU" />
+                </td>
+                <td class="px-4 py-2">
+                    <input type="number" name="variants[${i}][cost_price]" step="0.01" min="0" value="${prev.cost || ''}"
+                        class="w-full rounded-[8px] border border-border bg-background px-3 py-1.5 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        placeholder="Cost" />
+                </td>
+                <td class="px-4 py-2">
+                    <input type="number" name="variants[${i}][selling_price]" step="0.01" min="0" value="${prev.selling || ''}" required
+                        class="w-full rounded-[8px] border border-border bg-background px-3 py-1.5 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        placeholder="Selling" />
+                </td>
+                <td class="px-4 py-2">
+                    <input type="number" name="variants[${i}][strikethrough_price]" step="0.01" min="0" value="${prev.strike || ''}"
+                        class="w-full rounded-[8px] border border-border bg-background px-3 py-1.5 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        placeholder="Strike-through" />
+                </td>
+                <td class="px-4 py-2">
+                    <input type="number" name="variants[${i}][stock]" min="0" value="${prev.stock || ''}"
+                        class="w-full rounded-[8px] border border-border bg-background px-3 py-1.5 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        placeholder="0" />
+                </td>
+                <td class="px-4 py-2">
+                    <input type="file" name="variants[${i}][image]" accept="image/jpeg,image/png,image/webp"
+                        class="w-full text-xs text-muted file:rounded-[8px] file:border-none file:bg-primary/10 file:px-2 file:py-1 file:text-xs file:text-primary file:cursor-pointer" />
+                </td>`;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('variantsTable').classList.remove('hidden');
+    });
+
+
+    // ---------------
+    // Short Description Word Count (max 20 words)
+    // ---------------
+    const shortDesc      = document.getElementById('short_description');
+    const shortWordCount = document.getElementById('shortWordCount');
+
+    function countWords(text) {
+        return text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+    }
+
+    function initShortWordCount() {
+        const words = countWords(shortDesc.value);
+        shortWordCount.textContent = words + ' / 20 words';
+        shortWordCount.className   = 'text-xs ' + (words > 20 ? 'text-red-500' : 'text-muted');
+    }
+
+    shortDesc.addEventListener('input', initShortWordCount);
+    initShortWordCount();
+
+        const quill = new Quill('#detailed_description_editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: {
+                    container: [
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ list: 'ordered' }, { list: 'bullet' }],
+                        [{ header: [2, 3, false] }],
+                        ['link', 'image', 'video'],
+                        ['clean'],
+                    ],
+                    handlers: {
+                        image: function () { uploadEditorMedia(quill, 'image/*', 'image'); }
+                    }
+                }
+            },
+            placeholder: 'Write a detailed product description (200–300 words recommended)…',
+        });
+
+        // ---------------
+        // Upload an image/video file to the server and insert it at the cursor
+        // ---------------
+        function uploadEditorMedia(editor, accept) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = accept;
+            input.onchange = function () {
+                const file = input.files[0];
+                if (!file) return;
+
+                const range = editor.getSelection(true);
+                editor.insertText(range.index, 'Uploading...', 'italic', true);
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                axios.post('{{ route('manage.products.uploadMedia') }}', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                }).then(function (response) {
+                    editor.deleteText(range.index, 'Uploading...'.length);
+                    editor.insertEmbed(range.index, 'image', response.data.url);
+                    editor.setSelection(range.index + 1);
+                }).catch(function () {
+                    editor.deleteText(range.index, 'Uploading...'.length);
+                    alert('Upload failed. Please try again.');
+                });
+            };
+            input.click();
+        }       
+    if (window.__productDetailedDesc) quill.root.innerHTML = window.__productDetailedDesc;
+
+    const detailedWordCount = document.getElementById('detailedWordCount');
+
+    function updateDetailedWordCount() {
+        const words = countWords(quill.getText());
+        detailedWordCount.textContent = words + ' words';
+        detailedWordCount.className   = 'text-xs ' + (words < 200 ? 'text-muted' : (words <= 300 ? 'text-green-600' : 'text-amber-500'));
+    }
+
+    quill.on('text-change', updateDetailedWordCount);
+    updateDetailedWordCount();
+
+    // Sync Quill content to hidden input before form submit; disable hidden section inputs so they are not submitted
+    document.getElementById('productEditForm').addEventListener('submit', function () {
+        document.getElementById('detailed_description_hidden').value = quill.root.innerHTML;
+        if (variantSection.classList.contains('hidden')) {
+            variantSection.querySelectorAll('input, select, textarea').forEach(el => el.disabled = true);
+        }
+    });
+
+    // ---------------
+    // Thumbnail Device Upload Preview
+    // ---------------
+    document.getElementById('thumbnail').addEventListener('change', function () {
+        const file = this.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            document.getElementById('thumbnailPreviewImg').src = e.target.result;
+            document.getElementById('thumbnailPreview').classList.remove('hidden');
+            document.getElementById('thumbnail_library_input').value = '';
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // ---------------
+    // Gallery Device Upload Preview
+    // ---------------
+    document.getElementById('gallery').addEventListener('change', function () {
+        const preview = document.getElementById('galleryPreview');
+        Array.from(this.files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'h-14 w-14 rounded-[8px] object-cover border border-border';
+                preview.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+
+    // ---------------
+    // Media Library Modal
+    // ---------------
+    let libraryTarget = 'thumbnail';
+    let libraryLoaded = false;
+    const modal         = document.getElementById('mediaLibraryModal');
+    const modalGrid     = document.getElementById('mediaLibraryGrid');
+    const closeModalBtn = document.getElementById('closeMediaModal');
+
+    document.querySelectorAll('.open-media-library').forEach(btn => {
+        btn.addEventListener('click', function () {
+            libraryTarget = this.dataset.libraryTarget;
+            modal.classList.remove('hidden');
+            if (!libraryLoaded) loadMediaLibrary();
+        });
+    });
+
+    closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
+    modal.addEventListener('click', function (e) {
+        if (e.target === modal) modal.classList.add('hidden');
+    });
+
+    function loadMediaLibrary() {
+        modalGrid.innerHTML = '<p class="col-span-full text-center text-sm text-muted py-8">Loading…</p>';
+        axios.get('{{ route("manage.products.mediaLibrary") }}')
+            .then(function (response) {
+                libraryLoaded = true;
+                const items   = response.data;
+                if (!items.length) {
+                    modalGrid.innerHTML = '<p class="col-span-full text-center text-sm text-muted py-8">No images in the library yet.</p>';
+                    return;
+                }
+                modalGrid.innerHTML = '';
+                items.forEach(function (item) {
+                    const btn = document.createElement('button');
+                    btn.type  = 'button';
+                    btn.className = 'relative group rounded-[8px] overflow-hidden border-2 border-transparent hover:border-primary transition focus:outline-none';
+                    btn.innerHTML = `<img src="${item.url}" alt="" class="w-full aspect-square object-cover" />
+                        <div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                            <i class="fa-solid fa-check text-white text-lg"></i>
+                        </div>`;
+                    btn.addEventListener('click', function () {
+                        selectLibraryItem(item.path, item.url);
+                    });
+                    modalGrid.appendChild(btn);
+                });
+            })
+            .catch(function () {
+                modalGrid.innerHTML = '<p class="col-span-full text-center text-sm text-red-500 py-8">Failed to load media library.</p>';
+            });
+    }
+
+    function selectLibraryItem(path, url) {
+        if (libraryTarget === 'thumbnail') {
+            document.getElementById('thumbnail_library_input').value = path;
+            document.getElementById('thumbnailPreviewImg').src = url;
+            document.getElementById('thumbnailPreview').classList.remove('hidden');
+        } else {
+            const input = document.createElement('input');
+            input.type  = 'hidden';
+            input.name  = 'gallery_library[]';
+            input.value = path;
+            document.getElementById('galleryLibraryInputs').appendChild(input);
+
+            const img   = document.createElement('img');
+            img.src     = url;
+            img.className = 'h-14 w-14 rounded-[8px] object-cover border border-border';
+            document.getElementById('galleryPreview').appendChild(img);
+        }
+        modal.classList.add('hidden');
+    }
+
+}());
+</script>
+@endpush

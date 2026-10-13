@@ -1,0 +1,67 @@
+@extends('manage.layouts.app')
+
+@section('title', 'Edit User')
+
+@section('content')
+<div class="mb-6">
+    <nav class="text-sm text-muted mb-4">
+        <ol class="inline-flex items-center gap-2">
+            <li><a href="{{ route('manage.dashboard.index') }}" class="hover:text-primary">Dashboard</a></li>
+            <li>/</li>
+            <li><a href="{{ route('manage.system-users.index') }}" class="hover:text-primary">System Users</a></li>
+            <li>/</li>
+            <li class="text-black font-semibold">Edit User</li>
+        </ol>
+    </nav>
+    <h1 class="text-2xl font-semibold text-black">Edit User</h1>
+</div>
+
+@if ($errors->any())
+    <div class="mb-6 rounded-[12px] border border-red-200 bg-red-50 p-4 text-sm text-red-900">
+        <ul class="list-disc list-inside">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
+    </div>
+@endif
+
+<div class="bg-background border border-border rounded-[12px] p-6 shadow-sm">
+    <form method="POST" action="{{ route('manage.system-users.update', $user->id) }}">
+        @csrf @method('PUT')
+
+        <div class="grid gap-6 lg:grid-cols-2 mb-6">
+            <div><label class="block text-sm font-medium mb-2">First Name *</label><input type="text" name="first_name" value="{{ old('first_name', $user->first_name) }}" class="w-full rounded-[8px] border border-border bg-white px-4 py-3" required></div>
+            <div><label class="block text-sm font-medium mb-2">Last Name</label><input type="text" name="last_name" value="{{ old('last_name', $user->last_name) }}" class="w-full rounded-[8px] border border-border bg-white px-4 py-3"></div>
+        </div>
+
+        <div class="grid gap-6 lg:grid-cols-2 mb-6">
+            <div><label class="block text-sm font-medium mb-2">Email *</label><input type="email" name="email" value="{{ old('email', $user->email) }}" class="w-full rounded-[8px] border border-border bg-white px-4 py-3" required></div>
+            <div><label class="block text-sm font-medium mb-2">Phone</label><input type="text" name="phone" value="{{ old('phone', $user->phone) }}" class="w-full rounded-[8px] border border-border bg-white px-4 py-3"></div>
+        </div>
+
+        <div class="grid gap-6 lg:grid-cols-2 mb-6">
+            <div>
+                <label class="block text-sm font-medium mb-2">Role *</label>
+                <select name="role_id" class="w-full rounded-[8px] border border-border bg-white px-4 py-3" required>
+                    <option value="">-- Select Role --</option>
+                    @foreach ($roles as $role)
+                        <option value="{{ $role->id }}" {{ old('role_id', $user->role_id) == $role->id ? 'selected' : '' }}>{{ $role->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-text mb-2">Status</label>
+                <select name="status" class="w-full rounded-[8px] border border-border bg-white px-4 py-3 text-sm text-black outline-none focus:border-primary">
+                    @foreach (['active', 'pending', 'suspended'] as $statusOption)
+                        <option value="{{ $statusOption }}" {{ old('status', $user->status) == $statusOption ? 'selected' : '' }}>
+                            {{ ucfirst($statusOption) }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-4 border-t">
+            <a href="{{ route('manage.system-users.index') }}" class="rounded-[8px] border px-5 py-3 text-sm">Cancel</a>
+            <button type="submit" class="rounded-[8px] bg-primary px-5 py-3 text-sm font-semibold text-white">Update User</button>
+        </div>
+    </form>
+</div>
+@endsection
