@@ -12,6 +12,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Services\QuotationEmailService;
+use Illuminate\Support\Facades\Log;
 
 class QuotationsController extends Controller
 {
@@ -121,24 +123,107 @@ class QuotationsController extends Controller
     }
 
     // ---------------
-    // Update status (draft, sent, accepted, rejected, expired)
+    // Update status (draft, sent, accepted, rejected, expired).
+    // Emails the customer on sent, accepted, rejected and expired.
     // ---------------
-    public function updateStatus(Request $request, string $id)
+    public function updateStatus(Request $request, string $id, QuotationEmailService $emails)
     {
         $request->validate([
             'status' => 'required|in:draft,sent,accepted,rejected,expired',
         ]);
 
-        Quotation::findOrFail($id)->update(['status' => $request->status]);
+        $quotation = Quotation::with(['customer', 'items'])->findOrFail($id);
+        $old       = $quotation->status;
+        $new       = $request->status;
 
-        return redirect()->back()->with('success', 'Quotation status updated.');
+        $quotation->update(['status' => $new]);
+
+        // ---------------
+        // Draft is internal, and an unchanged status never re-emails
+        // (use Send / Resend for that)
+        // ---------------
+        if ($new === 'draft' || $new === $old) {
+            return redirect()->back()->with('success', 'Quotation status updated.');
+        }
+
+        if (! $emails->customerEmail($quotation)) {
+            return redirect()->back()->with('success', 'Quotation status updated. No customer email on file, so no email was sent.');
+        }
+
+        try {
+            $sent = $new === 'sent'
+                ? $emails->sendQuotationToClient($quotation)
+                : $emails->sendStatusUpdateToClient($quotation, $new);
+        } catch (\Throwable $e) {
+            Log::warning('Quotation status email failed', [
+                'quotation' => $quotation->quotation_code,
+                'error'     => $e->getMessage(),
+            ]);
+
+            return redirect()->back()
+                ->with('success', 'Quotation status updated.')
+                ->with('error', 'The customer email could not be sent: ' . $e->getMessage());
+        }
+
+        return redirect()->back()->with(
+            'success',
+            $sent
+                ? 'Quotation status updated and customer emailed.'
+                : 'Quotation status updated. Email settings are not configured, so no email was sent.'
+        );
+    }
+
+    // ---------------
+    // Email the quotation to the customer and mark it as sent.
+    // Works for draft (marks sent) and sent (resend) only.
+    // ---------------
+    public function send(string $id, QuotationEmailService $emails)
+    {
+        $quotation = Quotation::with(['customer', 'items'])->findOrFail($id);
+
+        if (! in_array($quotation->status, ['draft', 'sent'], true)) {
+            return redirect()->back()->with('error', 'Only draft or sent quotations can be sent.');
+        }
+
+        if ($quotation->items->isEmpty()) {
+            return redirect()->back()->with('error', 'Add at least one line item before sending.');
+        }
+
+        if (! $emails->customerEmail($quotation)) {
+            return redirect()->back()->with('error', 'This customer has no email address on file.');
+        }
+
+        try {
+            $sent = $emails->sendQuotationToClient($quotation);
+        } catch (\Throwable $e) {
+            Log::warning('Quotation send failed', [
+                'quotation' => $quotation->quotation_code,
+                'error'     => $e->getMessage(),
+            ]);
+
+            return redirect()->back()->with('error', 'The email could not be sent: ' . $e->getMessage());
+        }
+
+        if (! $sent) {
+            return redirect()->back()->with('error', 'Email settings are not configured, so the quotation was not sent.');
+        }
+
+        $wasDraft = $quotation->status === 'draft';
+
+        if ($wasDraft) {
+            $quotation->update(['status' => 'sent']);
+        }
+
+        return redirect()->back()->with(
+            'success',
+            $wasDraft ? 'Quotation sent to the customer and marked as Sent.' : 'Quotation re-sent to the customer.'
+        );
     }
 
     // ---------------
     // Convert an accepted quotation into a real order, copying its items
     // ---------------
-    public function convert(string $id)
-    {
+    public function convert(string $id, QuotationEmailService $emails)    {
         $quotation = Quotation::with('items')->findOrFail($id);
 
         if (!$quotation->user_id) {
@@ -179,8 +264,28 @@ class QuotationsController extends Controller
             return $order;
         });
 
+        // ---------------
+        // Tell the customer (a failed email never undoes the conversion)
+        // ---------------
+        $emailNote = '';
+
+        try {
+            $quotation->load('customer');
+
+            if ($emails->customerEmail($quotation)) {
+                $emails->sendConvertedToClient($quotation, $order->order_code);
+                $emailNote = ' Customer emailed.';
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Quotation converted email failed', [
+                'quotation' => $quotation->quotation_code,
+                'error'     => $e->getMessage(),
+            ]);
+            $emailNote = ' The customer email could not be sent.';
+        }
+
         return redirect()->route('manage.ecommerce.orders.index')
-            ->with('success', 'Quotation converted to order ' . $order->order_code . '.');
+            ->with('success', 'Quotation converted to order ' . $order->order_code . '.' . $emailNote);
     }
 
     // ---------------

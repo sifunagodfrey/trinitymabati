@@ -13,7 +13,7 @@
 
                     <!-- Header -->
                     <tr>
-                        <td style="background-color:#AAC527;padding:28px 32px;text-align:center;">
+                        <td style="background-color:#aa1f25;padding:28px 32px;text-align:center;">
                             <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;letter-spacing:-0.3px;">Trinity Mabati Factory</h1>
                             <p style="color:black;margin:6px 0 0;font-size:13px;">Seller Notification</p>
                         </td>
@@ -76,7 +76,7 @@
                                 <tr>
                                     <td align="center">
                                         <a href="{{ url('/seller/support') }}"
-                                           style="display:inline-block;background-color:#AAC527;color:#ffffff;padding:13px 32px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:700;">
+                                           style="display:inline-block;background-color:#aa1f25;color:#ffffff;padding:13px 32px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:700;">
                                             Contact Support
                                         </a>
                                     </td>

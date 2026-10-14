@@ -64,6 +64,45 @@ class OrderEmailService
     }
 
     // ---------------
+    // New order placed: alert every super admin.
+    // Never throws, one failed recipient does not block the others.
+    // ---------------
+    public function sendNewOrderToStaff($order): void
+    {
+        try {
+            $settings = $this->emailSettings();
+
+            if (! $settings?->mail_host) {
+                return;
+            }
+
+            $order->loadMissing(['user', 'items']);
+
+            foreach ($this->superAdmins() as $admin) {
+                try {
+                    $this->send(
+                        $settings,
+                        $admin->email,
+                        trim($admin->first_name . ' ' . $admin->last_name),
+                        'New Order - ' . $order->order_code,
+                        'emails.system.new_order_admin',
+                        array_merge(
+                            ['order' => $order],
+                            $this->resolveShippingNames($order)
+                        )
+                    );
+                } catch (\Throwable $e) {
+                    Log::warning('OrderEmailService: staff order alert failed', [
+                        'to'    => $admin->email,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('OrderEmailService: staff order alert failed', ['error' => $e->getMessage()]);
+        }
+    }
+    // ---------------
     // Payment confirmed: success email to the client.
     // ---------------
     public function sendPaymentSuccessToClient($order): void

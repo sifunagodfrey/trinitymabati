@@ -9,7 +9,7 @@ use App\Models\Manage\Quotations\Quotation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-
+use App\Services\QuotationEmailService;
 class QuotationRequestController extends Controller
 {
     private function resolve(int $productId, ?int $variantId, $metres, int $quantity): array
@@ -161,6 +161,14 @@ class QuotationRequestController extends Controller
             return $quote;
         });
         $request->session()->forget('trinity_quote');
+
+        // ---------------
+        // Receipt to the customer and alert to staff (never blocks the request)
+        // ---------------
+        $emails = app(QuotationEmailService::class);
+        $emails->sendRequestReceivedToClient($quote);
+        $emails->sendNewRequestToStaff($quote);
+
         return redirect()->route('frontend.quotation.index')->with('quote_success', $quote->quotation_code);
     }
 }

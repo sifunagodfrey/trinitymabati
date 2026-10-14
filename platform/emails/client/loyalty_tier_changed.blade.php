@@ -13,7 +13,7 @@
 
                     <!-- Header -->
                     <tr>
-                        <td style="background-color:#AAC527;padding:28px 32px;text-align:center;">
+                        <td style="background-color:#aa1f25;padding:28px 32px;text-align:center;">
                             <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;letter-spacing:-0.3px;">Trinity Mabati Factory</h1>
                             <p style="color:black;margin:6px 0 0;font-size:13px;">Loyalty Rewards Programme</p>
                         </td>
@@ -60,7 +60,7 @@
                                         <p style="margin:4px 0 0;font-size:12px;color:#9ca3af;">{{ number_format($oldTier->discount_percent, 1) }}% discount</p>
                                     </td>
                                     <!-- Arrow -->
-                                    <td width="4%" style="text-align:center;vertical-align:middle;font-size:20px;color:#AAC527;">&#8594;</td>
+                                    <td width="4%" style="text-align:center;vertical-align:middle;font-size:20px;color:#aa1f25;">&#8594;</td>
                                     <!-- New Tier -->
                                     <td width="48%" style="background-color:{{ $isUpgrade ? '#ecfdf5' : '#fefce8' }};border:2px solid {{ $isUpgrade ? '#6ee7b7' : '#fde68a' }};border-radius:8px;padding:16px 20px;text-align:center;vertical-align:top;">
                                         <p style="margin:0 0 6px;font-size:11px;color:{{ $isUpgrade ? '#059669' : '#b45309' }};font-weight:700;text-transform:uppercase;letter-spacing:0.8px;">New Tier</p>
@@ -94,7 +94,7 @@
                                 <tr>
                                     <td align="center">
                                         <a href="{{ url('/account/loyalty') }}"
-                                           style="display:inline-block;background-color:#AAC527;color:#ffffff;padding:13px 32px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:700;">
+                                           style="display:inline-block;background-color:#aa1f25;color:#ffffff;padding:13px 32px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:700;">
                                             View My Loyalty Dashboard
                                         </a>
                                     </td>

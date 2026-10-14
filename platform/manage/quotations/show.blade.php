@@ -21,6 +21,21 @@
                 <p class="text-sm text-muted">Created {{ $quotation->created_at->format('d M Y, H:i') }}</p>
             </div>
             <div class="flex items-center gap-2">
+                {{-- ---------------
+                -- Send / resend quotation to customer
+                -- --------------- --}}
+                @if (in_array($quotation->status, ['draft', 'sent'], true) && auth()->user()->hasPermission('manage_quotations'))
+                    <form method="POST" action="{{ route('manage.quotations.send', $quotation->id) }}"
+                        onsubmit="return confirm('Email this quotation to the customer?')">
+                        @csrf
+                        <button type="submit"
+                            class="inline-flex items-center gap-2 rounded-[12px] border border-primary px-4 py-2.5 text-sm font-medium text-primary transition hover:bg-primary hover:text-white">
+                            <i class="fa-solid fa-paper-plane"></i>
+                            {{ $quotation->status === 'draft' ? 'Send Quotation' : 'Resend Quotation' }}
+                        </button>
+                    </form>
+                @endif
+
                 @if ($quotation->user_id && $quotation->status !== 'converted' && auth()->user()->hasPermission('manage_quotations'))
                     <form method="POST" action="{{ route('manage.quotations.convert', $quotation->id) }}"
                         onsubmit="return confirm('Convert this quotation into a real order?')">

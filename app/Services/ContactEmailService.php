@@ -40,6 +40,41 @@ class ContactEmailService
     }
 
     // ---------------
+    // New contact message: alert every super admin.
+    // Never throws, one failed recipient does not block the others.
+    // ---------------
+    public function sendNewMessageToStaff(ContactMessage $message): void
+    {
+        try {
+            $settings = $this->emailSettings();
+
+            if (! $settings?->mail_host) {
+                return;
+            }
+
+            foreach ($this->superAdmins() as $admin) {
+                try {
+                    $this->send(
+                        $settings,
+                        $admin->email,
+                        trim($admin->first_name . ' ' . $admin->last_name),
+                        'New Contact Message - ' . $message->name,
+                        'emails.system.contact_message_admin',
+                        ['message' => $message]
+                    );
+                } catch (\Throwable $e) {
+                    Log::warning('ContactEmailService: staff alert failed', [
+                        'to'    => $admin->email,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('ContactEmailService: staff alert failed', ['error' => $e->getMessage()]);
+        }
+    }
+
+    // ---------------
     // Admin reply: send reply email and, if the sender has an active account,
     // also create an in-app notification in su_notifications.
     // ---------------
