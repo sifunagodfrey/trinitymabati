@@ -12,14 +12,12 @@ class HomeController extends Controller
 {
     public function index(): View
     {
-        $slugs = ['tile-profiles', 'corrugated-sheets', 'stone-coated-profiles', 'box-profile'];
+        $slugs = ['tile-profiles', 'corrugated-sheets', 'stone-coated-profiles', 'box-profiles'];
 
         $mainCategories = Category::query()
             ->whereNull('parent_id')
-            ->whereIn('slug', $slugs)
-            ->get()
-            ->sortBy(fn ($category) => array_search($category->slug, $slugs, true))
-            ->values();
+            ->orderBy('id')
+            ->get();
 
         $sections = collect($slugs)->mapWithKeys(function ($slug) use ($mainCategories) {
             $parent = $mainCategories->firstWhere('slug', $slug);

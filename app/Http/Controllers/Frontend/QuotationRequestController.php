@@ -73,10 +73,11 @@ class QuotationRequestController extends Controller
     public function search(Request $request)
     {
         $term = trim((string)$request->query('q', ''));
+        if ($term === '') return response()->json(['results' => []]);
         $products = Product::query()->where('is_active', 1)
             ->when($term !== '', fn($q) => $q->where('name', 'like', '%' . str_replace(['%', '_'], ['\%', '\_'], $term) . '%'))
             ->with(['variants.variantAttributes.attribute', 'variants.variantAttributes.attributeValue'])
-            ->orderByDesc('id')->limit(10)->get();
+            ->orderByDesc('id')->limit(5)->get();
         $options = [];
         foreach ($products as $product) {
             $variants = $product->is_variant ? $product->variants : collect([null]);
@@ -87,6 +88,7 @@ class QuotationRequestController extends Controller
                     $candidate = $this->resolve($product->id, $variant?->id, $length, 1);
                     $candidate['name'] = $product->name . ($candidate['options'] ? ' · ' . $candidate['options'] : '') . ($length !== null ? ' · 3 Metres' : '');
                     $options[] = $candidate;
+                    if (count($options) >= 5) break 2;
                 } catch (\Throwable $e) { continue; }
             }
         }

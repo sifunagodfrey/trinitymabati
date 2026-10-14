@@ -324,8 +324,10 @@
 
                 {{-- Card: Title + description + badges + rating --}}
                 <div class="bg-white border border-border rounded-[8px] p-5">
-                    <h1 class="text-lg md:text-xl font-bold text-secondary leading-snug">{{ $product->name }}</h1>
-
+                    <h1 class="text-lg md:text-xl font-bold text-primary leading-snug">{{ $product->name }}</h1>
+                    @if (filled($product->short_description))
+                        <p class="mt-2 text-sm leading-relaxed text-gray-600 line-clamp-2">{{ strip_tags($product->short_description) }}</p>
+                    @endif
 
                 </div>
 
@@ -494,10 +496,8 @@
                     </button>
                 </div>
 
-                {{-- Wishlist + Share --}}
+                {{-- Share --}}
                 <div class="flex items-center gap-4">
-                    <button x-data="{ inWishlist: {{ $inWishlist ? 'true' : 'false' }}, loading: false, async toggle() { if (this.loading) return; this.loading = true; try { const r = await fetch('{{ route('client.wishlist.toggle', $product->id) }}', { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, 'Accept': 'application/json', 'Content-Type': 'application/json' } }); if (r.status === 401) { window.location.href = '{{ route('login') }}'; return; } const d = await r.json(); this.inWishlist = d.status === 'added'; } finally { this.loading = false; } } }" @click="toggle()" :disabled="loading" :class="inWishlist ? 'text-red-500' : 'text-muted hover:text-red-500'" class="flex items-center gap-1.5 text-xs transition"><i :class="inWishlist ? 'fas fa-heart' : 'far fa-heart'"></i><span x-text="inWishlist ? 'Saved to Wishlist' : 'Add to Wishlist'"></span></button>
-                    <span class="text-border text-xs">|</span>
                     <button class="flex items-center gap-1.5 text-xs text-muted hover:text-secondary transition"><i class="fas fa-share-alt"></i> Share</button>
                 </div>
             </div>

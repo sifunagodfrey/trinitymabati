@@ -22,12 +22,8 @@ class SearchController extends Controller
     {
         $q = trim(request('q', ''));
 
-        if (strlen($q) < 2) {
-            return response()->json([]);
-        }
-
         $products = Product::where('is_active', true)
-            ->where('name', 'like', "%{$q}%")
+            ->when($q !== '', fn ($query) => $query->where('name', 'like', "%{$q}%"))
             ->with([
                 'category:id,name',
                 'variants:id,product_id,price,sale_price',
@@ -35,7 +31,8 @@ class SearchController extends Controller
             ->select('id', 'name', 'slug', 'thumbnail', 'price', 'sale_price', 'currency',
                      'category_id', 'is_variant')
             ->orderByRaw("CASE WHEN LOWER(name) LIKE LOWER(?) THEN 0 ELSE 1 END", ["{$q}%"])
-            ->limit(8)
+            ->orderByDesc('id')
+            ->limit(10)
             ->get()
             ->map(function ($p) {
                 $thumb = $p->thumbnail
@@ -71,6 +68,7 @@ class SearchController extends Controller
                     'id'            => $p->id,
                     'name'          => $p->name,
                     'slug'          => $p->slug,
+                    'url'           => route('frontend.products.show', $p->slug),
                     'thumb'         => $thumb,
                     'price_display' => $priceDisplay,
                     'category'      => $p->category?->name,

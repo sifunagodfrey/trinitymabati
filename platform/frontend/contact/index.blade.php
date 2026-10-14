@@ -60,7 +60,7 @@
         <div class="max-w-6xl mx-auto px-4 md:px-6 py-10 md:py-14">
 
             <div class="text-center mb-10">
-                <h1 class="text-2xl md:text-3xl font-bold text-text">Get in Touch</h1>
+                <h1 class="text-2xl md:text-3xl font-bold text-primary">Get in Touch</h1>
                 <p class="text-sm text-muted mt-2 max-w-xl mx-auto">
                     Reach us through any of the options below.
                 </p>

@@ -13,6 +13,21 @@ use Illuminate\View\View;
 
 class PageController extends Controller
 {
+    public function privacyPolicy(): View
+    {
+        return $this->show('privacy-policy');
+    }
+
+    public function termsConditions(): View
+    {
+        return $this->show('terms-and-conditions');
+    }
+
+    public function refundPolicy(): View
+    {
+        return $this->show('refund-policy');
+    }
+
     // ---------------
     // Show a page by slug
     // ---------------

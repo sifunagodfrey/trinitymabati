@@ -3,7 +3,7 @@
 @section('title', 'Trinity Mabati Factory | Quality Roofing Sheets in Kenya')
 @section('meta_description', 'Explore Trinity Mabati Factory roofing sheets: Tile Profiles, Corrugated Sheets, Stone
     Coated Profiles and Box Profile. Shop products or request a roofing quotation.')
-@section('og_image', url('public/images/hrinity-mabati-hero.webp'))
+@section('og_image', url('public/images/trinity-mabati-home-seo.jpg'))
 
 @section('content')
     @php
@@ -11,7 +11,7 @@
             'tile-profiles' => 'trinity-mabati-product-1.webp',
             'corrugated-sheets' => 'trinity-mabati-product-2.webp',
             'stone-coated-profiles' => 'trinity-mabati-product-3.webp',
-            'box-profile' => 'trinity-mabati-product-4.webp',
+            'box-profiles' => 'trinity-mabati-product-4.webp',
         ];
         $roofingGroups = [
             ['slug' => 'tile-profiles', 'heading' => 'Tile Profiles', 'image' => 'trinity-mabati-product-1.webp'],
@@ -25,11 +25,11 @@
                 'heading' => 'Stone Coated Profiles',
                 'image' => 'trinity-mabati-product-3.webp',
             ],
-            ['slug' => 'box-profile', 'heading' => 'Box Profile', 'image' => 'trinity-mabati-product-4.webp'],
+            ['slug' => 'box-profiles', 'heading' => 'Box Profile', 'image' => 'trinity-mabati-product-4.webp'],
         ];
     @endphp
 
-    <section class="relative isolate min-h-[440px] overflow-hidden bg-gray-900 sm:min-h-[510px] lg:min-h-[560px]"
+    <section class="relative isolate min-h-[440px] overflow-hidden bg-gray-900 sm:min-h-[470px] lg:min-h-[520px]"
         aria-label="Trinity Mabati Factory roofing">
         {{-- Keep the image visible immediately while the video buffers or when autoplay is unavailable. --}}
         <img src="{{ url('public/images/hrinity-mabati-hero.webp') }}" alt="Trinity Mabati roofing sheets"
@@ -51,7 +51,7 @@
             onerror="this.classList.remove('opacity-100');this.classList.add('opacity-0')"></video>
         <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/80 via-black/55 to-black/15"></div>
         <div
-            class="relative mx-auto flex min-h-[440px] max-w-7xl items-center px-4 py-20 sm:min-h-[510px] sm:px-6 lg:min-h-[560px] lg:px-8">
+            class="relative mx-auto flex min-h-[440px] max-w-7xl items-center px-4 py-20 sm:min-h-[470px] sm:px-6 sm:py-16 lg:min-h-[520px] lg:px-8">
             <div class="w-full max-w-[980px] text-white">
                 <h1
                     class="max-w-[720px] text-[clamp(1.9rem,3.1vw,2.8rem)] font-semibold uppercase leading-[1.14] tracking-tight text-white">
@@ -65,6 +65,8 @@
                     <a href="{{ route('frontend.products') }}"
                         class="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3.5 text-sm font-bold text-white transition hover:brightness-110">Explore
                         Our Mabati <i class="fas fa-arrow-right"></i></a>
+                    <a href="{{ route('frontend.quotation.index') }}"
+                        class="hidden items-center justify-center rounded-lg border-2 border-white bg-transparent px-6 py-3 text-sm font-bold text-white transition hover:bg-white hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:inline-flex">Get a Quote</a>
                 </div>
             </div>
         </div>

@@ -11,9 +11,14 @@
 
         {{-- Brand --}}
         <div class="lg:col-span-4">
-            <img src="{{ $branding['logo_white'] }}" alt="{{ config('app.name') }}" class="h-10 w-auto">
-            <p class="mt-4 text-sm leading-relaxed max-w-xs text-white/70">
-                Quality roofing sheets and accessories for durable, beautiful roofs across Kenya.
+            <img src="{{ $branding['logo_white'] }}" alt="{{ config('app.name') }}" class="h-16 w-auto max-w-full object-contain lg:h-20">
+            <p class="mt-4 max-w-xs overflow-hidden text-sm leading-relaxed text-white/70" style="max-height: 3.25em;"
+                x-data="{ fullText: '', observer: null, lastWidth: 0,
+                    fitText() { const paragraph = this.$el; const copy = this.$refs.footerCopy; const maxHeight = parseFloat(getComputedStyle(paragraph).lineHeight) * 2; copy.textContent = this.fullText + ' '; if (paragraph.scrollHeight &lt;= maxHeight + 1) return; let low = 0, high = this.fullText.length; while (low &lt; high) { const mid = Math.ceil((low + high) / 2); copy.textContent = this.fullText.slice(0, mid).trimEnd() + '… '; if (paragraph.scrollHeight &lt;= maxHeight + 1) low = mid; else high = mid - 1; } copy.textContent = this.fullText.slice(0, low).trimEnd() + '… '; },
+                    init() { this.fullText = this.$refs.footerCopy.textContent.trim(); this.$nextTick(() => { this.fitText(); this.observer = new ResizeObserver(entries => { const width = entries[0].contentRect.width; if (width !== this.lastWidth) { this.lastWidth = width; this.fitText(); } }); this.observer.observe(this.$el); document.fonts.ready.then(() => { if (this.$el.isConnected) this.fitText(); }); }); },
+                    destroy() { this.observer?.disconnect(); }
+                }">
+                <span x-ref="footerCopy">Trinity Mabati Factory delivers genuine, KEBS-certified metal roofing sheets with an ironclad 15-year written warranty directly to your construction site. </span><a href="{{ route('frontend.about') }}" class="whitespace-nowrap font-semibold text-white/80 transition hover:text-white">Read more <span aria-hidden="true">&rarr;</span><span class="sr-only"> about Trinity Mabati Factory</span></a>
             </p>
             @php
                 $socialIcons = [

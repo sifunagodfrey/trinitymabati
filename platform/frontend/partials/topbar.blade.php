@@ -10,23 +10,24 @@
 <div class="w-full bg-primary text-white">
     <div class="mx-auto flex min-h-10 max-w-7xl items-center justify-between gap-4 px-4 py-2 text-[13px] font-medium sm:px-6 sm:text-sm lg:px-8"
         style="font-weight: 500;">
-        <div class="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 sm:gap-x-5">
+        <div class="flex w-full min-w-0 items-center justify-between gap-x-2 gap-y-2 sm:w-auto sm:flex-wrap sm:justify-start sm:gap-x-5">
             @if ($nairobiPhone !== '')
                 <a href="tel:{{ preg_replace('/[^+0-9]/', '', $nairobiPhone) }}"
                     class="inline-flex items-center gap-2 whitespace-nowrap hover:text-white/80"
                     aria-label="Call Nairobi outlet">
-                    <i class="fas fa-phone-alt text-xs sm:text-sm" aria-hidden="true"></i>
+                    <i class="fas fa-phone-alt fa-flip-horizontal text-xs sm:text-sm" aria-hidden="true"></i>
                     <span>{{ $nairobiPhone }}</span>
                 </a>
             @endif
 
             @if ($migoriPhone !== '')
                 @if ($nairobiPhone !== '')
-                    <span class="text-white/60" aria-hidden="true">|</span>
+                    <span class="hidden text-white/60 sm:inline" aria-hidden="true">|</span>
                 @endif
                 <a href="tel:{{ preg_replace('/[^+0-9]/', '', $migoriPhone) }}"
-                    class="inline-flex items-center gap-2 whitespace-nowrap hover:text-white/80"
+                    class="ml-auto inline-flex items-center gap-2 whitespace-nowrap hover:text-white/80 sm:ml-0"
                     aria-label="Call Migori outlet">
+                    <i class="fas fa-phone-alt fa-flip-horizontal text-xs sm:text-sm" aria-hidden="true"></i>
                     <span>{{ $migoriPhone }}</span>
                 </a>
             @endif

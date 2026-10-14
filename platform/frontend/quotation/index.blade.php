@@ -21,15 +21,15 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
       <section class="lg:col-span-6 xl:col-span-7 bg-white rounded-xl border border-gray-200 p-4 sm:p-6 shadow-sm" aria-label="Search and add products">
         <label for="quote-search" class="block text-sm font-semibold text-gray-700 mb-2">Search products</label>
-        <div class="relative mb-4"><i class="fas fa-search absolute left-4 top-3.5 text-gray-400"></i><input id="quote-search" type="search" x-model="query" @input.debounce.300ms="search()" placeholder="e.g. Corrugated, Tile Red, Eurotile" class="w-full rounded-lg border border-gray-300 py-3 pl-11 pr-3 text-sm focus:border-red-600 focus:ring-red-600"></div>
+        <div class="relative mb-4"><i class="fas fa-search absolute left-4 top-3.5 text-gray-400"></i><input id="quote-search" type="search" x-model="query" @input="scheduleSearch()" placeholder="e.g. Corrugated, Tile Red, Eurotile" class="w-full rounded-lg border border-gray-300 py-3 pl-11 pr-3 text-sm focus:border-red-600 focus:ring-red-600"></div>
         <div x-show="loading" class="text-sm text-gray-500 py-5">Searching products…</div>
-        <div x-show="!loading && results.length===0" class="text-sm text-gray-500 py-6 text-center">No matching products found.</div>
+        <div x-show="query.trim() && !loading && !error && results.length===0" class="text-sm text-gray-500 py-6 text-center">No matching products found.</div>
         <div x-show="!loading" class="space-y-2 max-h-[650px] overflow-y-auto pr-1">
           <template x-for="option in results" :key="option.key">
             <article class="border border-gray-200 rounded-lg p-3 sm:p-4 hover:border-red-300 transition">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div class="min-w-0 flex-1"><p class="font-semibold text-sm text-gray-900" x-text="option.product_name"></p><p class="text-xs text-gray-600 mt-1" x-text="[option.options, option.length_enabled ? '3 Metres' : ''].filter(Boolean).join(' · ')"></p><p class="text-red-600 font-bold text-sm mt-2" x-text="money(option.unit_price)"></p></div>
-                <button type="button" @click="add(option)" :disabled="busy" class="flex-shrink-0 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg px-4 py-2.5 disabled:opacity-50"><i class="fas fa-plus mr-1"></i>Add to quote</button>
+                <button type="button" @click="add(option)" :disabled="busy" class="flex-shrink-0 bg-primary transition hover:opacity-90 text-white text-xs font-bold rounded-lg px-4 py-2.5 disabled:opacity-50"><i class="fas fa-plus mr-1"></i>Add to quote</button>
               </div>
             </article>
           </template>
@@ -42,7 +42,7 @@
         <div class="space-y-3 max-h-[510px] overflow-y-auto" x-show="items.length>0">
           <template x-for="item in items" :key="item.key">
             <article class="rounded-lg border border-gray-200 p-3">
-              <div class="flex justify-between items-start gap-2"><div><h3 class="text-sm font-bold text-gray-900" x-text="item.product_name"></h3><p class="text-xs text-gray-500 mt-1" x-text="item.options"></p></div><button type="button" @click="remove(item)" aria-label="Remove product" class="text-red-500 p-1 hover:text-red-700"><i class="fas fa-trash"></i></button></div>
+              <div class="flex justify-between items-start gap-2"><div><h3 class="text-sm font-bold text-gray-900" x-text="item.product_name"></h3><p class="text-xs text-gray-500 mt-1" x-text="item.options"></p></div><button type="button" @click="remove(item)" aria-label="Remove product" class="text-primary p-1 transition hover:opacity-80"><i class="fas fa-trash"></i></button></div>
               <div class="grid grid-cols-2 gap-3 mt-3">
                 <template x-if="item.length_enabled"><div><label class="text-xs font-semibold block mb-1">Metres</label><input type="number" inputmode="decimal" min="0.1" max="30" step="0.01" :value="item.metres" @change="update(item, {metres: $event.target.value})" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"></div></template>
                 <div><label class="text-xs font-semibold block mb-1">Quantity (sheets)</label><input type="number" min="1" max="10000" step="1" :value="item.quantity" @change="update(item,{quantity:$event.target.value})" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"></div>
@@ -59,7 +59,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3"><div><label class="text-xs font-semibold block mb-1" for="q-first">First name *</label><input id="q-first" name="first_name" required maxlength="100" value="{{ old('first_name') }}" autocomplete="given-name" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm"></div><div><label class="text-xs font-semibold block mb-1" for="q-last">Last name *</label><input id="q-last" name="last_name" required maxlength="100" value="{{ old('last_name') }}" autocomplete="family-name" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm"></div></div>
           <div><label class="text-xs font-semibold block mb-1" for="q-phone">Phone number *</label><input id="q-phone" type="tel" name="phone" required pattern="[+0-9 ]{9,16}" placeholder="07XX XXX XXX" value="{{ old('phone') }}" autocomplete="tel" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm"></div>
           <div><label class="text-xs font-semibold block mb-1" for="q-email">Email (optional)</label><input id="q-email" type="email" name="email" maxlength="190" placeholder="you@example.com" value="{{ old('email') }}" autocomplete="email" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm"></div>
-          <button type="submit" :disabled="busy || items.length===0" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-lg py-3.5 disabled:opacity-50">Submit quotation request <i class="fas fa-arrow-right ml-1"></i></button>
+          <button type="submit" :disabled="busy || items.length===0" class="w-full bg-primary transition hover:opacity-90 text-white font-bold text-sm rounded-lg py-3.5 disabled:opacity-50">Submit quotation request <i class="fas fa-arrow-right ml-1"></i></button>
         </form>
       </section>
     </div>
@@ -73,12 +73,14 @@
 <script>
 function quotationBuilder() {
  return {
-    query: '', results: [], items: @json($items), loading: false, busy: false, error: '',
+    query: '', results: [], searchTimer: null, searchController: null, searchVersion: 0, items: @json($items), loading: false, busy: false, error: '',
     endpoints: {search: @json(route('frontend.quotation.search')), add: @json(route('frontend.quotation.add')), update: @json(route('frontend.quotation.update')), remove: @json(route('frontend.quotation.remove'))},
     get total() { return this.items.reduce((s,i) => s+Number(i.unit_price)*Number(i.quantity), 0); },
     money(n) { return 'KSh ' + Number(n||0).toLocaleString('en-KE',{minimumFractionDigits:2, maximumFractionDigits:2}); },
-    init() { this.search(); },
-    async search() { this.loading = true; try { const r = await fetch(this.endpoints.search + '?q=' + encodeURIComponent(this.query), {headers:{Accept:'application/json'}}); if(!r.ok)throw new Error('Unable to load products');this.results=(await r.json()).results; }catch(e){this.error=e.message;}finally{this.loading=false;} },
+    init() { this.results = []; },
+    scheduleSearch() { clearTimeout(this.searchTimer); this.searchController?.abort(); const version = ++this.searchVersion; this.results = []; this.error = ''; this.loading = false; if (!this.query.trim()) return; this.loading = true; this.searchTimer = setTimeout(() => this.search(version), 300); },
+    async search(version = ++this.searchVersion) { const term = this.query.trim(); if (!term) { this.results = []; this.loading = false; return; } const controller = new AbortController(); this.searchController = controller; this.loading = true; try { const r = await fetch(this.endpoints.search + '?q=' + encodeURIComponent(term), {signal: controller.signal, headers:{Accept:'application/json'}}); if(!r.ok) throw new Error('Unable to load products'); const data = await r.json(); if(version === this.searchVersion) this.results = Array.isArray(data.results) ? data.results.slice(0, 5) : []; } catch(e) { if(e.name !== 'AbortError' && version === this.searchVersion) this.error = e.message; } finally { if(version === this.searchVersion) this.loading = false; } },
+    destroy() { clearTimeout(this.searchTimer); this.searchController?.abort(); },
     async request(url,payload) {this.busy=true;this.error='';try {let r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json','X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').content},body:JSON.stringify(payload)});let data=await r.json();if(!r.ok)throw new Error(Object.values(data.errors||{})[0]?.[0]||data.message||'Could not update quotation');window.location.reload();}catch(e){this.error=e.message;this.busy=false;}},
     add(item) {this.request(this.endpoints.add,{product_id:item.product_id,variant_id:item.variant_id,metres:item.metres,quantity:1});},
     update(item,changes) {this.request(this.endpoints.update,{key:item.key,quantity:item.quantity,metres:item.metres,...changes});},

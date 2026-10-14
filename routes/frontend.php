@@ -155,13 +155,13 @@ Route::get('/account-deletion', function () {
 Route::get('/cookie-policy', fn () => app(PageController::class)->show('cookie-policy'))
     ->name('frontend.cookie-policy');
 
-Route::get('/terms-conditions', fn () => app(PageController::class)->show('terms-and-conditions'))
+Route::get('/terms-conditions', [PageController::class, 'termsConditions'])
     ->name('frontend.terms');
 
-Route::get('/refund-policy', fn () => app(PageController::class)->show('refund-policy'))
+Route::get('/refund-policy', [PageController::class, 'refundPolicy'])
     ->name('frontend.refund-policy');
 
-Route::get('/privacy-policy', fn () => app(PageController::class)->show('privacy-policy'))
+Route::get('/privacy-policy', [PageController::class, 'privacyPolicy'])
     ->name('frontend.privacy-policy.public');
 
 Route::get('/pages/{slug}', [PageController::class, 'show'])->name('frontend.pages.show');
