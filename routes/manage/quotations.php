@@ -13,7 +13,7 @@ Route::middleware(['auth'])
             Route::post('/', [QuotationsController::class, 'store'])->name('store');
             Route::get('/{id}', [QuotationsController::class, 'show'])->name('show');
             Route::put('/{id}/status', [QuotationsController::class, 'updateStatus'])->name('status');
-            Route::post('/{id}/convert', [QuotationsController::class, 'convert'])->name('convert');
+            Route::post('/{id}/send', [QuotationsController::class, 'send'])->name('send');            Route::post('/{id}/convert', [QuotationsController::class, 'convert'])->name('convert');
             Route::delete('/{id}', [QuotationsController::class, 'destroy'])->name('destroy');
         });
 
