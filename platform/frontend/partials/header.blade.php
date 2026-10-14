@@ -1,11 +1,21 @@
 @php
-    $menuParents = collect($parentCategories ?? []);
+    // ---------------
+    // Hide these top-level categories from the storefront header menu.
+    // They remain available on the /categories pages and in the admin.
+    // ---------------
+    $excludedSlugs = ['industrial-sheets', 'roofing-accessories', 'uncategorized'];
+
+    $menuParents = collect($parentCategories ?? [])
+        ->reject(fn ($category) => in_array($category->slug, $excludedSlugs, true))
+        ->values();
+
     $childGroups = $menuParents->isNotEmpty()
         ? \Illuminate\Support\Facades\DB::table('su_product_categories')
             ->whereIn('parent_id', $menuParents->pluck('id')->all())
             ->orderBy('name')->get()->groupBy('parent_id')
         : collect();
 @endphp
+
 <header x-data="{ mobileOpen: false, mobileSubmenu: null, desktopMenu: null, headerVisible: true, lastScrollY: 0, onScroll() { const y = window.scrollY || 0; if (this.mobileOpen || y < 90) { this.headerVisible = true; } else if (Math.abs(y - this.lastScrollY) > 5) { this.headerVisible = y < this.lastScrollY; } this.lastScrollY = y; } }" @scroll.window.throttle.50ms="onScroll()" @keydown.escape.window="mobileOpen = false; desktopMenu = null" :class="headerVisible ? 'translate-y-0' : '-translate-y-full'" class="sticky top-0 z-50 border-b border-gray-100 bg-white transition-transform duration-200 ease-out">
     <div class="mx-auto grid min-h-[76px] max-w-7xl grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2 px-4 sm:px-6 lg:flex lg:min-h-[82px] lg:justify-between lg:gap-4 lg:px-8 xl:gap-6">
         <button type="button" @click="mobileOpen = true" class="flex h-11 w-11 items-center justify-center text-gray-800 lg:hidden" aria-label="Open navigation" :aria-expanded="mobileOpen"><i class="fas fa-bars text-xl" aria-hidden="true"></i></button>

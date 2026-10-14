@@ -13,4 +13,11 @@
         --background-color: color-mix(in srgb, var(--primary-color) 4%, white);
         --band-grey: color-mix(in srgb, var(--primary-color) 7%, white);
     }
+
+    /* Swap the Twitter bird glyph for the X glyph wherever fa-twitter is used.
+       Font Awesome 6.5 ships fa-x-twitter with codepoint \e61b, so the classic
+       bird (\f099) is overridden without touching any Blade partials. */
+    .fab.fa-twitter::before {
+        content: "\e61b";
+    }
 </style>

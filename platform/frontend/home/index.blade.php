@@ -34,8 +34,17 @@
         {{-- Keep the image visible immediately while the video buffers or when autoplay is unavailable. --}}
         <img src="{{ url('public/images/hrinity-mabati-hero.webp') }}" alt="Trinity Mabati roofing sheets"
             class="absolute inset-0 h-full w-full object-cover" fetchpriority="high">
-        <video class="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700"
-            src="{{ url('public/videos/trinity-mabati-hero-video.mp4') }}"
+        {{-- Desktop video (768px and up) --}}
+        <video class="absolute inset-0 hidden h-full w-full object-cover opacity-0 transition-opacity duration-700 md:block"
+            src="{{ url('public/videos/trinity-mabati-hero-desktop.mp4') }}"
+            poster="{{ url('public/images/hrinity-mabati-hero.webp') }}" autoplay muted loop playsinline preload="auto"
+            aria-hidden="true" tabindex="-1"
+            onplaying="this.classList.remove('opacity-0');this.classList.add('opacity-100')"
+            onerror="this.classList.remove('opacity-100');this.classList.add('opacity-0')"></video>
+
+        {{-- Mobile video (below 768px) --}}
+        <video class="absolute inset-0 block h-full w-full object-cover opacity-0 transition-opacity duration-700 md:hidden"
+            src="{{ url('public/videos/trinity-mabati-hero-mobile.mp4') }}"
             poster="{{ url('public/images/hrinity-mabati-hero.webp') }}" autoplay muted loop playsinline preload="auto"
             aria-hidden="true" tabindex="-1"
             onplaying="this.classList.remove('opacity-0');this.classList.add('opacity-100')"
