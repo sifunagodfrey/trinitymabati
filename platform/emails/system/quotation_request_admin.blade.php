@@ -14,7 +14,7 @@
                     -- Header
                     -- --------------- --}}
                     <tr>
-                        <td style="background-color:#AAC527;padding:28px 32px;text-align:center;">
+                        <td style="background-color:#aa1f25;padding:28px 32px;text-align:center;">
                             <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;">Trinity Mabati Factory</h1>
                             <p style="color:black;margin:6px 0 0;font-size:13px;">New Quotation Request</p>
                         </td>
@@ -69,7 +69,7 @@
 
                             <p style="margin:0;text-align:center;">
                                 <a href="{{ route('manage.quotations.show', $quotation->id) }}"
-                                   style="display:inline-block;background-color:#AAC527;color:#000000;font-weight:700;font-size:14px;text-decoration:none;padding:12px 24px;border-radius:8px;">
+                                   style="display:inline-block;background-color:#aa1f25;color:#000000;font-weight:700;font-size:14px;text-decoration:none;padding:12px 24px;border-radius:8px;">
                                     Review Quotation
                                 </a>
                             </p>

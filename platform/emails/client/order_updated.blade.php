@@ -9,7 +9,7 @@
         <tr>
             <td align="center">
                 <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:8px;overflow:hidden;max-width:600px;">
-                    <td style="background-color:#AAC527;padding:28px 32px;text-align:center;">
+                    <td style="background-color:#aa1f25;padding:28px 32px;text-align:center;">
                         <h1 style="color:#ffffff;margin:0;font-size:22px;">Trinity Mabati Factory</h1>
                         <p style="color: black;margin:6px 0 0;font-size:13px;">Order Update Notification</p>
                     </td>
