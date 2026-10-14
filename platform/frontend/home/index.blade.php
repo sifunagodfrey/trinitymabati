@@ -1,8 +1,9 @@
 @extends('frontend.layouts.app')
 
 @section('title', 'Trinity Mabati Factory | Quality Roofing Sheets in Kenya')
-@section('meta_description', 'Explore Trinity Mabati Factory roofing sheets: Tile Profiles, Corrugated Sheets, Stone
-    Coated Profiles and Box Profile. Shop products or request a roofing quotation.')
+@section('meta_description', 'Trinity Mabati Factory delivers genuine, KEBS-certified metal roofing sheets with an ironclad 15-year written warranty directly to your construction site.')
+@section('og_title', 'Trinity Mabati Factory')
+@section('og_description', 'Trinity Mabati Factory delivers genuine, KEBS-certified metal roofing sheets with an ironclad 15-year written warranty directly to your construction site.')
 @section('og_image', url('public/images/trinity-mabati-home-seo.jpg'))
 
 @section('content')
@@ -564,14 +565,14 @@
                             class="fas fa-chevron-left"></i></button>
                     <div x-ref="products" tabindex="0"
                         aria-label="{{ $group['heading'] }} products, scroll horizontally"
-                        class="flex snap-x snap-mandatory items-stretch gap-3 overflow-x-auto scroll-smooth pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4">
+                        class="flex snap-x snap-mandatory items-start sm:items-stretch gap-3 overflow-x-auto scroll-smooth pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4">
                         @foreach ($products as $product)
-                            <div class="flex w-[43%] shrink-0 snap-start flex-col sm:w-[32%] lg:w-[23%]">
+                            <div class="flex trinity-mobile-product-rail-item shrink-0 snap-start flex-col sm:w-[32%] lg:w-[23%]">
                                 @include('frontend.partials.product-card', ['product' => $product])
                             </div>
                         @endforeach
                         <a href="{{ $categoryUrl }}"
-                            class="flex min-h-[250px] w-[43%] shrink-0 snap-start flex-col items-center justify-center gap-3 rounded-xl border border-primary/20 bg-white p-3 text-center text-primary transition hover:bg-red-50 sm:w-[32%] sm:p-5 lg:w-[23%]">
+                            class="flex sm:min-h-[250px] trinity-mobile-product-rail-item shrink-0 snap-start flex-col items-center justify-center gap-3 rounded-xl border border-primary/20 bg-white p-3 text-center text-primary transition hover:bg-red-50 sm:w-[32%] sm:p-5 lg:w-[23%]">
                             <span
                                 class="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-xl sm:h-16 sm:w-16"><i
                                     class="fas fa-arrow-right"></i></span>
@@ -624,14 +625,14 @@
                             class="fas fa-chevron-left"></i></button>
                     <div x-ref="products" tabindex="0"
                         aria-label="{{ $group['heading'] }} products, scroll horizontally"
-                        class="flex snap-x snap-mandatory items-stretch gap-3 overflow-x-auto scroll-smooth pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4">
+                        class="flex snap-x snap-mandatory items-start sm:items-stretch gap-3 overflow-x-auto scroll-smooth pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4">
                         @foreach ($products as $product)
-                            <div class="flex w-[43%] shrink-0 snap-start flex-col sm:w-[32%] lg:w-[23%]">
+                            <div class="flex trinity-mobile-product-rail-item shrink-0 snap-start flex-col sm:w-[32%] lg:w-[23%]">
                                 @include('frontend.partials.product-card', ['product' => $product])
                             </div>
                         @endforeach
                         <a href="{{ $categoryUrl }}"
-                            class="flex min-h-[250px] w-[43%] shrink-0 snap-start flex-col items-center justify-center gap-3 rounded-xl border border-primary/20 bg-white p-3 text-center text-primary transition hover:bg-red-50 sm:w-[32%] sm:p-5 lg:w-[23%]">
+                            class="flex sm:min-h-[250px] trinity-mobile-product-rail-item shrink-0 snap-start flex-col items-center justify-center gap-3 rounded-xl border border-primary/20 bg-white p-3 text-center text-primary transition hover:bg-red-50 sm:w-[32%] sm:p-5 lg:w-[23%]">
                             <span
                                 class="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-xl sm:h-16 sm:w-16"><i
                                     class="fas fa-arrow-right"></i></span>

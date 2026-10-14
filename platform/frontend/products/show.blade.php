@@ -10,16 +10,16 @@
 
     {{-- Breadcrumb --}}
     <div class="bg-gray-50 border-b border-border">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 text-xs text-gray-500 flex items-center gap-2 flex-wrap">
-            <a href="{{ route('frontend.home') }}" class="hover:text-primary transition">Home</a>
-            <i class="fas fa-chevron-right text-gray-300 text-[10px]"></i>
-            <a href="{{ route('frontend.products') }}" class="hover:text-primary transition">Products</a>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 text-xs text-gray-500 flex items-center gap-2 flex-nowrap overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <a href="{{ route('frontend.home') }}" class="shrink-0 hover:text-primary transition">Home</a>
+            <i class="fas fa-chevron-right shrink-0 text-gray-300 text-[10px]"></i>
+            <a href="{{ route('frontend.products') }}" class="shrink-0 hover:text-primary transition">Products</a>
             @if ($product->category)
-                <i class="fas fa-chevron-right text-gray-300 text-[10px]"></i>
-                <a href="{{ route('frontend.products', ['category_id' => $product->category_id]) }}" class="hover:text-primary transition">{{ $product->category->name }}</a>
+                <i class="fas fa-chevron-right shrink-0 text-gray-300 text-[10px]"></i>
+                <a href="{{ route('frontend.products', ['category_id' => $product->category_id]) }}" class="shrink-0 hover:text-primary transition">{{ $product->category->name }}</a>
             @endif
-            <i class="fas fa-chevron-right text-gray-300 text-[10px]"></i>
-            <span class="text-gray-800 font-medium truncate max-w-[200px]">{{ $product->name }}</span>
+            <i class="fas fa-chevron-right shrink-0 text-gray-300 text-[10px]"></i>
+            <span class="shrink-0 text-gray-800 font-medium">{{ $product->name }}</span>
         </div>
     </div>
 
@@ -347,12 +347,12 @@
                         <p class="text-sm font-bold text-gray-900 mb-3">Sheet length (metres)</p>
                         <div class="flex flex-wrap gap-2">
                             <template x-for="option in [{value:'1',label:'1 m'},{value:'2',label:'2 m'},{value:'3',label:'3 m'},{value:'custom',label:'Custom'}]" :key="option.value">
-                                <button type="button" @click="sheetLengthMode = option.value" :class="sheetLengthMode === option.value ? 'bg-red-600 text-white border-red-600' : 'bg-white text-gray-800 border-gray-200 hover:border-red-500'" class="px-5 py-2 rounded-lg border text-sm font-semibold transition" x-text="option.label"></button>
+                                <button type="button" @click="sheetLengthMode = option.value" :class="sheetLengthMode === option.value ? 'bg-primary text-white border-primary' : 'bg-white text-gray-800 border-gray-200 hover:border-primary'" class="px-5 py-2 rounded-lg border text-sm font-semibold transition" x-text="option.label"></button>
                             </template>
                         </div>
                         <div x-show="sheetLengthMode === 'custom'" x-cloak class="mt-4">
                             <label for="custom-sheet-length" class="block text-xs font-semibold mb-2">Custom length (metres)</label>
-                            <input id="custom-sheet-length" type="text" inputmode="decimal" x-model="customLength" @input="customLength = $event.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1').slice(0, 7); if (Number(customLength) > 30) customLength = '30'" @blur="if (!validSheetLength) customLength = '0.1'" placeholder="e.g. 2.2" class="w-44 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-600 focus:ring-red-600">
+                            <input id="custom-sheet-length" type="text" inputmode="decimal" x-model="customLength" @input="customLength = $event.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1').slice(0, 7); if (Number(customLength) > 30) customLength = '30'" @blur="if (!validSheetLength) customLength = '0.1'" placeholder="e.g. 2.2" class="w-44 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:ring-primary">
                             <p x-show="!validSheetLength" class="text-xs text-red-600 mt-2">Enter a length from 0.10 to 30 metres (up to two decimal places).</p>
                         </div>
                     </div>
@@ -420,7 +420,7 @@
                                 @foreach ($bulkTiersJson as $tier)
                                     <button type="button"
                                         @click="selectedBulkTier = (selectedBulkTier && selectedBulkTier.id === {{ $tier['id'] }}) ? null : @js($tier); qty = selectedBulkTier ? selectedBulkTier.min_quantity : {{ $minBulkQty }}"
-                                        :class="selectedBulkTier && selectedBulkTier.id === {{ $tier['id'] }} ? 'bg-blue-600 text-white border-blue-600' : 'border-border text-gray-600 hover:border-blue-500 hover:text-blue-600 bg-white'"
+                                        :class="selectedBulkTier && selectedBulkTier.id === {{ $tier['id'] }} ? 'bg-primary text-white border-primary' : 'border-border text-gray-600 hover:border-primary hover:text-primary bg-white'"
                                         class="text-[11px] px-3 py-1.5 rounded border transition font-medium whitespace-nowrap">
                                         {{ $tier['min_quantity'] }}{{ $tier['max_quantity'] ? '–' . $tier['max_quantity'] : '+' }} units · @price($tier['price_per_unit'])/unit{{ $tier['label'] ? ' (' . $tier['label'] . ')' : '' }}
                                     </button>
@@ -445,7 +445,7 @@
                                         <button
                                             @click="selectedAttrs['{{ $attrId }}'] = @js($val); if (activeVariant && activeVariant.image) activeImage = activeVariant.image"
                                             class="text-xs px-3.5 py-1.5 rounded border transition font-medium"
-                                            :class="selectedAttrs['{{ $attrId }}'] === @js($val) ? 'bg-secondary text-white border-secondary' : 'border-border text-gray-600 hover:border-secondary hover:text-secondary bg-white'">
+                                            :class="selectedAttrs['{{ $attrId }}'] === @js($val) ? 'bg-primary text-white border-primary' : 'border-border text-gray-600 hover:border-primary hover:text-primary bg-white'">
                                             {{ $val }}
                                         </button>
                                     @endforeach
@@ -464,7 +464,7 @@
                                     <button
                                         @click="selectedVariantId = {{ $variant->id }}; const v = variants.find(x => x.id === {{ $variant->id }}); if (v && v.image) activeImage = v.image;"
                                         class="text-xs px-3.5 py-1.5 rounded border transition font-medium"
-                                        :class="activeVariant && activeVariant.id === {{ $variant->id }} ? 'bg-secondary text-white border-secondary' : 'border-border text-gray-600 hover:border-secondary hover:text-secondary bg-white'">
+                                        :class="activeVariant && activeVariant.id === {{ $variant->id }} ? 'bg-primary text-white border-primary' : 'border-border text-gray-600 hover:border-primary hover:text-primary bg-white'">
                                         {{ $variant->variant_code }}
                                     </button>
                                 @endforeach
@@ -478,20 +478,20 @@
                     <template x-if="!isInCart">
                         <button type="button" @click="addToCart()"
                             :disabled="addingToCart || unavailableCombination || ({{ $product->allow_custom_length ? 'true' : 'false' }} && !validSheetLength) || ({{ $product->is_variant ? 'true' : 'false' }} && !activeVariant)"
-                            class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-3.5 text-sm font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">
+                            class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3.5 text-sm font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
                             <i class="fas fa-shopping-cart" aria-hidden="true"></i>
                             <span x-text="addingToCart ? 'Adding...' : 'Add to Cart'"></span>
                         </button>
                     </template>
                     <template x-if="isInCart">
                         <a href="{{ route('frontend.cart') }}"
-                            class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-3.5 text-sm font-bold text-white transition hover:bg-red-700">
+                            class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3.5 text-sm font-bold text-white transition hover:opacity-90">
                             <i class="fas fa-shopping-cart" aria-hidden="true"></i> View Cart
                         </a>
                     </template>
                     <button type="button" @click="addToQuote()"
                         :disabled="addingToCart || unavailableCombination || ({{ $product->allow_custom_length ? 'true' : 'false' }} && !validSheetLength) || ({{ $product->is_variant ? 'true' : 'false' }} && !activeVariant)"
-                        class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border-2 border-red-600 px-4 py-3.5 text-sm font-bold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50">
+                        class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border-2 border-primary px-4 py-3.5 text-sm font-bold text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50">
                         <i class="fas fa-file-invoice" aria-hidden="true"></i> Get a Quote
                     </button>
                 </div>
@@ -532,6 +532,14 @@
             </div>
         </div>
 
+        <style>
+            .trinity-related-rail { display: flex; align-items: flex-start; gap: 12px; overflow-x: auto; padding-bottom: 16px; scroll-snap-type: x mandatory; scroll-behavior: smooth; scrollbar-width: none; }
+            .trinity-related-rail::-webkit-scrollbar { display: none; }
+            .trinity-related-card { display: flex; flex-direction: column; flex: 0 0 calc((100% - 24px) / 2.1); min-width: 0; scroll-snap-align: start; }
+            @media (min-width: 640px) { .trinity-related-rail { gap: 16px; align-items: stretch; } .trinity-related-card { flex-basis: calc((100% - 32px) / 3); } }
+            @media (min-width: 1024px) { .trinity-related-card { flex-basis: calc((100% - 48px) / 4); } }
+        </style>
+
         {{-- Related Products --}}
         @if ($relatedProductsWithMeta->isNotEmpty())
             <div class="mt-10">
@@ -547,9 +555,9 @@
                         class="absolute left-0 top-1/2 z-10 hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-[12px] bg-white text-primary opacity-0 shadow-md ring-1 ring-border transition hover:text-secondary group-hover:flex group-hover:opacity-100">
                         <i class="fas fa-chevron-left text-xs"></i>
                     </button>
-                    <div x-ref="relatedRail" class="hm-rail">
+                    <div x-ref="relatedRail" class="trinity-related-rail" tabindex="0" aria-label="Related products, scroll horizontally">
                         @foreach ($relatedProductsWithMeta as $related)
-                            <div class="hm-card">@include('frontend.partials.product-card', ['product' => $related])</div>
+                            <div class="trinity-related-card">@include('frontend.partials.product-card', ['product' => $related])</div>
                         @endforeach
                     </div>
                     <button @click="scrollRight()" type="button" aria-label="Scroll right"

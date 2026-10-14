@@ -26,7 +26,7 @@
                     <i class="fas fa-shopping-cart text-5xl text-gray-200 mb-4"></i>
                     <h2 class="text-lg font-semibold text-gray-700 mb-2">Your cart is empty</h2>
                     <p class="text-gray-400 text-sm mb-6">Browse our products and add items to your cart.</p>
-                    <a href="{{ route('frontend.products') }}"
+                    <a href="{{ route('frontend.categories') }}"
                         class="inline-block px-6 py-3 bg-primary text-white font-bold rounded-[12px] hover:opacity-90 transition">
                         Start Shopping
                     </a>

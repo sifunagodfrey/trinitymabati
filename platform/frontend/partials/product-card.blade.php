@@ -68,6 +68,16 @@
     $pUrl = route('frontend.products.show', $pSlug);
 @endphp
 
+@once
+    <style>
+        .trinity-product-card-name.trinity-product-card-name { -webkit-line-clamp: 2; }
+        @media (min-width: 768px) { .trinity-product-card-name.trinity-product-card-name { -webkit-line-clamp: 1; } }
+        @media (max-width: 639px) {
+            .trinity-mobile-product-rail-item { width: calc((100% - 24px) / 2.1); flex-basis: calc((100% - 24px) / 2.1); }
+        }
+    </style>
+@endonce
+
 <a href="{{ $pUrl }}"
     class="group flex h-full flex-col bg-white border border-border overflow-hidden rounded-lg 
           hover:shadow-md hover:border-primary/40 transition-all duration-300 relative">
@@ -75,13 +85,13 @@
     {{-- Badges: flat rectangles, top-left, stacked --}}
     <div class="absolute top-0 left-0 z-10 flex flex-col items-start">
         @if ($pDiscount)
-            <span class="bg-secondary text-white text-[10px] font-bold uppercase tracking-wide px-3 py-1.5"
+            <span class="bg-secondary text-white text-[10px] font-semibold uppercase tracking-wide px-3 py-1.5"
                 style="font-family: var(--font-ui);">
                 Save {{ $pDiscount }}%
             </span>
         @endif
         @if (!$pInStock)
-            <span class="bg-text text-white text-[10px] font-bold uppercase tracking-wide px-3 py-1.5"
+            <span class="bg-text text-white text-[10px] font-semibold uppercase tracking-wide px-3 py-1.5"
                 style="font-family: var(--font-ui);">
                 Sold Out
             </span>
@@ -102,13 +112,13 @@
 
     {{-- Info --}}
     <span class="flex flex-col border-t border-border p-3 sm:p-4">
-        <span class="block overflow-hidden text-ellipsis text-xs font-bold leading-snug text-text line-clamp-2 sm:text-sm md:line-clamp-1"
-            style="font-family: var(--font-heading);" title="{{ $pName }}">
+        <span class="trinity-product-card-name overflow-hidden text-ellipsis text-xs font-medium leading-snug text-text sm:text-sm"
+            style="font-family: var(--font-heading); font-weight: 500; display: -webkit-box; -webkit-box-orient: vertical;" title="{{ $pName }}">
             {{ $pName }}
         </span>
 
         <span class="flex items-baseline gap-2">
-            <span class="text-sm sm:text-base font-extrabold text-primary truncate whitespace-nowrap" style="font-family: var(--font-heading);">
+            <span class="text-sm sm:text-base font-semibold text-primary truncate whitespace-nowrap" style="font-family: var(--font-heading); font-weight: 600;">
                 @if ($pIsVariant && $pMinSell !== $pMaxSell)
                     @price($pMinSell) - @price($pMaxSell)
                 @else

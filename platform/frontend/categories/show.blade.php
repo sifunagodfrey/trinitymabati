@@ -34,13 +34,13 @@
                 </div>
                 <div class="relative">
                     <button type="button" aria-label="Scroll {{ $section['category']->name }} products left" onclick="document.getElementById('{{ $railId }}').scrollBy({left:-document.getElementById('{{ $railId }}').clientWidth*.8,behavior:'smooth'})" class="absolute -left-2 sm:-left-4 top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white border border-gray-200 shadow text-text hover:text-primary"><i class="fas fa-chevron-left text-xs" aria-hidden="true"></i></button>
-                    <div id="{{ $railId }}" class="flex items-stretch gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-3 px-1" style="scrollbar-width:none;-ms-overflow-style:none">
+                    <div id="{{ $railId }}" class="flex items-start sm:items-stretch gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-3 px-1" style="scrollbar-width:none;-ms-overflow-style:none">
                         @foreach ($section['products'] as $product)
-                            <div class="shrink-0 snap-start w-[43%] sm:w-[31%] lg:w-[23%] flex flex-col [&>a]:h-full">
+                            <div class="shrink-0 snap-start trinity-mobile-product-rail-item sm:w-[31%] lg:w-[23%] flex flex-col [&>a]:h-full">
                                 @include('frontend.partials.product-card', ['product' => $product])
                             </div>
                         @endforeach
-                        <a href="{{ route('frontend.categories.show', $section['category']->slug) }}" class="shrink-0 snap-start w-[43%] sm:w-[31%] lg:w-[23%] min-h-[260px] flex flex-col items-center justify-center gap-3 bg-white border border-gray-200 rounded-lg text-primary hover:border-primary hover:shadow-sm transition">
+                        <a href="{{ route('frontend.categories.show', $section['category']->slug) }}" class="shrink-0 snap-start trinity-mobile-product-rail-item sm:w-[31%] lg:w-[23%] sm:min-h-[260px] flex flex-col items-center justify-center gap-3 bg-white border border-gray-200 rounded-lg text-primary hover:border-primary hover:shadow-sm transition">
                             <span class="flex items-center justify-center h-12 w-12 rounded-full bg-red-50"><i class="fas fa-arrow-right" aria-hidden="true"></i></span>
                             <span class="font-bold">View More</span>
                         </a>
