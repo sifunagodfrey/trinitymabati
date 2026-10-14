@@ -1,135 +1,83 @@
-{{-- -------------------
-     All Categories
-     Clean image-card grid of categories that contain products. No search
-     hero and no A-Z filter - tapping a card opens that category.
-------------------- --}}
 @extends('frontend.layouts.app')
 
-@section('title', 'Shop by Category | ' . config('app.name'))
-@section('meta_description', 'Browse stationery, office supplies, school essentials and workplace accessories at ' . config('app.name') . '.')
+@section('title', 'Roofing Categories & Products | ' . config('app.name'))
+@section('meta_description', 'Browse Trinity Mabati Factory roofing sheets by profile and discover available products.')
 
 @section('content')
-
-    <style>
-        .cat-grid-item {
-            width: 88px;
-        }
-
-        @media (min-width: 768px) {
-            .cat-grid-item {
-                width: 104px;
-            }
-        }
-    </style>
-
-    {{-- Breadcrumb (on the page background) --}}
-    <div class="border-b border-border">
-        <div class="max-w-7xl mx-auto px-4 md:px-6 py-3">
-            <nav class="text-xs text-muted flex items-center gap-2" aria-label="Breadcrumb">
-                <a href="{{ route('frontend.home') }}" class="hover:text-primary transition">Home</a>
-                <i class="fas fa-chevron-right text-[9px]"></i>
-                <span class="text-text font-medium">All Categories</span>
-            </nav>
-        </div>
+<div class="border-b border-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+        <nav class="flex items-center gap-2 text-xs text-muted" aria-label="Breadcrumb">
+            <a href="{{ route('frontend.home') }}" class="hover:text-primary">Home</a>
+            <i class="fas fa-chevron-right text-[9px]" aria-hidden="true"></i>
+            <span class="font-medium text-text">All Categories</span>
+        </nav>
     </div>
+</div>
 
-    {{-- Grey band: starts at the Shop by Category header --}}
-    <div class="bg-primary-light/30">
-        <div class="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
-
-            {{-- Header --}}
-            <div class="flex items-end justify-between gap-3 mb-6">
-                <div>
-                    <h1 class="text-xl md:text-2xl font-bold text-text">Shop by Category</h1>
-                    <p class="text-sm text-muted mt-0.5">Everything for school, work and creative projects</p>
-                </div>
-                <a href="{{ route('frontend.products') }}"
-                    class="text-xs text-primary font-semibold hover:underline whitespace-nowrap">
-                    View All Products
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10">
+    <div class="relative group/rail">
+        <button type="button" aria-label="Scroll categories left" onclick="document.getElementById('roof-category-rail').scrollBy({left:-360,behavior:'smooth'})" class="absolute left-0 top-[38%] -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white border border-gray-200 shadow-sm hover:text-primary">
+            <i class="fas fa-chevron-left" aria-hidden="true"></i>
+        </button>
+        <div id="roof-category-rail" class="flex gap-3 overflow-x-auto snap-x snap-mandatory scroll-smooth px-1 pb-3 scrollbar-hide" style="scrollbar-width:none;-ms-overflow-style:none">
+            @foreach ($categories as $cat)
+                @php
+                    $image = null;
+                    if ($cat->featured_image) {
+                        $image = asset(str_starts_with($cat->featured_image, 'uploads/') ? $cat->featured_image : 'categories/featured/' . $cat->featured_image);
+                    } elseif (isset($categoryImages[$cat->id])) {
+                        $thumb = $categoryImages[$cat->id];
+                        $image = asset(str_starts_with($thumb, 'uploads/') ? $thumb : 'uploads/products/images/' . $thumb);
+                    }
+                @endphp
+                <a href="{{ route('frontend.categories', ['category' => $cat->slug]) }}" class="w-[112px] sm:w-[138px] shrink-0 snap-start group text-center" @if ($selectedSlug === $cat->slug) aria-current="page" @endif>
+                    <span class="relative block aspect-square overflow-hidden rounded-lg border-2 {{ $selectedSlug === $cat->slug ? 'border-primary' : 'border-gray-200' }} bg-white group-hover:border-primary/70 transition">
+                        @if ($image)
+                            <img src="{{ $image }}" alt="{{ $cat->name }}" loading="lazy" class="h-full w-full object-cover" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                            <span style="display:none" class="absolute inset-0 items-center justify-center text-xl font-semibold text-primary">{{ mb_strtoupper(mb_substr($cat->name,0,1)) }}</span>
+                        @else
+                            <span class="absolute inset-0 flex items-center justify-center text-xl font-semibold text-primary">{{ mb_strtoupper(mb_substr($cat->name,0,1)) }}</span>
+                        @endif
+                    </span>
+                    <span class="mt-2 block truncate whitespace-nowrap text-xs sm:text-sm {{ $selectedSlug === $cat->slug ? 'text-primary font-bold' : 'text-text font-medium' }}" title="{{ $cat->name }}">{{ $cat->name }}</span>
                 </a>
-            </div>
-
-            {{-- =========================
-             CATEGORY GRID (image cards, 8 per row desktop / 4 mobile)
-        ========================= --}}
-            <div class="flex flex-wrap gap-2.5 md:gap-3">
-                @forelse ($categories as $cat)
-                    @php
-                        $catImage = null;
-                        if ($cat->featured_image) {
-                            $catImage = asset(
-                                str_starts_with($cat->featured_image, 'uploads/')
-                                    ? $cat->featured_image
-                                    : 'categories/featured/' . $cat->featured_image,
-                            );
-                        } elseif (isset($categoryImages[$cat->id])) {
-                            $thumb = $categoryImages[$cat->id];
-                            $catImage = asset(
-                                str_starts_with($thumb, 'uploads/') ? $thumb : 'uploads/products/images/' . $thumb,
-                            );
-                        }
-                        $initial = mb_strtoupper(mb_substr($cat->name, 0, 1));
-                    @endphp
-                    <a href="{{ route('frontend.categories.show', $cat->slug) }}"
-                        class="cat-grid-item group flex flex-col transition">
-                        <span
-                            class="relative block w-full rounded-[12px] overflow-hidden border-2 border-border bg-white group-hover:border-primary/50 group-hover:shadow-md transition"
-                            style="aspect-ratio: 1 / 1;">
-                            <span class="absolute inset-0 overflow-hidden">
-                                @if ($catImage)
-                                    <img src="{{ $catImage }}" alt="{{ $cat->name }}" loading="lazy"
-                                        onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'absolute inset-0 flex items-center justify-center text-2xl font-extrabold text-primary/30',textContent:'{{ $initial }}'}));"
-                                        class="absolute inset-0 w-full h-full object-cover">
-                                @else
-                                    <span
-                                        class="absolute inset-0 flex items-center justify-center text-2xl font-extrabold text-primary/40">{{ $initial }}</span>
-                                @endif
-                            </span>
-                        </span>
-                        <span
-                            class="mt-1.5 h-8 flex items-start justify-center text-center text-[11px] md:text-xs font-medium text-text leading-tight line-clamp-2 group-hover:text-primary transition">
-                            {{ $cat->name }}
-                        </span>
-                    </a>
-                @empty
-                    <p class="w-full text-sm text-gray-400 text-center py-12">No categories available yet.</p>
-                @endforelse
-            </div>
-
-            {{-- =========================
-             POPULAR SEARCHES
-        ========================= --}}
-            <section class="mt-12 pb-4">
-                <h2 class="text-lg font-bold text-gray-900 mb-4">Popular Searches</h2>
-                <div class="flex flex-wrap gap-2">
-                    @php
-                        $tags = [
-                            'Exercise books',
-                            'Printer paper',
-                            'Pens and pencils',
-                            'Files and folders',
-                            'Desk organizers',
-                            'Art supplies',
-                            'School bags',
-                            'Calculators',
-                            'Office furniture',
-                            'Printer supplies',
-                            'Packaging supplies',
-                            'Cleaning supplies',
-                        ];
-                    @endphp
-                    @foreach ($tags as $tag)
-                        <a href="{{ route('frontend.search', ['q' => $tag]) }}"
-                            class="px-3.5 py-1.5 bg-white border border-gray-200 rounded-[12px] text-xs text-gray-600
-                               font-medium hover:border-primary hover:text-primary hover:bg-primary/5
-                               transition-all duration-200">
-                            {{ $tag }}
-                        </a>
-                    @endforeach
-                </div>
-            </section>
-
+            @endforeach
         </div>
+        <button type="button" aria-label="Scroll categories right" onclick="document.getElementById('roof-category-rail').scrollBy({left:360,behavior:'smooth'})" class="absolute right-0 top-[38%] -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white border border-gray-200 shadow-sm hover:text-primary">
+            <i class="fas fa-chevron-right" aria-hidden="true"></i>
+        </button>
     </div>
 
+    <section class="mt-8 md:mt-10" aria-label="Roofing products">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+            <h1 class="text-lg sm:text-xl font-bold text-primary">{{ $selectedSlug ? ($categories->firstWhere('slug', $selectedSlug)?->name ?? 'Products') : 'All Products' }}</h1>
+            <p class="text-sm text-muted">{{ number_format($products->total()) }} {{ \Illuminate\Support\Str::plural('product', $products->total()) }}</p>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            @forelse ($products as $product)
+                @include('frontend.partials.product-card', ['product' => $product])
+            @empty
+                <div class="col-span-full rounded-lg bg-white px-6 py-14 text-center text-muted">
+                    <i class="fas fa-box-open text-3xl mb-3 block" aria-hidden="true"></i>
+                    <p>No products available in this category yet.</p>
+                </div>
+            @endforelse
+        </div>
+        @if ($products->hasPages())
+            <nav aria-label="Product pages" class="mt-8 flex flex-wrap items-center justify-center gap-3">
+                @if ($products->onFirstPage())
+                    <span class="px-4 py-2 border border-gray-200 rounded-md text-gray-400">Previous</span>
+                @else
+                    <a href="{{ $products->previousPageUrl() }}" class="px-4 py-2 border border-gray-200 rounded-md hover:border-primary hover:text-primary">Previous</a>
+                @endif
+                <span class="text-sm text-muted">Page {{ $products->currentPage() }} of {{ $products->lastPage() }}</span>
+                @if ($products->hasMorePages())
+                    <a href="{{ $products->nextPageUrl() }}" class="px-4 py-2 border border-gray-200 rounded-md hover:border-primary hover:text-primary">Next</a>
+                @else
+                    <span class="px-4 py-2 border border-gray-200 rounded-md text-gray-400">Next</span>
+                @endif
+            </nav>
+        @endif
+    </section>
+</div>
 @endsection

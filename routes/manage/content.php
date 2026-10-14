@@ -42,6 +42,16 @@ Route::middleware(['auth'])
                 Route::delete('/{id}',      [PagesController::class, 'destroy'])->name('destroy');
             });
 
+
+            Route::prefix('client-stories')->as('client-stories.')->group(function () {
+                Route::get('/{kind}', [\App\Http\Controllers\Manage\Content\ClientStoriesController::class, 'index'])->name('index');
+                Route::get('/{kind}/create', [\App\Http\Controllers\Manage\Content\ClientStoriesController::class, 'create'])->name('create');
+                Route::post('/{kind}', [\App\Http\Controllers\Manage\Content\ClientStoriesController::class, 'store'])->name('store');
+                Route::get('/{kind}/{id}/edit', [\App\Http\Controllers\Manage\Content\ClientStoriesController::class, 'edit'])->name('edit');
+                Route::put('/{kind}/{id}', [\App\Http\Controllers\Manage\Content\ClientStoriesController::class, 'update'])->name('update');
+                Route::delete('/{kind}/{id}', [\App\Http\Controllers\Manage\Content\ClientStoriesController::class, 'destroy'])->name('destroy');
+            });
+
             // ---------------
             // FAQs
             // ---------------

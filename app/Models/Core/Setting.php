@@ -77,6 +77,18 @@ class Setting extends Model
             'whatsapp'     => $whatsappDigits ?: null,
             'whatsapp_url' => $whatsappDigits ? 'https://wa.me/' . $whatsappDigits : null,
             'address'      => $value('contact_address'),
+            'branches' => [
+                [
+                    'name' => array_key_exists('branch_nairobi_name', $all) ? trim((string) $all['branch_nairobi_name']) : 'Nairobi Outlet',
+                    'address' => array_key_exists('branch_nairobi_address', $all) ? trim((string) $all['branch_nairobi_address']) : 'Enterprise Road, B. Binico Enterprises, Nairobi, Kenya.',
+                    'phone' => array_key_exists('branch_nairobi_phone', $all) ? trim((string) $all['branch_nairobi_phone']) : '+254 740 550 105',
+                ],
+                [
+                    'name' => array_key_exists('branch_migori_name', $all) ? trim((string) $all['branch_migori_name']) : 'Migori Outlet',
+                    'address' => array_key_exists('branch_migori_address', $all) ? trim((string) $all['branch_migori_address']) : 'Kimaiga, next to Dolion Hotel',
+                    'phone' => array_key_exists('branch_migori_phone', $all) ? trim((string) $all['branch_migori_phone']) : '+254 796 593 842',
+                ],
+            ],
             'socials'      => array_filter([
                 'facebook'  => $value('social_facebook'),
                 'instagram' => $value('social_instagram'),

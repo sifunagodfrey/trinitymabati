@@ -25,6 +25,12 @@ class ContactController extends Controller
         'contact_phone'    => ['label' => 'Phone Number',      'help' => 'Shown in the top bar, footer and contact page.'],
         'contact_whatsapp' => ['label' => 'WhatsApp Number',   'help' => 'International format without plus, e.g. 254758821800. Used for wa.me chat links.'],
         'contact_address'  => ['label' => 'Location / Address','help' => 'Physical location shown in the footer and contact page.'],
+        'branch_nairobi_name' => ['label' => 'Nairobi Branch Name', 'help' => 'Shown on Contact Us.'],
+        'branch_nairobi_address' => ['label' => 'Nairobi Outlet Address', 'help' => 'Address shown under the Nairobi outlet on Contact Us.'],
+        'branch_nairobi_phone' => ['label' => 'Nairobi Branch Phone', 'help' => 'Shown on Contact Us and linked to the phone dialler.'],
+        'branch_migori_name' => ['label' => 'Migori Branch Name', 'help' => 'Shown on Contact Us.'],
+        'branch_migori_address' => ['label' => 'Migori Outlet Address', 'help' => 'Address shown under the Migori outlet on Contact Us.'],
+        'branch_migori_phone' => ['label' => 'Migori Branch Phone', 'help' => 'Shown on Contact Us and linked to the phone dialler.'],
         'social_facebook'  => ['label' => 'Facebook URL',      'help' => 'Full page URL. Leave blank to hide the icon.'],
         'social_instagram' => ['label' => 'Instagram URL',     'help' => 'Full profile URL. Leave blank to hide the icon.'],
         'social_twitter'   => ['label' => 'X (Twitter) URL',   'help' => 'Full profile URL. Leave blank to hide the icon.'],
@@ -47,6 +53,20 @@ class ContactController extends Controller
             $fields[$key] = $meta + ['value' => $stored[$key] ?? ''];
         }
 
+        $defaults = [
+            'branch_nairobi_name' => 'Nairobi Outlet',
+            'branch_nairobi_address' => 'Enterprise Road, B. Binico Enterprises, Nairobi, Kenya.',
+            'branch_nairobi_phone' => '+254 740 550 105',
+            'branch_migori_name' => 'Migori Outlet',
+            'branch_migori_address' => 'Kimaiga, next to Dolion Hotel',
+            'branch_migori_phone' => '+254 796 593 842',
+        ];
+        foreach ($defaults as $key => $default) {
+            if (!array_key_exists($key, $stored)) {
+                $fields[$key]['value'] = $default;
+            }
+        }
+
         return view('manage.settings.contact.index', compact('fields'));
     }
 
@@ -60,6 +80,12 @@ class ContactController extends Controller
             'contact_phone'    => 'nullable|string|max:30',
             'contact_whatsapp' => 'nullable|string|max:20|regex:/^[0-9 +]*$/',
             'contact_address'  => 'nullable|string|max:255',
+            'branch_nairobi_name' => 'required|string|max:100',
+            'branch_nairobi_address' => 'required|string|max:255',
+            'branch_nairobi_phone' => ['required', 'string', 'max:30', 'regex:/^[0-9+() .-]+$/'],
+            'branch_migori_name' => 'required|string|max:100',
+            'branch_migori_address' => 'required|string|max:255',
+            'branch_migori_phone' => ['required', 'string', 'max:30', 'regex:/^[0-9+() .-]+$/'],
             'social_facebook'  => 'nullable|url|max:255',
             'social_instagram' => 'nullable|url|max:255',
             'social_twitter'   => 'nullable|url|max:255',

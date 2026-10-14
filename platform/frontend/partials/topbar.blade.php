@@ -1,73 +1,57 @@
-<div class="hidden w-full border-y border-gray-200 bg-white text-xs text-text lg:block">
-    <div class="mx-auto grid h-10 max-w-[1440px] grid-cols-3 items-center px-20">
-        <div class="flex items-center gap-5">
-            @if (($site['phone'] ?? null))
-                <a href="{{ $site['phone_href'] }}" class="group flex items-center gap-1.5 text-text transition hover:text-secondary">
-                    <i class="fas fa-phone-alt text-[10px] text-primary transition group-hover:text-secondary"></i>
-                    <span>{{ $site['phone'] }}</span>
+@php
+    $nairobiPhone = trim((string) \App\Models\Core\Setting::get('branch_nairobi_phone', ''));
+    $migoriPhone = trim((string) \App\Models\Core\Setting::get('branch_migori_phone', ''));
+    $supportEmail = trim((string) \App\Models\Core\Setting::get('contact_email', ''));
+    $topSocials = collect($site['socials'] ?? [])
+        ->filter()
+        ->take(4);
+@endphp
+
+<div class="w-full bg-primary text-white">
+    <div class="mx-auto flex min-h-10 max-w-7xl items-center justify-between gap-4 px-4 py-2 text-[13px] font-medium sm:px-6 sm:text-sm lg:px-8"
+        style="font-weight: 500;">
+        <div class="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 sm:gap-x-5">
+            @if ($nairobiPhone !== '')
+                <a href="tel:{{ preg_replace('/[^+0-9]/', '', $nairobiPhone) }}"
+                    class="inline-flex items-center gap-2 whitespace-nowrap hover:text-white/80"
+                    aria-label="Call Nairobi outlet">
+                    <i class="fas fa-phone-alt text-xs sm:text-sm" aria-hidden="true"></i>
+                    <span>{{ $nairobiPhone }}</span>
                 </a>
             @endif
-            @if (($site['email'] ?? null))
-                <a href="mailto:{{ $site['email'] }}" class="group flex items-center gap-1.5 text-text transition hover:text-secondary">
-                    <i class="fas fa-envelope text-[10px] text-primary transition group-hover:text-secondary"></i>
-                    <span>{{ $site['email'] }}</span>
+
+            @if ($migoriPhone !== '')
+                @if ($nairobiPhone !== '')
+                    <span class="text-white/60" aria-hidden="true">|</span>
+                @endif
+                <a href="tel:{{ preg_replace('/[^+0-9]/', '', $migoriPhone) }}"
+                    class="inline-flex items-center gap-2 whitespace-nowrap hover:text-white/80"
+                    aria-label="Call Migori outlet">
+                    <span>{{ $migoriPhone }}</span>
+                </a>
+            @endif
+
+            @if ($supportEmail !== '')
+                @if ($nairobiPhone !== '' || $migoriPhone !== '')
+                    <span class="hidden text-white/60 sm:inline" aria-hidden="true">|</span>
+                @endif
+                <a href="mailto:{{ $supportEmail }}"
+                    class="hidden items-center gap-2 hover:text-white/80 sm:inline-flex">
+                    <i class="fas fa-envelope text-xs sm:text-sm" aria-hidden="true"></i>
+                    <span class="whitespace-nowrap">{{ $supportEmail }}</span>
                 </a>
             @endif
         </div>
-        <p class="text-center font-medium text-muted">Quality stationery and office supplies in one place.</p>
-        <div class="flex items-center justify-end gap-4">
-            <a href="{{ route('frontend.track-order') }}" class="text-text transition hover:text-secondary">Track Order</a>
-            <span class="text-border">|</span>
-            <a href="{{ route('frontend.about') }}" class="text-text transition hover:text-secondary">About</a>
-            @if (!empty($site['socials']))
-                <span class="text-border">|</span>
-                <span class="flex items-center gap-3">
-                    @foreach ($site['socials'] as $network => $url)
-                        <a href="{{ $url }}" target="_blank" rel="noopener" aria-label="{{ ucfirst($network) }}"
-                           class="text-primary transition hover:text-secondary"><i class="fab fa-{{ $network }} text-xs"></i></a>
-                    @endforeach
-                </span>
-            @endif
-        </div>
+
+        @if ($topSocials->isNotEmpty())
+            <div class="hidden shrink-0 items-center gap-4 md:flex" aria-label="Social media">
+                @foreach ($topSocials as $network => $url)
+                    <a href="{{ $url }}" target="_blank" rel="noopener noreferrer"
+                        class="text-white transition hover:text-white/70" aria-label="{{ ucfirst($network) }}">
+                        <i class="fab fa-{{ $network }} text-sm" aria-hidden="true"></i>
+                    </a>
+                @endforeach
+            </div>
+        @endif
     </div>
 </div>
-
-{{-- <div class="w-full border-y border-gray-200 bg-primary text-xs text-white lg:bg-white lg:text-text"> --}}
-    {{-- <div class="mx-auto flex h-9 max-w-[1440px] items-center justify-center gap-4 px-4 lg:grid lg:h-10 lg:grid-cols-3 lg:justify-normal lg:px-7"> --}}
-
-        {{-- Left: contact links --}}
-        {{-- <div class="flex items-center gap-4 lg:gap-5">
-            @if (($site['phone'] ?? null))
-                <a href="{{ $site['phone_href'] }}" class="group flex items-center gap-1.5 text-white transition hover:text-white/80 lg:text-text lg:hover:text-secondary">
-                    <i class="fas fa-phone-alt text-[10px] text-white transition group-hover:text-white/80 lg:text-primary lg:group-hover:text-secondary"></i>
-                    <span>{{ $site['phone'] }}</span>
-                </a>
-            @endif
-            @if (($site['email'] ?? null))
-                <a href="mailto:{{ $site['email'] }}" class="group hidden items-center gap-1.5 text-text transition hover:text-secondary lg:flex">
-                    <i class="fas fa-envelope text-[10px] text-primary transition group-hover:text-secondary"></i>
-                    <span>{{ $site['email'] }}</span>
-                </a>
-            @endif
-        </div> --}}
-
-        {{-- Center: tagline (visible at all sizes) --}}
-        {{-- <p class="text-center font-medium text-white/90 lg:text-muted">Quality stationery and office supplies in one place.</p> --}}
-
-        {{-- Right: links + socials (desktop only) --}}
-        {{-- <div class="hidden items-center justify-end gap-4 lg:flex">
-            <a href="{{ route('frontend.track-order') }}" class="text-text transition hover:text-secondary">Track Order</a>
-            <span class="text-border">|</span>
-            <a href="{{ route('frontend.about') }}" class="text-text transition hover:text-secondary">About</a>
-            @if (!empty($site['socials']))
-                <span class="text-border">|</span>
-                <span class="flex items-center gap-3">
-                    @foreach ($site['socials'] as $network => $url)
-                        <a href="{{ $url }}" target="_blank" rel="noopener" aria-label="{{ ucfirst($network) }}"
-                           class="text-primary transition hover:text-secondary"><i class="fab fa-{{ $network }} text-xs"></i></a>
-                    @endforeach
-                </span>
-            @endif
-        </div> --}}
-    {{-- </div>
-</div> --}}

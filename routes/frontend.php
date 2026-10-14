@@ -52,6 +52,14 @@ Route::get('/products', [ProductController::class, 'index'])
 Route::get('/products/{slug}', [ProductController::class, 'show'])
     ->name('frontend.products.show');
 
+// Public quotation builder (guest checkout supported)
+Route::get('/quotation', [\App\Http\Controllers\Frontend\QuotationRequestController::class, 'index'])->name('frontend.quotation.index');
+Route::get('/quotation/search', [\App\Http\Controllers\Frontend\QuotationRequestController::class, 'search'])->name('frontend.quotation.search');
+Route::post('/quotation/add', [\App\Http\Controllers\Frontend\QuotationRequestController::class, 'add'])->name('frontend.quotation.add');
+Route::post('/quotation/update', [\App\Http\Controllers\Frontend\QuotationRequestController::class, 'update'])->name('frontend.quotation.update');
+Route::post('/quotation/remove', [\App\Http\Controllers\Frontend\QuotationRequestController::class, 'remove'])->name('frontend.quotation.remove');
+Route::post('/quotation/submit', [\App\Http\Controllers\Frontend\QuotationRequestController::class, 'submit'])->middleware('throttle:8,1')->name('frontend.quotation.submit');
+
 // -------------------
 // REFERRAL LINKS
 // -------------------
@@ -111,9 +119,9 @@ Route::middleware('auth')->group(function () {
 // -------------------
 // GENERAL
 // -------------------
-Route::get('/testimonials', function () {
-    return view('frontend.testimonials.index');
-})->name('frontend.testimonials');
+Route::get('/testimonials', [\App\Http\Controllers\Frontend\ClientStoriesController::class, 'testimonials'])->name('frontend.testimonials');
+Route::get('/client-projects', [\App\Http\Controllers\Frontend\ClientStoriesController::class, 'projects'])->name('frontend.projects');
+Route::get('/client-projects/{slug}', [\App\Http\Controllers\Frontend\ClientStoriesController::class, 'project'])->name('frontend.projects.show');
 
 Route::get('/faq', [FaqController::class, 'index'])->name('frontend.faq');
 

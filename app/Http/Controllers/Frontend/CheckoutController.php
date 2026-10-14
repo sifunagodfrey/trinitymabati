@@ -348,7 +348,7 @@ class CheckoutController extends Controller
                 'order_id'      => $order->id,
                 'product_id'    => $cartItem->product_id,
                 'variant_id'    => $cartItem->variant_id,
-                'variant_label' => $variantLabel,
+                'variant_label' => ($cartItem->sheet_length_m ? trim(($variantLabel ? $variantLabel . ' / ' : '') . number_format($cartItem->sheet_length_m, 2) . ' m') : $variantLabel),
                 'product_name'  => $cartItem->product?->name ?? 'Unknown Product',
                 'quantity'      => $cartItem->quantity,
                 'price'         => $cartItem->price_at_time,

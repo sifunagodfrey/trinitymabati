@@ -243,18 +243,18 @@
    circular controls and badges that use rounded-[12px].
 ------------------- */
 @layer utilities {
-    main :is(section, article, aside, form, div, a).rounded-[8px],
-    [role="dialog"].rounded-[8px] {
+    main :is(section, article, aside, form, div, a).rounded-\[8px\],
+    [role="dialog"].rounded-\[8px\] {
         border-radius: 8px;
     }
 
-    main :is(section, article, aside, form, div, a).rounded-[12px],
-    [role="dialog"].rounded-[12px] {
-        border-radius: 10px;
+    main :is(section, article, aside, form, div, a).rounded-\[12px\],
+    [role="dialog"].rounded-\[12px\] {
+        border-radius: 12px;
     }
 
-    main :is(section, article, aside, form, div, a).rounded-[12px],
-    [role="dialog"].rounded-[12px] {
+    main :is(section, article, aside, form, div, a).rounded-\[12px\],
+    [role="dialog"].rounded-\[12px\] {
         border-radius: 12px;
     }
 }

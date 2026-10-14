@@ -7,37 +7,48 @@
 <footer class="site-footer w-full mt-20">
 
     {{-- Main columns --}}
-    <div class="max-w-7xl mx-auto px-6 py-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-12">
 
         {{-- Brand --}}
         <div class="lg:col-span-4">
             <img src="{{ $branding['logo_white'] }}" alt="{{ config('app.name') }}" class="h-10 w-auto">
             <p class="mt-4 text-sm leading-relaxed max-w-xs text-white/70">
-                Reliable stationery and office supplies for work, school and everyday creativity.
+                Quality roofing sheets and accessories for durable, beautiful roofs across Kenya.
             </p>
-            @if (!empty($site['socials']))
-                <div class="flex items-center gap-3 mt-6">
-                    @foreach ($site['socials'] as $network => $url)
-                        <a href="{{ $url }}" target="_blank" rel="noopener"
-                            aria-label="{{ ucfirst($network) }}"
-                            class="w-9 h-9 rounded-[12px] flex items-center justify-center transition hover:bg-primary"
-                            style="background-color: rgba(255,255,255,0.06);">
-                            <i class="fab fa-{{ $network }} text-sm text-white"></i>
+            @php
+                $socialIcons = [
+                    'facebook' => 'fa-facebook-f',
+                    'instagram' => 'fa-instagram',
+                    'tiktok' => 'fa-tiktok',
+                    'youtube' => 'fa-youtube',
+                    'twitter' => 'fa-x-twitter',
+                    'linkedin' => 'fa-linkedin-in',
+                ];
+                $footerSocials = collect($site['socials'] ?? [])
+                    ->filter(fn ($url, $network) => filled($url) && isset($socialIcons[$network]))
+                    ->take(4);
+            @endphp
+            @if ($footerSocials->isNotEmpty())
+                <div class="mt-5 flex flex-wrap items-center gap-3" aria-label="Social media links">
+                    @foreach ($footerSocials as $network => $url)
+                        <a href="{{ $url }}" target="_blank" rel="noopener noreferrer"
+                           aria-label="{{ ucfirst($network) }}"
+                           class="inline-flex h-10 w-10 items-center justify-center rounded-md bg-white/10 text-white transition hover:bg-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+                            <i class="fab {{ $socialIcons[$network] }} text-base" aria-hidden="true"></i>
                         </a>
                     @endforeach
                 </div>
             @endif
         </div>
 
-        {{-- Shop --}}
+        {{-- Product categories --}}
         <div class="lg:col-span-2">
-            <h4 class="text-white text-sm font-semibold uppercase tracking-wider" style="font-family: var(--font-ui);">
-                Shop</h4>
+            <h4 class="text-white text-sm font-semibold uppercase tracking-wider" style="font-family: var(--font-ui);">Products</h4>
             <ul class="mt-4 space-y-3 text-sm text-white/70">
-                <li><a href="{{ route('frontend.products') }}" class="hover:text-white transition">All Products</a></li>
-                <li><a href="{{ route('frontend.categories') }}" class="hover:text-white transition">Top Categories</a></li>
-                <li><a href="{{ route('frontend.brands') }}" class="hover:text-white transition">Top Brands</a></li>
-                <li><a href="#" class="hover:text-white transition">Print Services</a></li>
+                <li><a href="{{ route('frontend.categories.show', 'tile-profiles') }}" class="hover:text-white transition">Tile Profiles</a></li>
+                <li><a href="{{ route('frontend.categories.show', 'stone-coated-profiles') }}" class="hover:text-white transition">Stone Coated Profiles</a></li>
+                <li><a href="{{ route('frontend.categories.show', 'box-profile') }}" class="hover:text-white transition">Box Profile</a></li>
+                <li><a href="{{ route('frontend.categories.show', 'corrugated-sheets') }}" class="hover:text-white transition">Corrugated Sheets</a></li>
             </ul>
         </div>
 
@@ -47,9 +58,9 @@
                 Company</h4>
             <ul class="mt-4 space-y-3 text-sm text-white/70">
                 <li><a href="{{ route('frontend.about') }}" class="hover:text-white transition">About Us</a></li>
-                <li><a href="{{ route('frontend.track-order') }}" class="hover:text-white transition">Track Order</a>
+                <li><a href="{{ route('frontend.quotation.index') }}" class="hover:text-white transition">Request Quotation</a>
                 </li>
-                <li><a href="{{ route('frontend.blog') }}" class="hover:text-white transition">Blog</a></li>
+                <li><a href="{{ route('frontend.blog') }}" class="hover:text-white transition">Blog &amp; Tips</a></li>
                 <li><a href="{{ route('frontend.contact') }}" class="hover:text-white transition">Contact Us</a></li>
             </ul>
         </div>
@@ -92,7 +103,7 @@
 
     {{-- Legal bar --}}
     <div class="border-t" style="border-color: rgba(255,255,255,0.08);">
-        <div class="max-w-7xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/50">
             <p>&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
             <div class="flex items-center gap-5">
                 <a href="{{ route('frontend.privacy-policy.public') }}"

@@ -84,6 +84,13 @@
 
             </div>
 
+            <div class="rounded-lg border border-gray-200 p-4 my-4 space-y-3">
+                <label class="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" name="allow_custom_length" value="1" { old('allow_custom_length', false) ? 'checked' : '' }> Allow custom sheet length (priced per metre)</label>
+                <label class="block text-sm">Default length (metres)
+                    <input type="number" name="default_length_m" min="0.1" max="30" step="0.01" value="{{ old('default_length_m', 3) }}" class="block w-36 rounded border px-3 py-2 mt-1">
+                </label>
+                <p class="text-xs text-gray-500">For enabled products, product and variant prices are rates per metre. The customer can enter 0.10–30.00 metres. Default is 3 m.</p>
+            </div>
             {{-- ---------------
             -- Classification: Category, Brand, Label
             -- --------------- --}}
@@ -188,22 +195,9 @@
                     </button>
                 </div>
 
-                {{-- Generated variant table - populated by JS --}}
-                <div id="variantsTable" class="hidden overflow-x-auto rounded-[8px] border border-border">
-                    <table class="min-w-[840px] divide-y divide-border text-sm">
-                        <thead class="bg-border/30">
-                            <tr>
-                                <th class="px-4 py-3 text-left font-medium text-text w-1/4">Variant</th>
-                                <th class="px-4 py-3 text-left font-medium text-text">SKU</th>
-                                <th class="px-4 py-3 text-left font-medium text-text">Cost Price</th>
-                                <th class="px-4 py-3 text-left font-medium text-text">Selling Price <span class="text-red-500">*</span></th>
-                                <th class="px-4 py-3 text-left font-medium text-text">Strike-through Price</th>
-                                <th class="px-4 py-3 text-left font-medium text-text w-24">Stock</th>
-                                <th class="px-4 py-3 text-left font-medium text-text">Image</th>
-                            </tr>
-                        </thead>
-                        <tbody id="variantRows" class="divide-y divide-border"></tbody>
-                    </table>
+                <div id="variantsTable" class="hidden">
+                    <p class="mb-3 text-xs text-muted">Enter a price for each customer option. SKU is a technical inventory reference, not a customer-facing name.</p>
+                    <div id="variantRows" class="grid grid-cols-1 gap-4 xl:grid-cols-2"></div>
                 </div>
             </div>
 
@@ -519,6 +513,8 @@
     // ---------------
     // Generate Variants Table (with auto-SKU per variant and image column)
     // ---------------
+    const escapeVariantText = value => String(value ?? '').replace(/[&"'<>]/g, c => ({'&':'&amp;','"':'&quot;',"'":'&#39;','<':'&lt;','>':'&gt;'}[c]));
+
     document.getElementById('generateVariants').addEventListener('click', function () {
         const groups = document.querySelectorAll('.attribute-group');
         const attributeSets = [];
@@ -544,7 +540,7 @@
         // Preserve values already entered in existing rows
         const tbody = document.getElementById('variantRows');
         const existingRows = {};
-        tbody.querySelectorAll('tr').forEach(tr => {
+        tbody.querySelectorAll('[data-label]').forEach(tr => {
             const label = tr.dataset.label;
             if (label) {
                 existingRows[label] = {
@@ -562,43 +558,26 @@
             const label   = combo.join(' / ');
             const prev    = existingRows[label] || {};
             const autoSku = prev.sku || buildSku(label);
-            const tr      = document.createElement('tr');
+            const tr = document.createElement('div');
             tr.dataset.label = label;
-            tr.className     = 'divide-x divide-border';
+            tr.className = 'rounded-xl border border-border bg-white p-4 shadow-sm sm:p-5';
             tr.innerHTML = `
-                <td class="px-4 py-2 font-medium text-text text-sm">
-                    ${label}
-                    <input type="hidden" name="variants[${i}][variant_code]" value="${label}" />
-                </td>
-                <td class="px-4 py-2">
-                    <input type="text" name="variants[${i}][sku]" value="${autoSku}"
-                        class="w-full rounded-[8px] border border-border bg-background px-3 py-1.5 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                        placeholder="SKU" />
-                </td>
-                <td class="px-4 py-2">
-                    <input type="number" name="variants[${i}][cost_price]" step="0.01" min="0" value="${prev.cost || ''}"
-                        class="w-full rounded-[8px] border border-border bg-background px-3 py-1.5 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                        placeholder="Cost" />
-                </td>
-                <td class="px-4 py-2">
-                    <input type="number" name="variants[${i}][selling_price]" step="0.01" min="0" value="${prev.selling || ''}" required
-                        class="w-full rounded-[8px] border border-border bg-background px-3 py-1.5 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                        placeholder="Selling" />
-                </td>
-                <td class="px-4 py-2">
-                    <input type="number" name="variants[${i}][strikethrough_price]" step="0.01" min="0" value="${prev.strike || ''}"
-                        class="w-full rounded-[8px] border border-border bg-background px-3 py-1.5 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                        placeholder="Strike-through" />
-                </td>
-                <td class="px-4 py-2">
-                    <input type="number" name="variants[${i}][stock]" min="0" value="${prev.stock || ''}"
-                        class="w-full rounded-[8px] border border-border bg-background px-3 py-1.5 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                        placeholder="0" />
-                </td>
-                <td class="px-4 py-2">
-                    <input type="file" name="variants[${i}][image]" accept="image/jpeg,image/png,image/webp"
-                        class="w-full text-xs text-muted file:rounded-[8px] file:border-none file:bg-primary/10 file:px-2 file:py-1 file:text-xs file:text-primary file:cursor-pointer" />
-                </td>`;
+                <div class="mb-4 flex flex-wrap items-start justify-between gap-2">
+                    <div><div class="font-semibold text-text">${escapeVariantText(combo.join(' · '))}</div><p class="mt-1 text-xs text-muted">Set price and availability for this option</p></div>
+                    <span class="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">Option ${i + 1}</span>
+                </div>
+                <input type="hidden" name="variants[${i}][variant_code]" value="${escapeVariantText(label)}" />
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <label class="block min-w-0 space-y-1.5"><span class="block text-xs font-semibold text-text">SKU (internal)</span><input type="text" name="variants[${i}][sku]"  value="${escapeVariantText(autoSku)}" class="w-full min-w-0 rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" /></label>
+                    <label class="block min-w-0 space-y-1.5"><span class="block text-xs font-semibold text-text">Cost price (KSh)</span><input type="number" name="variants[${i}][cost_price]" step="0.01" min="0" value="${escapeVariantText(prev.cost || '')}" class="w-full min-w-0 rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" /></label>
+                    <label class="block min-w-0 space-y-1.5"><span class="block text-xs font-semibold text-text">Selling price (KSh)</span><input type="number" name="variants[${i}][selling_price]" step="0.01" min="0" required value="${escapeVariantText(prev.selling || '')}" class="w-full min-w-0 rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" /></label>
+                    <label class="block min-w-0 space-y-1.5"><span class="block text-xs font-semibold text-text">Was price (optional)</span><input type="number" name="variants[${i}][strikethrough_price]" step="0.01" min="0" value="${escapeVariantText(prev.strike || '')}" class="w-full min-w-0 rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" /></label>
+                    <label class="block min-w-0 space-y-1.5"><span class="block text-xs font-semibold text-text">Available stock</span><input type="number" name="variants[${i}][stock]" min="0" value="${escapeVariantText(prev.stock || '')}" class="w-full min-w-0 rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" /></label>
+                    <div class="min-w-0 space-y-2 sm:col-span-2">
+                        <label class="block text-xs font-semibold text-text">Variant image (optional)</label>
+                        <input type="file" name="variants[${i}][image]" accept="image/jpeg,image/png,image/webp" class="block w-full min-w-0 text-xs text-muted file:mr-2 file:rounded-lg file:border-0 file:bg-primary/10 file:px-3 file:py-2 file:font-semibold file:text-primary" />
+                    </div>
+                </div>`;
             tbody.appendChild(tr);
         });
 

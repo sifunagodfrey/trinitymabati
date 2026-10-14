@@ -14,7 +14,7 @@
     <div class="hidden lg:block overflow-hidden transition-all duration-300"
         :class="scrolled ? 'max-h-0 opacity-0' : 'max-h-12 opacity-100'">
         <div
-            class="max-w-7xl mx-auto px-6 flex items-center justify-between h-9 text-xs text-white border-b border-white/15">
+            class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-9 text-xs text-white border-b border-white/15">
             <div class="flex items-center gap-5">
                 @if ($site['phone'] ?? null)
                     <a href="{{ $site['phone_href'] }}" class="flex items-center gap-1.5 hover:opacity-70 transition">
@@ -48,7 +48,7 @@
     </div>
 
     {{-- Main bar --}}
-    <div class="max-w-7xl mx-auto px-6" :class="scrolled ? '' : 'border-b border-white/15'">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" :class="scrolled ? '' : 'border-b border-white/15'">
         <div class="flex items-center justify-between gap-6 h-[72px]">
 
             {{-- Logo --}}

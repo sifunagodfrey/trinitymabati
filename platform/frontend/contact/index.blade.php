@@ -44,7 +44,7 @@
         }
 
         .contact-card {
-            border-radius: 1.5rem;
+            border-radius: 4px;
             padding: 1.75rem;
         }
 
@@ -55,17 +55,6 @@
         }
     </style>
 
-    {{-- Breadcrumb --}}
-    <div class="border-b border-border">
-        <div class="max-w-7xl mx-auto px-4 md:px-6 py-3">
-            <nav class="text-xs text-muted flex items-center gap-2" aria-label="Breadcrumb">
-                <a href="{{ route('frontend.home') }}" class="hover:text-primary transition">Home</a>
-                <i class="fas fa-chevron-right text-[9px]"></i>
-                <span class="text-text font-medium">Contact Us</span>
-            </nav>
-        </div>
-    </div>
-
     {{-- Page body --}}
     <div style="background-color: var(--background-color);">
         <div class="max-w-6xl mx-auto px-4 md:px-6 py-10 md:py-14">
@@ -73,115 +62,44 @@
             <div class="text-center mb-10">
                 <h1 class="text-2xl md:text-3xl font-bold text-text">Get in Touch</h1>
                 <p class="text-sm text-muted mt-2 max-w-xl mx-auto">
-                    We are here to help with anything you need - questions, orders, or just a friendly hello.
                     Reach us through any of the options below.
                 </p>
             </div>
 
             <div class="contact-grid">
 
-                {{-- ===============================
-                     LEFT: Contact details
-                =============================== --}}
-                <div class="contact-card brand-gradient relative overflow-hidden text-white shadow-xl">
-
-                    {{-- Decorative circles --}}
-                    <div class="absolute -top-12 -right-12 w-44 h-44 rounded-[12px] bg-white/10"></div>
-                    <div class="absolute -bottom-16 -left-10 w-52 h-52 rounded-[12px] bg-white/5"></div>
-
-                    <div class="relative">
-                        <h2 class="text-xl font-bold mb-1.5">Contact Information</h2>
-                        <p class="text-sm text-white/80 mb-8">Our team typically replies within a few hours.</p>
-
-                        <ul class="space-y-6">
-                            @if ($site['phone'] ?? null)
-                                <li>
-                                    <a href="{{ $site['phone_href'] }}" class="flex items-start gap-4 group">
-                                        <span
-                                            class="w-11 h-11 rounded-[12px] bg-white/15 flex items-center justify-center flex-shrink-0 group-hover:bg-white group-hover:text-primary transition">
-                                            <i class="fas fa-phone"></i>
-                                        </span>
-                                        <span>
-                                            <span class="block text-xs uppercase tracking-wide text-white/70">Call Us</span>
-                                            <span class="block text-sm font-semibold mt-0.5">{{ $site['phone'] }}</span>
-                                        </span>
-                                    </a>
-                                </li>
-                            @endif
-
-                            @if ($site['whatsapp_url'] ?? null)
-                                <li>
-                                    <a href="{{ $site['whatsapp_url'] }}" target="_blank" rel="noopener"
-                                        class="flex items-start gap-4 group">
-                                        <span
-                                            class="w-11 h-11 rounded-[12px] bg-white/15 flex items-center justify-center flex-shrink-0 group-hover:bg-white group-hover:text-green-600 transition">
-                                            <i class="fab fa-whatsapp text-lg"></i>
-                                        </span>
-                                        <span>
-                                            <span
-                                                class="block text-xs uppercase tracking-wide text-white/70">WhatsApp</span>
-                                            <span class="block text-sm font-semibold mt-0.5">Chat with us instantly</span>
-                                        </span>
-                                    </a>
-                                </li>
-                            @endif
-
-                            @if ($site['email'] ?? null)
-                                <li>
-                                    <a href="mailto:{{ $site['email'] }}" class="flex items-start gap-4 group">
-                                        <span
-                                            class="w-11 h-11 rounded-[12px] bg-white/15 flex items-center justify-center flex-shrink-0 group-hover:bg-white group-hover:text-primary transition">
-                                            <i class="fas fa-envelope"></i>
-                                        </span>
-                                        <span>
-                                            <span class="block text-xs uppercase tracking-wide text-white/70">Email</span>
-                                            <span
-                                                class="block text-sm font-semibold mt-0.5 break-all">{{ $site['email'] }}</span>
-                                        </span>
-                                    </a>
-                                </li>
-                            @endif
-
-                            @if ($site['address'] ?? null)
-                                <li class="flex items-start gap-4">
-                                    <span
-                                        class="w-11 h-11 rounded-[12px] bg-white/15 flex items-center justify-center flex-shrink-0">
-                                        <i class="fas fa-location-dot"></i>
-                                    </span>
-                                    <span>
-                                        <span class="block text-xs uppercase tracking-wide text-white/70">Location</span>
-                                        <span class="block text-sm font-semibold mt-0.5">{{ $site['address'] }}</span>
-                                    </span>
-                                </li>
-                            @endif
-                        </ul>
-
-                        {{-- Socials --}}
-                        @if (!empty($site['socials'] ?? []))
-                            <div class="mt-9 pt-6 border-t border-white/15">
-                                <p class="text-xs uppercase tracking-wide text-white/70 mb-3">Follow Us</p>
-                                <div class="flex items-center gap-2.5">
-                                    @php
-                                        $socialIcons = [
-                                            'facebook' => 'fab fa-facebook-f',
-                                            'instagram' => 'fab fa-instagram',
-                                            'twitter' => 'fab fa-x-twitter',
-                                            'tiktok' => 'fab fa-tiktok',
-                                            'youtube' => 'fab fa-youtube',
-                                            'linkedin' => 'fab fa-linkedin-in',
-                                        ];
-                                    @endphp
-                                    @foreach ($site['socials'] as $network => $url)
-                                        <a href="{{ $url }}" target="_blank" rel="noopener"
-                                            aria-label="{{ ucfirst($network) }}"
-                                            class="w-9 h-9 rounded-[12px] bg-white/15 flex items-center justify-center hover:bg-white hover:text-primary hover:-translate-y-0.5 transition-all">
-                                            <i class="{{ $socialIcons[$network] ?? 'fas fa-link' }} text-sm"></i>
-                                        </a>
-                                    @endforeach
+                {{-- Left: Nairobi, Migori, and general contact cards --}}
+                <div class="grid gap-4 self-start">
+                    @foreach (($site['branches'] ?? []) as $branch)
+                        @if (!empty($branch['name']) && !empty($branch['phone']))
+                            <section class="rounded-[4px] border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+                                <div class="flex items-start gap-4">
+                                    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-[4px] bg-red-50 text-primary"><i class="fas fa-mobile-screen-button text-lg" aria-hidden="true"></i></span>
+                                    <div class="min-w-0">
+                                        <h2 class="text-lg font-bold text-gray-900">{{ $branch['name'] }}</h2>
+                                        @if (!empty($branch['address']))
+                                            <p class="mt-2 text-sm leading-6 text-gray-600">{{ $branch['address'] }}</p>
+                                        @endif
+                                        <a href="tel:{{ preg_replace('/[^0-9+]/', '', $branch['phone']) }}" class="mt-2 inline-block text-base font-bold text-primary hover:underline">{{ $branch['phone'] }}</a>
+                                    </div>
                                 </div>
-                            </div>
+                            </section>
                         @endif
-                    </div>
+                    @endforeach
+                    <section class="rounded-[4px] border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+                        <h2 class="text-lg font-bold text-gray-900">Other Ways to Reach Us</h2>
+                        <div class="mt-4 space-y-4 text-sm">
+                            @if (!empty($site['whatsapp_url']))
+                                <a href="{{ $site['whatsapp_url'] }}" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 text-gray-700 hover:text-primary"><i class="fab fa-whatsapp w-5 text-lg text-green-600" aria-hidden="true"></i><span>Chat with us on WhatsApp</span></a>
+                            @endif
+                            @if (!empty($site['email']))
+                                <a href="mailto:{{ $site['email'] }}" class="flex items-center gap-3 break-all text-gray-700 hover:text-primary"><i class="fas fa-envelope w-5 text-primary" aria-hidden="true"></i><span>{{ $site['email'] }}</span></a>
+                            @endif
+                            @if (!empty($site['address']))
+                                <div class="flex items-center gap-3 text-gray-700"><i class="fas fa-location-dot w-5 text-primary" aria-hidden="true"></i><span>{{ $site['address'] }}</span></div>
+                            @endif
+                        </div>
+                    </section>
                 </div>
 
                 {{-- ===============================

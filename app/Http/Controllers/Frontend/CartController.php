@@ -62,6 +62,7 @@ class CartController extends Controller
                 'variant_id'    => $data['variant_id'] ?? null,
                 'quantity'      => $data['quantity'],
                 'price_at_time' => $data['price_at_time'],
+                'sheet_length_m' => $data['sheet_length_m'] ?? null,
                 'product'       => $product,
                 'variant'       => $variant,
             ];
@@ -90,6 +91,7 @@ class CartController extends Controller
             'product_id'  => 'required|integer|exists:su_products,id',
             'variant_id'  => 'nullable|integer|exists:su_product_variants,id',
             'quantity'    => 'required|integer|min:1',
+            'sheet_length_m' => ['nullable','numeric','min:0.1','max:30','regex:/^\d+(\.\d{1,2})?$/'],
         ]);
 
         $productId = (int) $request->input('product_id');
@@ -97,11 +99,22 @@ class CartController extends Controller
         $quantity  = (int) $request->input('quantity', 1);
         $product   = Product::findOrFail($productId);
 
+        $length = $product->allow_custom_length
+            ? (float) $request->input('sheet_length_m', $product->default_length_m ?? 1)
+            : null;
+        if ($product->allow_custom_length && ($length < 0.1 || $length > 30 || round($length, 2) != $length)) {
+            return response()->json(['message' => 'Invalid sheet length. Use 0.10–30.00 metres, maximum two decimals.'], 422);
+        }
+        if ($variantId && !ProductVariant::where('id', $variantId)->where('product_id', $productId)->exists()) {
+            return response()->json(['message' => 'Variant does not belong to this product.'], 422);
+        }
         $price = $product->sale_price ?? $product->price;
         if ($variantId) {
             $variant = ProductVariant::findOrFail($variantId);
             $price   = $variant->sale_price ?? $variant->price;
         }
+
+        if ($length !== null) $price = round((float) $price * $length, 2);
 
         if (auth()->check()) {
             $cart     = Cart::firstOrCreate(['user_id' => auth()->id()]);
@@ -109,6 +122,7 @@ class CartController extends Controller
                 'cart_id'    => $cart->id,
                 'product_id' => $productId,
                 'variant_id' => $variantId,
+                'sheet_length_m' => $length,
             ])->first();
 
             if ($existing) {
@@ -126,6 +140,7 @@ class CartController extends Controller
                     'variant_id'    => $variantId,
                     'quantity'      => $quantity,
                     'price_at_time' => $price,
+                    'sheet_length_m' => $length,
                     'weight'        => $product->weight ?? 0,
                     'length'        => $product->length ?? 0,
                     'width'         => $product->width ?? 0,
@@ -137,7 +152,7 @@ class CartController extends Controller
             $found       = false;
 
             foreach ($sessionCart as &$item) {
-                if ($item['product_id'] === $productId && ($item['variant_id'] ?? null) === $variantId) {
+                if ($item['product_id'] === $productId && ($item['variant_id'] ?? null) === $variantId && ($item['sheet_length_m'] ?? null) === $length) {
                     $item['quantity'] = $request->boolean('set_quantity')
                         ? max(1, $quantity)
                         : $item['quantity'] + $quantity;
@@ -153,6 +168,7 @@ class CartController extends Controller
                     'variant_id'    => $variantId,
                     'quantity'      => $quantity,
                     'price_at_time' => (float) $price,
+                    'sheet_length_m' => $length,
                 ];
             }
 

@@ -25,7 +25,7 @@
             style="background-image: url('{{ url('public/images/trinity-mabati-factory-aboout.jpg') }}');"></div>
         <div class="absolute inset-0 bg-gradient-to-r from-primary via-primary/90 to-secondary"></div>
 
-        <div class="relative max-w-7xl mx-auto px-6 text-center text-white">
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
             <div class="flex justify-center mb-4">
                 <div class="w-14 h-14 flex items-center justify-center rounded-[12px] bg-white/10 border border-white/20">
                     <i class="fas fa-truck-fast text-xl"></i>

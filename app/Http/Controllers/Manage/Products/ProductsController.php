@@ -255,6 +255,7 @@ class ProductsController extends Controller
     // ---------------
     public function store(StoreProductRequest $request)
     {
+        $request->validate(['default_length_m' => ['nullable','numeric','min:0.1','max:30','regex:/^\d+(\.\d{1,2})?$/'], 'default_gauge' => 'nullable|string|max:100', 'default_finish' => 'nullable|string|max:100']);
         // ---------------
         // Generate Unique Slug
         // ---------------
@@ -302,6 +303,10 @@ class ProductsController extends Controller
             'is_variant'           => $request->boolean('is_variant'),
             'is_vat_exempt'        => $request->boolean('is_vat_exempt'),
             'is_active'            => $request->boolean('is_active', true),
+            'allow_custom_length'  => $request->boolean('allow_custom_length'),
+            'default_length_m'     => $request->input('default_length_m', 1),
+            'default_gauge'        => $request->filled('default_gauge') ? trim($request->input('default_gauge')) : null,
+            'default_finish'       => $request->filled('default_finish') ? trim($request->input('default_finish')) : null,
             'weight'               => $request->weight,
             'length'               => $request->length,
             'width'                => $request->width,
@@ -390,6 +395,7 @@ class ProductsController extends Controller
     // ---------------
     public function update(UpdateProductRequest $request, string $id)
     {
+        $request->validate(['default_length_m' => ['nullable','numeric','min:0.1','max:30','regex:/^\d+(\.\d{1,2})?$/'], 'default_gauge' => 'nullable|string|max:100', 'default_finish' => 'nullable|string|max:100']);
         $product = Product::findOrFail($id);
 
         // ---------------
@@ -443,6 +449,10 @@ class ProductsController extends Controller
             'is_variant'           => $request->boolean('is_variant'),
             'is_vat_exempt'        => $request->boolean('is_vat_exempt'),
             'is_active'            => $request->boolean('is_active', $product->is_active),
+            'allow_custom_length'  => $request->boolean('allow_custom_length'),
+            'default_length_m'     => $request->input('default_length_m', 1),
+            'default_gauge'        => $request->filled('default_gauge') ? trim($request->input('default_gauge')) : null,
+            'default_finish'       => $request->filled('default_finish') ? trim($request->input('default_finish')) : null,
             'weight'               => $request->weight,
             'length'               => $request->length,
             'width'                => $request->width,

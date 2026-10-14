@@ -10,7 +10,7 @@
 
     {{-- Breadcrumb --}}
     <div class="bg-gray-50 border-b border-border">
-        <div class="max-w-7xl mx-auto px-4 py-2.5 text-xs text-gray-500 flex items-center gap-2 flex-wrap">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 text-xs text-gray-500 flex items-center gap-2 flex-wrap">
             <a href="{{ route('frontend.home') }}" class="hover:text-primary transition">Home</a>
             <i class="fas fa-chevron-right text-gray-300 text-[10px]"></i>
             <a href="{{ route('frontend.products') }}" class="hover:text-primary transition">Products</a>
@@ -27,12 +27,20 @@
     @php
         $minBulkQty = $bulkTiersJson->isNotEmpty() ? $bulkTiersJson->min('min_quantity') : 1;
     @endphp
-    <div class="max-w-7xl mx-auto px-4 py-6"
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
         x-data="{
             activeImage: @js($allImages[0]),
             activeTab: 'description',
             qty: {{ $minBulkQty }},
+            sheetLengthMode: @js(in_array((string) (float) ($product->default_length_m ?? 1), ['1','2','3'], true) ? (string) (float) ($product->default_length_m ?? 1) : 'custom'),
+            customLength: @js(!in_array((string) (float) ($product->default_length_m ?? 1), ['1','2','3'], true) ? (string) ($product->default_length_m ?? 1) : ''),
+            get sheetLength() { return this.sheetLengthMode === 'custom' ? Number(this.customLength) : Number(this.sheetLengthMode); },
+            get validSheetLength() { return this.sheetLengthMode !== 'custom' || (/^(?:\d+)(?:\.\d{1,2})?$/.test(String(this.customLength)) && Number.isFinite(this.sheetLength) && this.sheetLength >= 0.1 && this.sheetLength <= 30); },
+            get lengthMultiplier() { return {{ $product->allow_custom_length ? 'true' : 'false' }} ? (this.validSheetLength ? this.sheetLength : 0) : 1; },
             selectedAttrs: {},
+            preferredGauge: @js($product->default_gauge),
+            preferredFinish: @js($product->default_finish),
+            attributeSlugs: @js(collect($attrGroups)->mapWithKeys(fn($group, $id) => [$id => \Illuminate\Support\Str::slug($group['name'])])->all()),
             selectedVariantId: null,
             variants: @js($variantsJson),
             variantMinPrice: {{ $variantMinPrice ?? 'null' }},
@@ -44,6 +52,17 @@
             bulkMaxPrice: {{ $bulkMinPrice === null ? 'null' : (float) $bulkTiersJson->max('price_per_unit') }},
             addingToCart: false,
             minBulkQuantity: {{ $minBulkQty }},
+            init() {
+                if (this.variants.length) {
+                    const preferred = this.variants.find(v => {
+                        const matches = (slug, desired) => !desired || v.attrs.some(a => String(this.attributeSlugs[String(a.attribute_id)] || '').toLowerCase() === slug && String(a.value).toLowerCase() === String(desired).toLowerCase());
+                        return v.stock_quantity > 0 && matches('gauge', this.preferredGauge) && matches('finish', this.preferredFinish);
+                    }) || this.variants.find(v => v.stock_quantity > 0) || this.variants[0];
+                    if (preferred.attrs && preferred.attrs.length) {
+                        preferred.attrs.forEach(a => { this.selectedAttrs[a.attribute_id] = a.value; });
+                    } else { this.selectedVariantId = preferred.id; }
+                }
+            },
             get activeVariant() {
                 // ---------------
                 // Direct selection - used when no attribute structure exists
@@ -66,6 +85,12 @@
                 return this.variantMinPrice !== null
                     && this.variantMaxPrice !== null
                     && this.variantMinPrice !== this.variantMaxPrice
+                    && !this.activeVariant
+                    && Object.keys(this.selectedAttrs).length === 0;
+            },
+            get unavailableCombination() {
+                return {{ $product->is_variant ? 'true' : 'false' }}
+                    && Object.keys(this.selectedAttrs).length > 0
                     && !this.activeVariant;
             },
             get showBulkPriceRange() {
@@ -77,20 +102,22 @@
                     && {{ $basePrice == 0 ? 'true' : 'false' }};
             },
             get displayPrice() {
-                if (this.selectedBulkTier) return this.selectedBulkTier.price_per_unit;
+                if (this.selectedBulkTier) return this.selectedBulkTier.price_per_unit * this.lengthMultiplier;
                 if (this.activeVariant) {
-                    return this.activeVariant.sale_price ?? this.activeVariant.price;
+                    return (this.activeVariant.sale_price ?? this.activeVariant.price) * this.lengthMultiplier;
                 }
-                if (this.variantMinPrice !== null) return this.variantMinPrice;
+                // An unmatched gauge/finish is not a sellable variant; never quote the minimum price.
+                if ({{ $product->is_variant ? 'true' : 'false' }} && Object.keys(this.selectedAttrs).length) return null;
+                if (this.variantMinPrice !== null) return this.variantMinPrice * this.lengthMultiplier;
                 // ---------------
                 // Bulk-only product: show min tier price when no base price is set
                 // ---------------
-                if ({{ $basePrice == 0 ? 'true' : 'false' }} && this.bulkMinPrice !== null) return this.bulkMinPrice;
-                return {{ $basePrice }};
+                if ({{ $basePrice == 0 ? 'true' : 'false' }} && this.bulkMinPrice !== null) return this.bulkMinPrice * this.lengthMultiplier;
+                return {{ $basePrice }} * this.lengthMultiplier;
             },
             get displayOriginal() {
-                if (this.activeVariant) return this.activeVariant.price;
-                return {{ $baseOriginal }};
+                if (this.activeVariant) return this.activeVariant.price * this.lengthMultiplier;
+                return {{ $baseOriginal }} * this.lengthMultiplier;
             },
             get displayStock() {
                 if (this.activeVariant) return this.activeVariant.stock_quantity;
@@ -108,7 +135,8 @@
                 const variantId = this.activeVariant ? this.activeVariant.id : null;
                 return this.cartItems.some(item => 
                     item.product_id == productId && 
-                    (item.variant_id == variantId || (item.variant_id === null && variantId === null))
+                    (item.variant_id == variantId || (item.variant_id === null && variantId === null)) &&
+                    (!{{ $product->allow_custom_length ? 'true' : 'false' }} || Number(item.sheet_length_m) === this.sheetLength)
                 );
             },
             currencyRate: {{ $currencyRate }},
@@ -159,7 +187,7 @@
             // updates the cart quantity and totals automatically.
             syncCartTimer: null,
             syncCartQty() {
-                if (! this.isInCart) return;
+                if (! this.isInCart || this.unavailableCombination) return;
                 clearTimeout(this.syncCartTimer);
                 this.syncCartTimer = setTimeout(() => { this.sendCartQuantity(); }, 350);
             },
@@ -176,6 +204,7 @@
                             product_id: {{ $product->id }},
                             variant_id: this.activeVariant ? this.activeVariant.id : null,
                             quantity: this.qty,
+                            ...({{ $product->allow_custom_length ? 'true' : 'false' }} ? {sheet_length_m: this.sheetLength} : {}),
                             set_quantity: true
                         })
                     });
@@ -183,8 +212,22 @@
                     if (data.success) this.updateCartCount(data.count);
                 } catch (e) {}
             },
+            async addToQuote() {
+                if (this.addingToCart || this.unavailableCombination || ({{ $product->allow_custom_length ? 'true' : 'false' }} && !this.validSheetLength) || ({{ $product->is_variant ? 'true' : 'false' }} && !this.activeVariant)) return;
+                this.addingToCart = true;
+                try {
+                    const response = await fetch(@js(route('frontend.quotation.add')), {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content},
+                        body: JSON.stringify({product_id: {{ $product->id }}, variant_id: this.activeVariant ? this.activeVariant.id : null, metres: {{ $product->allow_custom_length ? 'true' : 'false' }} ? this.sheetLength : null, quantity: this.qty})
+                    });
+                    const data = await response.json();
+                    if (!response.ok || data.success === false) throw new Error(data.message || Object.values(data.errors || {})[0]?.[0] || 'Could not add to quote');
+                    window.location.href = @js(route('frontend.quotation.index'));
+                } catch (error) { alert(error.message); } finally { this.addingToCart = false; }
+            },
             async addToCart() {
-                if (this.addingToCart) return;
+                if (this.addingToCart || this.unavailableCombination || ({{ $product->allow_custom_length ? 'true' : 'false' }} && !this.validSheetLength)) return;
                 if ({{ $product->is_variant ? 'true' : 'false' }} && !this.activeVariant) return;
 
                 this.addingToCart = true;
@@ -200,6 +243,7 @@
                             product_id: {{ $product->id }},
                             variant_id: this.activeVariant ? this.activeVariant.id : null,
                             quantity: this.qty,
+                            ...({{ $product->allow_custom_length ? 'true' : 'false' }} ? {sheet_length_m: this.sheetLength} : {}),
                             ...(this.selectedBulkTier ? {
                                 bulk_tier_id: this.selectedBulkTier.id,
                             } : {})
@@ -210,9 +254,10 @@
                     if (data.success) {
                         const newItem = {
                             product_id: {{ $product->id }},
-                            variant_id: this.activeVariant ? this.activeVariant.id : null
+                            variant_id: this.activeVariant ? this.activeVariant.id : null,
+                            sheet_length_m: {{ $product->allow_custom_length ? 'true' : 'false' }} ? this.sheetLength : null
                         };
-                        if (!this.cartItems.some(item => item.product_id === newItem.product_id && item.variant_id === newItem.variant_id)) {
+                        if (!this.cartItems.some(item => item.product_id === newItem.product_id && item.variant_id === newItem.variant_id && (!{{ $product->allow_custom_length ? 'true' : 'false' }} || Number(item.sheet_length_m) === this.sheetLength))) {
                             this.cartItems.push(newItem);
                         }
                         this.updateCartCount(data.count);
@@ -253,8 +298,9 @@
                     @endif
 
                     {{-- Main image --}}
-                    <div class="relative bg-gray-50 border border-border rounded-[8px] overflow-hidden flex-1" style="aspect-ratio: 1 / 1;">
-                        <img :src="activeImage" alt="{{ $product->name }}" class="w-full h-full object-contain p-4 transition-opacity duration-200">
+                    <div class="relative bg-gray-50 rounded-xl overflow-hidden flex-1 min-w-0 aspect-square">
+                        <div class="absolute inset-0 flex items-center justify-center text-gray-300" aria-hidden="true"><i class="fas fa-box-open text-5xl"></i></div>
+                        <img :src="activeImage" alt="{{ $product->name }}" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-200" onerror="this.style.display='none'" @load="$el.style.display='block'" :key="activeImage">
                         @if ($isFlashSale)
                             <div class="absolute top-3 left-3 bg-red-500 text-white text-[11px] font-extrabold px-3 py-1 rounded-[12px] shadow flex items-center gap-1">
                                 <i class="fas fa-bolt"></i> FLASH {{ $flashDiscount }}% OFF
@@ -280,39 +326,7 @@
                 <div class="bg-white border border-border rounded-[8px] p-5">
                     <h1 class="text-lg md:text-xl font-bold text-secondary leading-snug">{{ $product->name }}</h1>
 
-                    @if ($product->short_description)
-                        <p class="text-xs text-muted leading-relaxed mt-1.5">{{ $product->short_description }}</p>
-                    @endif
 
-                    <div class="flex items-center flex-wrap gap-2 mt-3">
-                        @if ($product->brand)
-                            <span class="text-[10px] font-bold uppercase tracking-wide text-gray-600 bg-gray-100 px-2.5 py-1 rounded">{{ $product->brand->name }}</span>
-                        @endif
-                        @foreach ($product->categories as $cat)
-                            <span class="text-[10px] font-bold uppercase tracking-wide text-gray-600 bg-gray-100 px-2.5 py-1 rounded">{{ $cat->name }}</span>
-                        @endforeach
-                        @foreach ($product->labels as $lbl)
-                            <span class="text-[10px] font-bold uppercase tracking-wide text-gray-600 bg-gray-100 px-2.5 py-1 rounded">{{ $lbl->name }}</span>
-                        @endforeach
-                        @if ($product->condition)
-                            <span class="text-[10px] font-bold uppercase tracking-wide text-gray-600 bg-gray-100 px-2.5 py-1 rounded">{{ ucfirst($product->condition) }}</span>
-                        @endif
-                        <span class="text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded"
-                            :class="(displayStock > 0 || (bulkTiers.length > 0 && !activeVariant)) ? 'text-green-700 bg-green-100' : 'text-red-600 bg-red-100'"
-                            x-text="(displayStock > 0 || (bulkTiers.length > 0 && !activeVariant)) ? 'In Stock' : 'Out of Stock'">
-                            {{ $baseStock > 0 ? 'In Stock' : ($product->is_bulk_enabled && $bulkTiersJson->isNotEmpty() ? 'In Stock' : 'Out of Stock') }}
-                        </span>
-                    </div>
-
-                    <div class="flex items-center flex-wrap gap-4 text-xs text-muted mt-3">
-                        <div class="flex items-center gap-1">
-                            @for ($i = 1; $i <= 5; $i++)
-                                <i class="fas fa-star text-xs {{ $i <= round($avgRating) ? 'text-yellow-400' : 'text-gray-200' }}"></i>
-                            @endfor
-                            <span class="ml-1 text-gray-600 font-medium">{{ number_format($avgRating, 1) }}</span>
-                            <button @click="activeTab = 'reviews'" class="ml-1 hover:text-secondary transition">({{ $reviewCount }} {{ Str::plural('review', $reviewCount) }})</button>
-                        </div>
-                    </div>
                 </div>
 
                 {{-- Card: Flash sale banner (only when active) --}}
@@ -326,13 +340,29 @@
                     </div>
                 @endif
 
+                @if ($product->allow_custom_length)
+                    <div class="bg-white border border-border rounded-lg p-5">
+                        <p class="text-sm font-bold text-gray-900 mb-3">Sheet length (metres)</p>
+                        <div class="flex flex-wrap gap-2">
+                            <template x-for="option in [{value:'1',label:'1 m'},{value:'2',label:'2 m'},{value:'3',label:'3 m'},{value:'custom',label:'Custom'}]" :key="option.value">
+                                <button type="button" @click="sheetLengthMode = option.value" :class="sheetLengthMode === option.value ? 'bg-red-600 text-white border-red-600' : 'bg-white text-gray-800 border-gray-200 hover:border-red-500'" class="px-5 py-2 rounded-lg border text-sm font-semibold transition" x-text="option.label"></button>
+                            </template>
+                        </div>
+                        <div x-show="sheetLengthMode === 'custom'" x-cloak class="mt-4">
+                            <label for="custom-sheet-length" class="block text-xs font-semibold mb-2">Custom length (metres)</label>
+                            <input id="custom-sheet-length" type="text" inputmode="decimal" x-model="customLength" @input="customLength = $event.target.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1').slice(0, 7); if (Number(customLength) > 30) customLength = '30'" @blur="if (!validSheetLength) customLength = '0.1'" placeholder="e.g. 2.2" class="w-44 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-600 focus:ring-red-600">
+                            <p x-show="!validSheetLength" class="text-xs text-red-600 mt-2">Enter a length from 0.10 to 30 metres (up to two decimal places).</p>
+                        </div>
+                    </div>
+                @endif
+
                 {{-- Card: Price + variant/bulk selectors --}}
                 <div class="bg-white border border-border rounded-[8px] p-5">
                     <div class="flex items-start justify-between gap-4 flex-wrap">
                         {{-- Left: price info --}}
                         <div>
                             <div class="flex items-baseline flex-wrap gap-2">
-                                <span class="text-2xl md:text-3xl font-extrabold text-secondary" x-text="fmtPrice(displayPrice)">@price($variantMinPrice ?? ($basePrice > 0 ? $basePrice : ($bulkMinPrice ?? 0)))</span>
+                                <span class="text-2xl md:text-3xl font-extrabold text-secondary" x-text="displayPrice === null ? '—' : fmtPrice(displayPrice)">@price($variantMinPrice ?? ($basePrice > 0 ? $basePrice : ($bulkMinPrice ?? 0)))</span>
                                 @if ($product->is_variant && $variantMinPrice !== null && $variantMinPrice != $variantMaxPrice)
                                     <span class="text-xl text-muted font-normal" x-show="showPriceRange"> – </span>
                                     <span class="text-2xl md:text-3xl font-extrabold text-secondary" x-show="showPriceRange" x-text="fmtPrice(variantMaxPrice)">@price($variantMaxPrice)</span>
@@ -341,11 +371,12 @@
                                     <span class="text-xl text-muted font-normal" x-show="showBulkPriceRange"> – </span>
                                     <span class="text-2xl md:text-3xl font-extrabold text-secondary" x-show="showBulkPriceRange" x-text="fmtPrice(bulkMaxPrice)">@price($bulkTiersJson->max('price_per_unit'))</span>
                                 @endif
-                                <span class="text-xs text-muted">per unit</span>
+                                <span class="text-xs text-muted">per sheet</span>
                                 <span class="text-sm text-muted line-through" x-show="(isOnSale || selectedBulkTier) && !showPriceRange && !showBulkPriceRange" x-text="fmtPrice(displayOriginal)"></span>
                                 <span class="text-xs font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded" x-show="isOnSale && !selectedBulkTier && !showPriceRange && !showBulkPriceRange">Save {{ $saleDiscount }}%</span>
                                 <span class="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded flex items-center gap-1" x-show="selectedBulkTier && !showPriceRange"><i class="fas fa-layer-group text-[10px]"></i><span x-text="selectedBulkTier ? 'Bulk: ' + selectedBulkTier.min_quantity + (selectedBulkTier.max_quantity ? '–' + selectedBulkTier.max_quantity : '+') + ' units' : ''"></span></span>
                             </div>
+                            <p x-show="unavailableCombination" x-cloak class="mt-2 text-sm font-medium text-red-600" role="status">This gauge and finish combination is not available. Please choose another finish or gauge.</p>
                             @if ($product->is_variant && $variantMinPrice !== null)
                                 <p class="text-[11px] mt-0.5 text-muted" x-show="showPriceRange">Select options to see exact price</p>
                             @endif
@@ -440,44 +471,27 @@
                     @endif
                 </div>
 
-                {{-- Card: Line total --}}
-                <div class="bg-white border border-border rounded-[8px] p-5">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-[10px] font-bold uppercase tracking-wide text-muted">Line Total</p>
-                            <p class="text-[11px] text-muted" x-text="qty + ' pc' + (qty > 1 ? 's' : '')"></p>
-                        </div>
-                        <p class="text-lg font-extrabold text-secondary" x-text="fmtPrice(displayPrice * qty)"></p>
-                    </div>
-                </div>
-
-                {{-- Actions: Add to Cart + Order on WhatsApp --}}
+                {{-- Shopping cart and quotation are separate baskets. --}}
                 <div class="flex flex-col sm:flex-row gap-3">
                     <template x-if="!isInCart">
-                        <button type="button"
-                            @click="addToCart"
-                            :disabled="addingToCart || ({{ $product->is_variant ? 'true' : 'false' }} && !activeVariant)"
-                            :class="({{ $product->is_variant ? 'true' : 'false' }} && !activeVariant) || addingToCart ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'"
-                            class="flex-1 flex items-center justify-center gap-2 bg-secondary text-white font-bold text-sm rounded-[8px] py-3.5 transition shadow-sm">
-                            <i class="fas fa-cart-plus" x-show="!addingToCart"></i>
-                            <i class="fas fa-spinner fa-spin" x-show="addingToCart"></i>
+                        <button type="button" @click="addToCart()"
+                            :disabled="addingToCart || unavailableCombination || ({{ $product->allow_custom_length ? 'true' : 'false' }} && !validSheetLength) || ({{ $product->is_variant ? 'true' : 'false' }} && !activeVariant)"
+                            class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-3.5 text-sm font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">
+                            <i class="fas fa-shopping-cart" aria-hidden="true"></i>
                             <span x-text="addingToCart ? 'Adding...' : 'Add to Cart'"></span>
                         </button>
                     </template>
                     <template x-if="isInCart">
                         <a href="{{ route('frontend.cart') }}"
-                           class="flex-1 flex items-center justify-center gap-2 bg-secondary text-white font-bold text-sm rounded-[8px] py-3.5 transition shadow-sm hover:opacity-90">
-                            <i class="fas fa-shopping-cart"></i> View Cart
+                            class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-3.5 text-sm font-bold text-white transition hover:bg-red-700">
+                            <i class="fas fa-shopping-cart" aria-hidden="true"></i> View Cart
                         </a>
                     </template>
-
-                    <a :href="`https://wa.me/{{ $whatsappNumber ?? '' }}?text=` + encodeURIComponent(
-                            `Hi, I'd like to order:\n\n*{{ $product->name }}*\nQuantity: ${qty}\nPrice: ${fmtPrice(displayPrice)} each\nTotal: ${fmtPrice(displayPrice * qty)}\n\nLink: {{ $pUrl ?? url()->current() }}`
-                        )"
-                       target="_blank" rel="noopener"
-                       class="flex-1 flex items-center justify-center gap-2 border-2 border-green-500 text-green-600 font-bold text-sm rounded-[8px] py-3 transition hover:bg-green-500 hover:text-white">
-                        <i class="fab fa-whatsapp text-base"></i> Order on WhatsApp
-                    </a>
+                    <button type="button" @click="addToQuote()"
+                        :disabled="addingToCart || unavailableCombination || ({{ $product->allow_custom_length ? 'true' : 'false' }} && !validSheetLength) || ({{ $product->is_variant ? 'true' : 'false' }} && !activeVariant)"
+                        class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border-2 border-red-600 px-4 py-3.5 text-sm font-bold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50">
+                        <i class="fas fa-file-invoice" aria-hidden="true"></i> Get a Quote
+                    </button>
                 </div>
 
                 {{-- Wishlist + Share --}}
@@ -493,8 +507,7 @@
         <div id="product-tabs" class="bg-white border border-border rounded-[12px] overflow-hidden">
             <div class="flex overflow-x-auto border-b border-border">
                 <button @click="activeTab = 'description'" class="flex-shrink-0 px-5 py-3.5 text-xs font-semibold transition border-b-2" :class="activeTab === 'description' ? 'border-primary text-primary' : 'border-transparent text-muted hover:text-text'">Description</button>
-                <button @click="activeTab = 'specs'" class="flex-shrink-0 px-5 py-3.5 text-xs font-semibold transition border-b-2" :class="activeTab === 'specs' ? 'border-primary text-primary' : 'border-transparent text-muted hover:text-text'">Specifications</button>
-                <button @click="activeTab = 'reviews'" class="flex-shrink-0 px-5 py-3.5 text-xs font-semibold transition border-b-2" :class="activeTab === 'reviews' ? 'border-primary text-primary' : 'border-transparent text-muted hover:text-text'">Reviews @if ($reviewCount > 0)<span class="ml-1 bg-primary text-white text-[10px] px-1.5 py-0.5 rounded-[12px]">{{ $reviewCount }}</span>@endif</button>
+                <button @click="activeTab = 'benefits'" class="flex-shrink-0 px-5 py-3.5 text-xs font-semibold transition border-b-2" :class="activeTab === 'benefits' ? 'border-primary text-primary' : 'border-transparent text-muted hover:text-text'">Features &amp; Benefits</button>
             </div>
             <div class="p-6">
                 {{-- Tab: Description --}}
@@ -510,94 +523,10 @@
                     @endif
                 </div>
 
-                {{-- Tab: Specifications --}}
-                <div x-show="activeTab === 'specs'" x-transition>
-                    @php
-                        $specs = array_filter([
-                            'SKU' => $product->sku,
-                            'Condition' => $product->condition ? ucfirst($product->condition) : null,
-                            'Brand' => $product->brand?->name,
-                            'Category' => $product->category?->name,
-                            'Weight' => $product->weight ? "{$product->weight} kg" : null,
-                            'Length' => $product->length ? "{$product->length} cm" : null,
-                            'Width' => $product->width ? "{$product->width} cm" : null,
-                            'Height' => $product->height ? "{$product->height} cm" : null,
-                            'Currency' => $product->currency,
-                            'VAT' => $product->is_vat_exempt ? 'Exempt' : 'Applicable',
-                        ]);
-                    @endphp
-                    @if (count($specs))
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                            @foreach ($specs as $label => $value)
-                                <div class="flex items-center justify-between bg-gray-50 rounded-[8px] px-4 py-2.5">
-                                    <span class="text-xs text-muted font-medium">{{ $label }}</span>
-                                    <span class="text-xs text-text font-semibold">{{ $value }}</span>
-                                </div>
-                            @endforeach
-                            @if ($product->condition_notes)
-                                <div class="sm:col-span-2 bg-gray-50 rounded-[8px] px-4 py-2.5">
-                                    <p class="text-xs text-muted font-medium mb-1">Condition Notes</p>
-                                    <p class="text-xs text-text">{{ $product->condition_notes }}</p>
-                                </div>
-                            @endif
-                        </div>
-                    @else
-                        <p class="text-sm text-muted italic">No specifications available.</p>
-                    @endif
-                </div>
-
-                {{-- Tab: Reviews --}}
-                <div x-show="activeTab === 'reviews'" x-transition id="reviews">
-                    <div class="flex flex-col sm:flex-row items-start gap-6 mb-6">
-                        <div class="flex flex-col items-center justify-center bg-gray-50 rounded-[12px] px-8 py-5 flex-shrink-0">
-                            <p class="text-4xl font-extrabold text-text">{{ number_format($avgRating, 1) }}</p>
-                            <div class="flex items-center gap-0.5 mt-1">
-                                @for ($i = 1; $i <= 5; $i++)
-                                    <i class="fas fa-star text-sm {{ $i <= round($avgRating) ? 'text-yellow-400' : 'text-gray-200' }}"></i>
-                                @endfor
-                            </div>
-                            <p class="text-xs text-muted mt-1">{{ $reviewCount }} {{ Str::plural('review', $reviewCount) }}</p>
-                        </div>
-                        <div class="flex-1 space-y-2 w-full pt-1">
-                            @for ($star = 5; $star >= 1; $star--)
-                                @php
-                                    $starCount = $approvedReviews->where('rating', $star)->count();
-                                    $pct = $reviewCount ? round($starCount / $reviewCount * 100) : 0;
-                                @endphp
-                                <div class="flex items-center gap-2">
-                                    <span class="text-xs text-muted w-10 flex-shrink-0">{{ $star }} <i class="fas fa-star text-yellow-400 text-[10px]"></i></span>
-                                    <div class="flex-1 bg-gray-100 rounded-[12px] h-2 overflow-hidden">
-                                        <div class="bg-yellow-400 h-2 rounded-[12px] transition-all" style="width: {{ $pct }}%"></div>
-                                    </div>
-                                    <span class="text-xs text-muted w-6 text-right flex-shrink-0">{{ $starCount }}</span>
-                                </div>
-                            @endfor
-                        </div>
+                <div x-show="activeTab === 'benefits'" x-transition>
+                    <div class="text-sm text-gray-700 leading-relaxed">
+                        <p>Contact Trinity Mabati Factory for this product's features and benefits.</p>
                     </div>
-                    @forelse ($approvedReviews->take(8) as $review)
-                        <div class="border-t border-border py-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-8 h-8 rounded-[12px] bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                        <i class="fas fa-user text-primary text-xs"></i>
-                                    </div>
-                                    <span class="text-xs font-semibold text-text">{{ $review->user->first_name ?? 'Customer' }}</span>
-                                    <span class="text-[10px] text-muted">{{ $review->created_at->diffForHumans() }}</span>
-                                </div>
-                                <div class="flex items-center gap-0.5">
-                                    @for ($i = 1; $i <= 5; $i++)
-                                        <i class="fas fa-star text-[10px] {{ $i <= $review->rating ? 'text-yellow-400' : 'text-gray-200' }}"></i>
-                                    @endfor
-                                </div>
-                            </div>
-                            <p class="text-xs text-gray-600 leading-relaxed pl-10">{{ $review->comment }}</p>
-                        </div>
-                    @empty
-                        <div class="text-center py-10">
-                            <i class="fas fa-comment-alt text-4xl text-gray-200 mb-3"></i>
-                            <p class="text-sm text-muted">No reviews yet for this product.</p>
-                        </div>
-                    @endforelse
                 </div>
 
             </div>

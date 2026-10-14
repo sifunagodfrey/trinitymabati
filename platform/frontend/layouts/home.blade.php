@@ -44,7 +44,8 @@
 <body class="bg-background text-text flex flex-col min-h-screen">
 
     {{-- Header (fixed, transparent over hero) --}}
-    @include('frontend.partials.home-header')
+    @include('frontend.partials.topbar')
+    @include('frontend.partials.header')
 
     {{-- Page Content --}}
     <main class="storefront-main flex-1">

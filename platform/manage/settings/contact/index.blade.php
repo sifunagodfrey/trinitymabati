@@ -69,6 +69,28 @@
             </div>
         </div>
 
+        <div class="bg-background border border-border rounded-[12px] p-6 shadow-sm mb-6">
+            <h2 class="text-lg font-semibold text-black mb-1">Branch Contacts</h2>
+            <p class="mb-5 text-sm text-muted">Manage the two branch names and phone numbers displayed on the Contact Us page.</p>
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                @foreach (['nairobi' => 'Nairobi Branch', 'migori' => 'Migori Branch'] as $branchKey => $branchTitle)
+                    <fieldset class="min-w-0 rounded-lg border border-border p-4">
+                        <legend class="px-2 text-sm font-semibold text-black">{{ $branchTitle }}</legend>
+                        @foreach (['name', 'address', 'phone'] as $part)
+                            @php $key = 'branch_' . $branchKey . '_' . $part; @endphp
+                            <div class="mb-4 last:mb-0">
+                                <label for="{{ $key }}" class="mb-1 block text-sm font-medium text-black">{{ $fields[$key]['label'] }}</label>
+                                <input type="text" id="{{ $key }}" name="{{ $key }}" required
+                                    value="{{ old($key, $fields[$key]['value']) }}"
+                                    class="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm focus:border-primary focus:ring-primary">
+                                <p class="mt-1 text-xs text-muted">{{ $fields[$key]['help'] }}</p>
+                            </div>
+                        @endforeach
+                    </fieldset>
+                @endforeach
+            </div>
+        </div>
+
         {{-- ---------------
         -- Social Media Links
         -- --------------- --}}

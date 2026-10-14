@@ -14,7 +14,7 @@
 
         <div class="absolute inset-0 bg-gradient-to-r from-primary via-primary/90 to-secondary"></div>
 
-        <div class="relative max-w-7xl mx-auto px-6 text-center text-white">
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
 
             <h1 class="text-3xl md:text-4xl font-bold mb-4">Privacy Policy</h1>
 

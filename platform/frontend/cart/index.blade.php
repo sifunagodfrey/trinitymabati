@@ -5,7 +5,7 @@
 @section('content')
 
     <section class="py-10 bg-gray-50 min-h-screen">
-        <div class="max-w-7xl mx-auto px-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
             {{-- ---------------
             -- Page Heading
@@ -83,6 +83,9 @@
                                             <div class="flex items-start justify-between gap-3">
                                                 <div>
                                                     <h3 class="font-semibold text-gray-900">{{ $item->product->name }}</h3>
+                                                    @if ($item->sheet_length_m ?? null)
+                                                        <p class="text-xs text-gray-600">Sheet length: {{ number_format($item->sheet_length_m, 2) }} m</p>
+                                                    @endif
                                                     @if ($item->variant)
                                                         <p class="text-xs text-gray-400 mt-0.5">
                                                             <i class="fas fa-tag mr-1"></i> {{ $item->variant->variant_code }}

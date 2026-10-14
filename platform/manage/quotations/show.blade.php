@@ -21,7 +21,7 @@
                 <p class="text-sm text-muted">Created {{ $quotation->created_at->format('d M Y, H:i') }}</p>
             </div>
             <div class="flex items-center gap-2">
-                @if ($quotation->status !== 'converted' && auth()->user()->hasPermission('manage_quotations'))
+                @if ($quotation->user_id && $quotation->status !== 'converted' && auth()->user()->hasPermission('manage_quotations'))
                     <form method="POST" action="{{ route('manage.quotations.convert', $quotation->id) }}"
                         onsubmit="return confirm('Convert this quotation into a real order?')">
                         @csrf
@@ -151,10 +151,10 @@
             <div class="bg-background border border-border rounded-[12px] p-6 shadow-sm">
                 <h2 class="text-base font-semibold text-black mb-4">Customer</h2>
                 <p class="text-sm text-black font-medium">
-                    {{ trim(($quotation->customer->first_name ?? '') . ' ' . ($quotation->customer->last_name ?? '')) ?: '—' }}
+                    {{ trim(($quotation->customer_first_name ?? $quotation->customer->first_name ?? '') . ' ' . ($quotation->customer_last_name ?? $quotation->customer->last_name ?? '')) ?: '—' }}
                 </p>
-                <p class="text-sm text-muted">{{ $quotation->customer->email ?? '' }}</p>
-                <p class="text-sm text-muted">{{ $quotation->customer->phone ?? '' }}</p>
+                <p class="text-sm text-muted">{{ $quotation->customer_email ?? $quotation->customer->email ?? '' }}</p>
+                <p class="text-sm text-muted">{{ $quotation->customer_phone ?? $quotation->customer->phone ?? '' }}</p>
             </div>
 
             @if ($quotation->preparedBy)

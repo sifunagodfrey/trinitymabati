@@ -11,7 +11,7 @@
     -- Breadcrumb
     -- --------------- --}}
     <div class="bg-gray-50 border-b border-border">
-        <div class="max-w-7xl mx-auto px-4 py-2.5 text-xs text-gray-500 flex items-center gap-2">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 text-xs text-gray-500 flex items-center gap-2">
             <a href="{{ route('frontend.home') }}" class="hover:text-primary transition">Home</a>
             <i class="fas fa-chevron-right text-gray-300 text-[10px]"></i>
             <span class="text-gray-800 font-medium">Blog</span>
@@ -63,7 +63,7 @@
         -- Page Header (when featured hero not shown)
         -- --------------- --}}
         <div class="bg-primary/5 border-b border-border py-10">
-            <div class="max-w-7xl mx-auto px-4 text-center">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                 <h1 class="text-3xl font-bold text-gray-900 mb-2">Trinity Mabati Factory Blog</h1>
                 <p class="text-gray-500 text-sm max-w-xl mx-auto">
                     News, guides, and wellness tips and updates from the Trinity Mabati Factory team.
@@ -72,7 +72,7 @@
         </div>
     @endif
 
-    <div class="max-w-7xl mx-auto px-4 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         {{-- ---------------
         -- Search + Category Filter Bar

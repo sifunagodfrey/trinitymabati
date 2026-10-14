@@ -189,8 +189,8 @@
         @endif
 
         {{-- CONTENT – uses manage_categories as proxy --}}
-        @if ($user->hasPermission('manage_categories'))
-            @php $isContent = request()->routeIs('manage.content.*'); @endphp
+        @if ($user->hasPermission('manage_pages'))
+            @php $isContent = (request()->routeIs('manage.content.*')); @endphp
             <div x-data="menuState('content', {{ $isContent ? 'true' : 'false' }})" x-init="init()">
                 <button @click="toggle()" class="{{ $isContent ? $navActive : $navLink }}">
                     <div class="flex items-center gap-3">
@@ -207,6 +207,8 @@
                             class="fas fa-file-alt w-3.5 text-primary"></i> Pages</a>
                     <a href="{{ route('manage.content.faqs.index') }}" class="{{ $subLink }}"><i
                             class="fas fa-circle-question w-3.5 text-info"></i> FAQs</a>
+                    <a href="{{ route('manage.content.client-stories.index', 'testimonials') }}" class="{{ $subLink }}"><i class="fas fa-quote-left w-3.5"></i> Client Testimonials</a>
+                    <a href="{{ route('manage.content.client-stories.index', 'projects') }}" class="{{ $subLink }}"><i class="fas fa-helmet-safety w-3.5"></i> Client Projects</a>
                 </div>
             </div>
         @endif

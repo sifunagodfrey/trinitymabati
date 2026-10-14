@@ -30,6 +30,9 @@ class QuotationsController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('quotation_code', 'like', "%{$search}%")
+                    ->orWhere('customer_first_name', 'like', "%{$search}%")
+                    ->orWhere('customer_last_name', 'like', "%{$search}%")
+                    ->orWhere('customer_phone', 'like', "%{$search}%")
                     ->orWhereHas('customer', function ($c) use ($search) {
                         $c->where('first_name', 'like', "%{$search}%")
                             ->orWhere('last_name', 'like', "%{$search}%")
@@ -137,6 +140,10 @@ class QuotationsController extends Controller
     public function convert(string $id)
     {
         $quotation = Quotation::with('items')->findOrFail($id);
+
+        if (!$quotation->user_id) {
+            return redirect()->back()->with('error', 'Guest quotation: link the customer to an account before converting to an order.');
+        }
 
         if ($quotation->converted_order_id) {
             return redirect()->back()->with('error', 'This quotation was already converted to an order.');

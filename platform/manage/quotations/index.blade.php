@@ -87,7 +87,7 @@
                         <tr class="hover:bg-slate-50 transition">
                             <td class="px-5 py-3 text-black font-medium">{{ $quotation->quotation_code }}</td>
                             <td class="px-5 py-3 text-black">
-                                {{ trim(($quotation->customer->first_name ?? '') . ' ' . ($quotation->customer->last_name ?? '')) ?: '—' }}
+                                {{ trim(($quotation->customer_first_name ?? $quotation->customer->first_name ?? '') . ' ' . ($quotation->customer_last_name ?? $quotation->customer->last_name ?? '')) ?: '—' }}
                             </td>
                             <td class="px-5 py-3 text-muted">
                                 {{ trim(($quotation->preparedBy->first_name ?? '') . ' ' . ($quotation->preparedBy->last_name ?? '')) ?: '—' }}

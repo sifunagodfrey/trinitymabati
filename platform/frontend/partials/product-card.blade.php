@@ -46,6 +46,14 @@
         }
     }
 
+    if (!is_array($product) && $product->allow_custom_length) {
+        $metres = (float) ($product->default_length_m ?? 3);
+        $pSelling *= $metres;
+        $pMinSell *= $metres;
+        $pMaxSell *= $metres;
+        if ($pStrike !== null) $pStrike *= $metres;
+    }
+
     $pDiscount =
         $pStrike && $pSelling && $pStrike > $pSelling ? round((($pStrike - $pSelling) / $pStrike) * 100) : null;
 
@@ -61,7 +69,7 @@
 @endphp
 
 <a href="{{ $pUrl }}"
-    class="group block bg-white border border-border overflow-hidden  rounded-[8px] 
+    class="group flex h-full flex-col bg-white border border-border overflow-hidden rounded-lg 
           hover:shadow-md hover:border-primary/40 transition-all duration-300 relative">
 
     {{-- Badges: flat rectangles, top-left, stacked --}}
@@ -93,13 +101,13 @@
     </span>
 
     {{-- Info --}}
-    <span class="block p-3 sm:p-4 border-t border-border">
-        <span class="block text-xs sm:text-sm font-bold text-text leading-snug truncate whitespace-nowrap sm:whitespace-normal sm:line-clamp-2"
+    <span class="flex min-h-[112px] flex-1 flex-col border-t border-border p-3 sm:min-h-[124px] sm:p-4">
+        <span class="block min-h-[2.5rem] overflow-hidden text-ellipsis text-xs font-bold leading-snug text-text line-clamp-2 sm:text-sm"
             style="font-family: var(--font-heading);" title="{{ $pName }}">
             {{ $pName }}
         </span>
 
-        <span class="flex items-baseline gap-2 mt-1.5 sm:mt-2">
+        <span class="mt-auto flex items-baseline gap-2 pt-2">
             <span class="text-sm sm:text-base font-extrabold text-secondary truncate whitespace-nowrap" style="font-family: var(--font-heading);">
                 @if ($pIsVariant && $pMinSell !== $pMaxSell)
                     @price($pMinSell) - @price($pMaxSell)
@@ -107,6 +115,9 @@
                     @price($pSelling)
                 @endif
             </span>
+            @if (!is_array($product) && $product->allow_custom_length)
+                <span class="text-xs text-muted">/ {{ $product->default_length_m ?? 3 }} m sheet</span>
+            @endif
             @if ($pStrike)
                 <span class="text-[10px] sm:text-xs text-muted line-through truncate whitespace-nowrap">@price($pStrike)</span>
             @endif

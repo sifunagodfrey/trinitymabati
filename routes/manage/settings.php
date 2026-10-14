@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Manage\Settings\CurrencyController;
 use App\Http\Controllers\Manage\Settings\EmailController;
 use App\Http\Controllers\Manage\Settings\OptimizationController;
 use App\Http\Controllers\Manage\Settings\VatController;
@@ -35,13 +34,6 @@ Route::middleware(['auth'])
                 Route::post('/', [EmailController::class, 'update'])->name('update');
             });
 
-            // ---------------
-            // Currency Settings
-            // ---------------
-            Route::prefix('currency')->as('currency.')->group(function () {
-                Route::get('/', [CurrencyController::class, 'index'])->name('index');
-                Route::post('/', [CurrencyController::class, 'update'])->name('update');
-            });
 
             // ---------------
             // Login Security Settings

@@ -23,6 +23,7 @@ class CartItem extends Model
         return [
             'quantity'      => 'integer',
             'price_at_time' => 'float',
+            'sheet_length_m' => 'float',
             'weight'        => 'float',
             'length'        => 'float',
             'width'         => 'float',

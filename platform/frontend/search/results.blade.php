@@ -8,14 +8,14 @@
     -- Breadcrumb
     -- --------------- --}}
     <div class="bg-gray-50 border-b border-border">
-        <div class="max-w-7xl mx-auto px-4 py-2.5 text-xs text-gray-500 flex items-center gap-2">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 text-xs text-gray-500 flex items-center gap-2">
             <a href="{{ route('frontend.home') }}" class="hover:text-primary transition">Home</a>
             <i class="fas fa-chevron-right text-gray-300 text-[10px]"></i>
             <span class="text-gray-800 font-medium">Search Results</span>
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 py-6"
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6"
          x-data="{ showFilters: false }">
 
         {{-- ---------------

@@ -18,6 +18,10 @@ class Product extends Model
     {
         return [
             'is_variant'      => 'boolean',
+            'allow_custom_length' => 'boolean',
+            'default_length_m' => 'decimal:2',
+            'default_gauge' => 'string',
+            'default_finish' => 'string',
             'is_active'       => 'boolean',
             'is_vat_exempt'   => 'boolean',
             'price'           => 'decimal:2',

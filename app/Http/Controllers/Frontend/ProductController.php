@@ -263,6 +263,7 @@ class ProductController extends Controller
                     $cartItems[] = [
                         'product_id' => $item->product_id,
                         'variant_id' => $item->variant_id,
+                        'sheet_length_m' => $item->sheet_length_m,
                     ];
                 }
             }
@@ -272,6 +273,7 @@ class ProductController extends Controller
                 $cartItems[] = [
                     'product_id' => $item['product_id'],
                     'variant_id' => $item['variant_id'] ?? null,
+                    'sheet_length_m' => $item['sheet_length_m'] ?? null,
                 ];
             }
         }

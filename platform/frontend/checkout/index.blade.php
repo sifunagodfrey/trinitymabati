@@ -5,7 +5,7 @@
 @section('content')
 
     <section class="py-10 bg-gray-50 min-h-screen">
-        <div class="max-w-7xl mx-auto px-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
             {{-- Page Heading --}}
             <div class="mb-6">
