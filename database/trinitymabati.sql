@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 13, 2026 at 07:57 AM
+-- Generation Time: Oct 14, 2026 at 08:12 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -39,7 +39,17 @@ CREATE TABLE `migrations` (
 
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (1, '2026_09_22_162053_add_foreign_keys_to_su_product_label_table', 1),
-(2, '2026_09_26_060639_add_default_uncategorized_product_category', 2);
+(2, '2026_09_26_060639_add_default_uncategorized_product_category', 2),
+(3, '2026_09_28_115518_add_is_default_to_su_product_categories_table', 3),
+(4, '2026_10_13_110000_add_product_default_variant_options', 3),
+(5, '2026_10_13_103000_seed_stone_coated_shingle_roofing_tiles', 4),
+(6, '2026_10_13_113000_seed_stone_coated_classic_roofing_tiles', 5),
+(7, '2026_10_13_120000_seed_stone_coated_roman_roofing_tiles', 6),
+(8, '2026_10_13_123000_seed_box_profile_four_products', 7),
+(9, '2026_10_13_130000_add_box_profile_tile_red_28g_glossy_variant', 8),
+(10, '2026_10_13_130000_seed_corrugated_roofing_sheets', 9),
+(11, '2026_10_13_160000_create_client_testimonials_and_projects', 10),
+(12, '2026_10_13_150000_allow_guest_quotation_requests', 11);
 
 -- --------------------------------------------------------
 
@@ -62,7 +72,7 @@ CREATE TABLE `su_abandoned_carts` (
 --
 
 INSERT INTO `su_abandoned_carts` (`id`, `user_id`, `cart_data`, `last_updated`, `recovered`, `reminder_sent`, `created_at`) VALUES
-(3, 2, '{\"total\":350,\"total_items\":1,\"items\":[{\"product_id\":109,\"product_name\":\"A4 Counter Book (4 Quire)\",\"quantity\":1,\"price\":350,\"subtotal\":350}]}', '2026-09-28 08:59:34', 0, 0, '2026-09-22 15:16:12'),
+(3, 2, '{\"total\":350,\"total_items\":1,\"items\":[{\"product_id\":109,\"product_name\":\"A4 Counter Book (4 Quire)\",\"quantity\":1,\"price\":350,\"subtotal\":350}]}', '2026-10-13 18:48:27', 0, 0, '2026-09-22 15:16:12'),
 (5, 1, '{\"total\":1150,\"total_items\":8,\"items\":[{\"product_id\":98,\"product_name\":\"Blue Gel Pens\",\"quantity\":7,\"price\":100,\"subtotal\":700},{\"product_id\":95,\"product_name\":\"Desktop Calculator\",\"quantity\":1,\"price\":450,\"subtotal\":450}]}', '2026-09-26 09:03:49', 0, 0, '2026-09-25 16:27:36');
 
 -- --------------------------------------------------------
@@ -214,7 +224,52 @@ CREATE TABLE `su_cart_items` (
   `height` float DEFAULT 0,
   `weight` float DEFAULT 0,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `sheet_length_m` decimal(5,2) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `su_client_projects`
+--
+
+CREATE TABLE `su_client_projects` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `slug` varchar(255) NOT NULL,
+  `location` varchar(160) DEFAULT NULL,
+  `roofing_profile` varchar(160) DEFAULT NULL,
+  `completion_date` date DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `cover_image` varchar(255) DEFAULT NULL,
+  `gallery` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`gallery`)),
+  `is_published` tinyint(1) NOT NULL DEFAULT 0,
+  `is_featured` tinyint(1) NOT NULL DEFAULT 0,
+  `sort_order` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `su_client_testimonials`
+--
+
+CREATE TABLE `su_client_testimonials` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `client_name` varchar(160) NOT NULL,
+  `location` varchar(160) DEFAULT NULL,
+  `role` varchar(160) DEFAULT NULL,
+  `testimonial` text NOT NULL,
+  `rating` tinyint(3) UNSIGNED NOT NULL DEFAULT 5,
+  `photo` varchar(255) DEFAULT NULL,
+  `is_published` tinyint(1) NOT NULL DEFAULT 0,
+  `is_featured` tinyint(1) NOT NULL DEFAULT 0,
+  `sort_order` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1023,7 +1078,7 @@ CREATE TABLE `su_products` (
   `name` varchar(255) NOT NULL,
   `slug` varchar(255) NOT NULL,
   `brand_id` int(10) UNSIGNED DEFAULT NULL,
-  `category_id` int(10) UNSIGNED DEFAULT 17,
+  `category_id` int(10) UNSIGNED,
   `label_id` int(10) UNSIGNED DEFAULT NULL,
   `sku` varchar(100) DEFAULT NULL,
   `price` decimal(12,2) DEFAULT NULL,
@@ -1047,8 +1102,57 @@ CREATE TABLE `su_products` (
   `detailed_description` text DEFAULT NULL,
   `views` int(11) NOT NULL DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `allow_custom_length` tinyint(1) NOT NULL DEFAULT 0,
+  `default_length_m` decimal(6,2) NOT NULL DEFAULT 3.00,
+  `min_length_m` decimal(6,2) NOT NULL DEFAULT 0.10,
+  `max_length_m` decimal(6,2) NOT NULL DEFAULT 30.00,
+  `default_gauge` varchar(100) DEFAULT NULL,
+  `default_finish` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `su_products`
+--
+
+INSERT INTO `su_products` (`id`, `name`, `slug`, `brand_id`, `category_id`, `label_id`, `sku`, `price`, `sale_price`, `cost_price`, `original_price`, `currency`, `stock_quantity`, `low_stock_threshold`, `is_variant`, `weight`, `length`, `width`, `height`, `condition`, `condition_notes`, `is_vat_exempt`, `is_active`, `thumbnail`, `short_description`, `detailed_description`, `views`, `created_at`, `updated_at`, `allow_custom_length`, `default_length_m`, `min_length_m`, `max_length_m`, `default_gauge`, `default_finish`) VALUES
+(212, 'Trinity Versatile Roofing Sheet - Tile Red', 'trinity-versatile-roofing-sheet-tile-red', NULL, 22, NULL, 'TV-TILE-RED', 650.00, NULL, NULL, NULL, 'KES', 200, 5, 1, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, NULL, 'Trinity Versatile metal roofing sheet in Tile Red.', '<h3>Trinity Versatile Metal Roofing Sheet</h3><p><strong>Trinity Versatile</strong> is a high-quality steel roofing sheet that replicates the appearance of traditional roof tiles while offering superior longevity. As Kenya\'s most established painted steel tile product, it has earned a reputation for delivering attractive, affordable roofing solutions to countless customers.</p><p>A <strong>Trinity Versatile</strong> Roof delivers exceptional aesthetics, long-lasting performance, and value for money.</p><p>Known for its attractive appearance and robust construction, it leads the residential steel tile roofing market across Kenya.</p><p>Offered in both <strong>Glossy</strong> and <strong>Matte</strong> finishes.</p>', 0, '2026-10-13 06:43:02', '2026-10-13 06:46:43', 0, 3.00, 0.10, 30.00, NULL, NULL),
+(213, 'Trinity Versatile Roofing Sheet - Maroon', 'trinity-versatile-roofing-sheet-maroon', NULL, 22, NULL, 'TV-MAROON', 650.00, NULL, NULL, NULL, 'KES', 200, 5, 1, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, NULL, 'Trinity Versatile metal roofing sheet in Maroon.', '<h3>Trinity Versatile Metal Roofing Sheet</h3><p><strong>Trinity Versatile</strong> is a high-quality steel roofing sheet that replicates the appearance of traditional roof tiles while offering superior longevity. As Kenya\'s most established painted steel tile product, it has earned a reputation for delivering attractive, affordable roofing solutions to countless customers.</p><p>A <strong>Trinity Versatile</strong> Roof delivers exceptional aesthetics, long-lasting performance, and value for money.</p><p>Known for its attractive appearance and robust construction, it leads the residential steel tile roofing market across Kenya.</p><p>Offered in both <strong>Glossy</strong> and <strong>Matte</strong> finishes.</p>', 0, '2026-10-13 06:43:02', '2026-10-13 06:46:43', 0, 3.00, 0.10, 30.00, NULL, NULL),
+(214, 'Trinity Versatile Roofing Sheet - Forest Green', 'trinity-versatile-roofing-sheet-forest-green', NULL, 22, NULL, 'TV-FOREST-GREEN', 650.00, NULL, NULL, NULL, 'KES', 200, 5, 1, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, NULL, 'Trinity Versatile metal roofing sheet in Forest Green.', '<h3>Trinity Versatile Metal Roofing Sheet</h3><p><strong>Trinity Versatile</strong> is a high-quality steel roofing sheet that replicates the appearance of traditional roof tiles while offering superior longevity. As Kenya\'s most established painted steel tile product, it has earned a reputation for delivering attractive, affordable roofing solutions to countless customers.</p><p>A <strong>Trinity Versatile</strong> Roof delivers exceptional aesthetics, long-lasting performance, and value for money.</p><p>Known for its attractive appearance and robust construction, it leads the residential steel tile roofing market across Kenya.</p><p>Offered in both <strong>Glossy</strong> and <strong>Matte</strong> finishes.</p>', 0, '2026-10-13 06:43:02', '2026-10-13 06:46:43', 0, 3.00, 0.10, 30.00, NULL, NULL),
+(215, 'Trinity Versatile Roofing Sheet - Maasai Red', 'trinity-versatile-roofing-sheet-maasai-red', NULL, 22, NULL, 'TV-MAASAI-RED', 650.00, NULL, NULL, NULL, 'KES', 200, 5, 1, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, NULL, 'Trinity Versatile metal roofing sheet in Maasai Red.', '<h3>Trinity Versatile Metal Roofing Sheet</h3><p><strong>Trinity Versatile</strong> is a high-quality steel roofing sheet that replicates the appearance of traditional roof tiles while offering superior longevity. As Kenya\'s most established painted steel tile product, it has earned a reputation for delivering attractive, affordable roofing solutions to countless customers.</p><p>A <strong>Trinity Versatile</strong> Roof delivers exceptional aesthetics, long-lasting performance, and value for money.</p><p>Known for its attractive appearance and robust construction, it leads the residential steel tile roofing market across Kenya.</p><p>Offered in both <strong>Glossy</strong> and <strong>Matte</strong> finishes.</p>', 0, '2026-10-13 06:43:02', '2026-10-13 06:46:43', 0, 3.00, 0.10, 30.00, NULL, NULL),
+(216, 'Trinity Versatile Roofing Sheet - Chocolate Brown', 'trinity-versatile-roofing-sheet-chocolate-brown', NULL, 22, NULL, 'TV-CHOCOLATE-BROWN', 650.00, NULL, NULL, NULL, 'KES', 200, 5, 1, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, NULL, 'Trinity Versatile metal roofing sheet in Chocolate Brown.', '<h3>Trinity Versatile Metal Roofing Sheet</h3><p><strong>Trinity Versatile</strong> is a high-quality steel roofing sheet that replicates the appearance of traditional roof tiles while offering superior longevity. As Kenya\'s most established painted steel tile product, it has earned a reputation for delivering attractive, affordable roofing solutions to countless customers.</p><p>A <strong>Trinity Versatile</strong> Roof delivers exceptional aesthetics, long-lasting performance, and value for money.</p><p>Known for its attractive appearance and robust construction, it leads the residential steel tile roofing market across Kenya.</p><p>Offered in both <strong>Glossy</strong> and <strong>Matte</strong> finishes.</p>', 0, '2026-10-13 06:43:02', '2026-10-13 06:46:43', 0, 3.00, 0.10, 30.00, NULL, NULL),
+(217, 'Trinity Versatile Roofing Sheet - Charcoal Grey', 'trinity-versatile-roofing-sheet-charcoal-grey', NULL, 22, NULL, 'TV-CHARCOAL-GREY', 650.00, NULL, NULL, NULL, 'KES', 200, 5, 1, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, NULL, 'Trinity Versatile metal roofing sheet in Charcoal Grey.', '<h3>Trinity Versatile Metal Roofing Sheet</h3><p><strong>Trinity Versatile</strong> is a high-quality steel roofing sheet that replicates the appearance of traditional roof tiles while offering superior longevity. As Kenya\'s most established painted steel tile product, it has earned a reputation for delivering attractive, affordable roofing solutions to countless customers.</p><p>A <strong>Trinity Versatile</strong> Roof delivers exceptional aesthetics, long-lasting performance, and value for money.</p><p>Known for its attractive appearance and robust construction, it leads the residential steel tile roofing market across Kenya.</p><p>Offered in both <strong>Glossy</strong> and <strong>Matte</strong> finishes.</p>', 0, '2026-10-13 06:43:02', '2026-10-13 06:46:43', 0, 3.00, 0.10, 30.00, NULL, NULL),
+(225, 'Trinity Orientile Roofing Sheet - Charcoal Grey', 'trinity-orientile-roofing-sheet-charcoal-grey', NULL, 24, NULL, 'TO-CHARCOAL-GREY', 650.00, NULL, NULL, NULL, 'KES', 200, 5, 1, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, NULL, 'Trinity Orientile roofing sheet in Charcoal Grey.', '<h3>Trinity Orientile Metal Roofing Sheet</h3><p>Trinity Orientile Roofing Sheets are a highly recognizable and popular premium roofing solution in Kenya, distinguished by their unique, gently curved profile that skillfully mimics the look of traditional barrel tiles while retaining the lightweight and structural benefits of metal.</p><p>Highly favored in upscale residential and commercial developments, Orientile is celebrated for its exceptional visual appeal, lending a flowing, elegant aesthetic to any structure.</p><p>Fabricated from high-grade, pre-painted alu-zinc steel, this profile is expertly engineered for optimal rainwater runoff and boasts superior noise-dampening qualities compared to basic mabati, offering a stylish, long-lasting, and value-adding alternative that combines beauty and resilience.</p>', 0, '2026-10-13 06:55:23', '2026-10-13 06:58:32', 0, 3.00, 0.10, 30.00, NULL, NULL),
+(226, 'Trinity Orientile Roofing Sheet - Tile Red', 'trinity-orientile-roofing-sheet-tile-red', NULL, 24, NULL, 'TO-TILE-RED', 650.00, NULL, NULL, NULL, 'KES', 200, 5, 1, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, NULL, 'Trinity Orientile roofing sheet in Tile Red.', '<h3>Trinity Orientile Metal Roofing Sheet</h3><p>Trinity Orientile Roofing Sheets are a highly recognizable and popular premium roofing solution in Kenya, distinguished by their unique, gently curved profile that skillfully mimics the look of traditional barrel tiles while retaining the lightweight and structural benefits of metal.</p><p>Highly favored in upscale residential and commercial developments, Orientile is celebrated for its exceptional visual appeal, lending a flowing, elegant aesthetic to any structure.</p><p>Fabricated from high-grade, pre-painted alu-zinc steel, this profile is expertly engineered for optimal rainwater runoff and boasts superior noise-dampening qualities compared to basic mabati, offering a stylish, long-lasting, and value-adding alternative that combines beauty and resilience.</p>', 0, '2026-10-13 06:55:23', '2026-10-13 06:58:32', 0, 3.00, 0.10, 30.00, NULL, NULL),
+(227, 'Trinity Orientile Roofing Sheet - Maroon', 'trinity-orientile-roofing-sheet-maroon', NULL, 24, NULL, 'TO-MAROON', 650.00, NULL, NULL, NULL, 'KES', 200, 5, 1, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, NULL, 'Trinity Orientile roofing sheet in Maroon.', '<h3>Trinity Orientile Metal Roofing Sheet</h3><p>Trinity Orientile Roofing Sheets are a highly recognizable and popular premium roofing solution in Kenya, distinguished by their unique, gently curved profile that skillfully mimics the look of traditional barrel tiles while retaining the lightweight and structural benefits of metal.</p><p>Highly favored in upscale residential and commercial developments, Orientile is celebrated for its exceptional visual appeal, lending a flowing, elegant aesthetic to any structure.</p><p>Fabricated from high-grade, pre-painted alu-zinc steel, this profile is expertly engineered for optimal rainwater runoff and boasts superior noise-dampening qualities compared to basic mabati, offering a stylish, long-lasting, and value-adding alternative that combines beauty and resilience.</p>', 0, '2026-10-13 06:55:23', '2026-10-13 06:58:32', 0, 3.00, 0.10, 30.00, NULL, NULL),
+(228, 'Trinity Orientile Roofing Sheet - Chocolate Brown', 'trinity-orientile-roofing-sheet-chocolate-brown', NULL, 24, NULL, 'TO-CHOCOLATE-BROWN', 650.00, NULL, NULL, NULL, 'KES', 200, 5, 1, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, NULL, 'Trinity Orientile roofing sheet in Chocolate Brown.', '<h3>Trinity Orientile Metal Roofing Sheet</h3><p>Trinity Orientile Roofing Sheets are a highly recognizable and popular premium roofing solution in Kenya, distinguished by their unique, gently curved profile that skillfully mimics the look of traditional barrel tiles while retaining the lightweight and structural benefits of metal.</p><p>Highly favored in upscale residential and commercial developments, Orientile is celebrated for its exceptional visual appeal, lending a flowing, elegant aesthetic to any structure.</p><p>Fabricated from high-grade, pre-painted alu-zinc steel, this profile is expertly engineered for optimal rainwater runoff and boasts superior noise-dampening qualities compared to basic mabati, offering a stylish, long-lasting, and value-adding alternative that combines beauty and resilience.</p>', 0, '2026-10-13 06:55:23', '2026-10-13 06:58:32', 0, 3.00, 0.10, 30.00, NULL, NULL),
+(229, 'Trinity Orientile Roofing Sheet - Maasai Red', 'trinity-orientile-roofing-sheet-maasai-red', NULL, 24, NULL, 'TO-MAASAI-RED', 650.00, NULL, NULL, NULL, 'KES', 200, 5, 1, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, NULL, NULL, '<h3>Trinity Orientile Metal Roofing Sheet</h3><p>Trinity Orientile Roofing Sheets are a highly recognizable and popular premium roofing solution in Kenya, distinguished by their unique, gently curved profile that skillfully mimics the look of traditional barrel tiles while retaining the lightweight and structural benefits of metal.</p><p>Highly favored in upscale residential and commercial developments, Orientile is celebrated for its exceptional visual appeal, lending a flowing, elegant aesthetic to any structure.</p><p>Fabricated from high-grade, pre-painted alu-zinc steel, this profile is expertly engineered for optimal rainwater runoff and boasts superior noise-dampening qualities compared to basic mabati, offering a stylish, long-lasting, and value-adding alternative that combines beauty and resilience.</p>', 0, '2026-10-13 07:07:52', '2026-10-13 07:10:23', 0, 3.00, 0.10, 30.00, NULL, NULL),
+(230, 'Trinity Orientile Roofing Sheet - Forest Green', 'trinity-orientile-roofing-sheet-forest-green', NULL, 24, NULL, 'TO-FOREST-GREEN', 650.00, NULL, NULL, NULL, 'KES', 200, 5, 1, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, NULL, NULL, '<h3>Trinity Orientile Metal Roofing Sheet</h3><p>Trinity Orientile Roofing Sheets are a highly recognizable and popular premium roofing solution in Kenya, distinguished by their unique, gently curved profile that skillfully mimics the look of traditional barrel tiles while retaining the lightweight and structural benefits of metal.</p><p>Highly favored in upscale residential and commercial developments, Orientile is celebrated for its exceptional visual appeal, lending a flowing, elegant aesthetic to any structure.</p><p>Fabricated from high-grade, pre-painted alu-zinc steel, this profile is expertly engineered for optimal rainwater runoff and boasts superior noise-dampening qualities compared to basic mabati, offering a stylish, long-lasting, and value-adding alternative that combines beauty and resilience.</p>', 0, '2026-10-13 07:07:53', '2026-10-13 07:10:23', 0, 3.00, 0.10, 30.00, NULL, NULL),
+(231, 'Trinity Eurotile Roofing Sheet - Charcoal Grey', 'trinity-eurotile-roofing-sheet-charcoal-grey', NULL, 23, NULL, 'TE-CHARCOAL-GREY', 1950.00, NULL, NULL, NULL, 'KES', 200, 5, 1, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, NULL, 'Trinity Eurotile metal roofing sheet', NULL, 0, '2026-10-13 07:19:32', '2026-10-13 08:11:16', 1, 1.00, 0.10, 30.00, '30G', 'Matte'),
+(232, 'Trinity Eurotile Roofing Sheet - Tile Red', 'trinity-eurotile-roofing-sheet-tile-red', NULL, 23, NULL, 'TE-TILE-RED', 1950.00, NULL, NULL, NULL, 'KES', 200, 5, 1, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, NULL, 'Trinity Eurotile metal roofing sheet', NULL, 0, '2026-10-13 07:19:32', '2026-10-13 08:11:16', 1, 1.00, 0.10, 30.00, '30G', 'Matte'),
+(233, 'Trinity Eurotile Roofing Sheet - Maroon', 'trinity-eurotile-roofing-sheet-maroon', NULL, 23, NULL, 'TE-MAROON', 1950.00, NULL, NULL, NULL, 'KES', 200, 5, 1, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, NULL, 'Trinity Eurotile metal roofing sheet', NULL, 0, '2026-10-13 07:19:32', '2026-10-13 08:11:16', 1, 1.00, 0.10, 30.00, '30G', 'Matte'),
+(234, 'Trinity Eurotile Roofing Sheet - Forest Green', 'trinity-eurotile-roofing-sheet-forest-green', NULL, 23, NULL, 'TE-FOREST-GREEN', 1950.00, NULL, NULL, NULL, 'KES', 200, 5, 1, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, NULL, 'Trinity Eurotile metal roofing sheet', NULL, 0, '2026-10-13 07:19:33', '2026-10-13 08:11:16', 1, 1.00, 0.10, 30.00, '30G', 'Matte'),
+(235, 'Trinity Eurotile Roofing Sheet - Chocolate Brown', 'trinity-eurotile-roofing-sheet-chocolate-brown', NULL, 23, NULL, 'TE-CHOCOLATE-BROWN', 1950.00, NULL, NULL, NULL, 'KES', 0, 5, 1, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, 'uploads/products/images/1791902166-trinity-eurotile-roofing-sheet-chocolate-brown.webp', 'Trinity Eurotile metal roofing sheet', '<p><br></p>', 0, '2026-10-13 07:19:33', '2026-10-13 17:36:06', 0, 1.00, 0.10, 30.00, NULL, NULL),
+(236, 'Stone Coated Shingle Roofing Tiles - Maroon', 'stone-coated-shingle-roofing-tiles-maroon', NULL, 25, NULL, 'SCS-MAROON', 750.00, NULL, NULL, NULL, 'KES', 200, 5, 0, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, NULL, 'Stone coated shingle roofing tiles in Maroon.', '<h3>Stone Coated Roofing Tiles</h3><p>Stone Coated Roofing Tiles represent the pinnacle of roofing excellence, blending the timeless, sophisticated appearance of traditional Mediterranean tiles or asphalt shingles with the modern durability of zinc-aluminium coated steel.</p><p>Popular in Kenya for luxury residential homes and high-profile developments, these sheets feature a tough stone granule finish that effectively dampens rain noise and offers outstanding resistance to UV rays, hail, and extreme weather.</p><p>Although they require a higher initial investment, Stone Coated Tiles provide unmatched longevity, exceptional curb appeal, and significant added value to any property, offering a truly premium, maintenance-free solution.</p>', 0, '2026-10-13 11:21:00', '2026-10-13 11:21:00', 0, 3.00, 0.10, 30.00, NULL, NULL),
+(237, 'Stone Coated Shingle Roofing Tiles - Chocolate Brown', 'stone-coated-shingle-roofing-tiles-chocolate-brown', NULL, 25, NULL, 'SCS-CHOCOLATE-BROWN', 750.00, NULL, NULL, NULL, 'KES', 200, 5, 0, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, NULL, 'Stone coated shingle roofing tiles in Chocolate Brown.', '<h3>Stone Coated Roofing Tiles</h3><p>Stone Coated Roofing Tiles represent the pinnacle of roofing excellence, blending the timeless, sophisticated appearance of traditional Mediterranean tiles or asphalt shingles with the modern durability of zinc-aluminium coated steel.</p><p>Popular in Kenya for luxury residential homes and high-profile developments, these sheets feature a tough stone granule finish that effectively dampens rain noise and offers outstanding resistance to UV rays, hail, and extreme weather.</p><p>Although they require a higher initial investment, Stone Coated Tiles provide unmatched longevity, exceptional curb appeal, and significant added value to any property, offering a truly premium, maintenance-free solution.</p>', 0, '2026-10-13 11:21:00', '2026-10-13 11:21:00', 0, 3.00, 0.10, 30.00, NULL, NULL),
+(238, 'Stone Coated Shingle Roofing Tiles - Forest Green', 'stone-coated-shingle-roofing-tiles-forest-green', NULL, 25, NULL, 'SCS-FOREST-GREEN', 750.00, NULL, NULL, NULL, 'KES', 200, 5, 0, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, NULL, 'Stone coated shingle roofing tiles in Forest Green.', '<h3>Stone Coated Roofing Tiles</h3><p>Stone Coated Roofing Tiles represent the pinnacle of roofing excellence, blending the timeless, sophisticated appearance of traditional Mediterranean tiles or asphalt shingles with the modern durability of zinc-aluminium coated steel.</p><p>Popular in Kenya for luxury residential homes and high-profile developments, these sheets feature a tough stone granule finish that effectively dampens rain noise and offers outstanding resistance to UV rays, hail, and extreme weather.</p><p>Although they require a higher initial investment, Stone Coated Tiles provide unmatched longevity, exceptional curb appeal, and significant added value to any property, offering a truly premium, maintenance-free solution.</p>', 0, '2026-10-13 11:21:00', '2026-10-13 11:21:00', 0, 3.00, 0.10, 30.00, NULL, NULL),
+(239, 'Stone Coated Shingle Roofing Tiles - Charcoal Grey', 'stone-coated-shingle-roofing-tiles-charcoal-grey', NULL, 25, NULL, 'SCS-CHARCOAL-GREY', 750.00, NULL, NULL, NULL, 'KES', 200, 5, 0, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, NULL, 'Stone coated shingle roofing tiles in Charcoal Grey.', '<h3>Stone Coated Roofing Tiles</h3><p>Stone Coated Roofing Tiles represent the pinnacle of roofing excellence, blending the timeless, sophisticated appearance of traditional Mediterranean tiles or asphalt shingles with the modern durability of zinc-aluminium coated steel.</p><p>Popular in Kenya for luxury residential homes and high-profile developments, these sheets feature a tough stone granule finish that effectively dampens rain noise and offers outstanding resistance to UV rays, hail, and extreme weather.</p><p>Although they require a higher initial investment, Stone Coated Tiles provide unmatched longevity, exceptional curb appeal, and significant added value to any property, offering a truly premium, maintenance-free solution.</p>', 0, '2026-10-13 11:21:00', '2026-10-13 11:21:00', 0, 3.00, 0.10, 30.00, NULL, NULL),
+(240, 'Stone Coated Classic Roofing Tiles - Charcoal Grey', 'stone-coated-classic-roofing-tiles-charcoal-grey', NULL, 26, NULL, 'SCC-CHARCOAL-GREY', 750.00, NULL, NULL, NULL, 'KES', 200, 5, 0, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, NULL, 'Stone coated classic roofing tiles in Charcoal Grey.', '<h3>Stone Coated Roofing Tiles</h3><p>Stone Coated Roofing Tiles represent the pinnacle of roofing excellence, blending the timeless, sophisticated appearance of traditional Mediterranean tiles or asphalt shingles with the modern durability of zinc-aluminium coated steel.</p><p>Popular in Kenya for luxury residential homes and high-profile developments, these sheets feature a tough stone granule finish that effectively dampens rain noise and offers outstanding resistance to UV rays, hail, and extreme weather.</p><p>Although they require a higher initial investment, Stone Coated Tiles provide unmatched longevity, exceptional curb appeal, and significant added value to any property, offering a truly premium, maintenance-free solution.</p>', 0, '2026-10-13 11:25:07', '2026-10-13 11:25:07', 0, 3.00, 0.10, 30.00, NULL, NULL),
+(241, 'Stone Coated Classic Roofing Tiles - Forest Green', 'stone-coated-classic-roofing-tiles-forest-green', NULL, 26, NULL, 'SCC-FOREST-GREEN', 750.00, NULL, NULL, NULL, 'KES', 200, 5, 0, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, NULL, 'Stone coated classic roofing tiles in Forest Green.', '<h3>Stone Coated Roofing Tiles</h3><p>Stone Coated Roofing Tiles represent the pinnacle of roofing excellence, blending the timeless, sophisticated appearance of traditional Mediterranean tiles or asphalt shingles with the modern durability of zinc-aluminium coated steel.</p><p>Popular in Kenya for luxury residential homes and high-profile developments, these sheets feature a tough stone granule finish that effectively dampens rain noise and offers outstanding resistance to UV rays, hail, and extreme weather.</p><p>Although they require a higher initial investment, Stone Coated Tiles provide unmatched longevity, exceptional curb appeal, and significant added value to any property, offering a truly premium, maintenance-free solution.</p>', 0, '2026-10-13 11:25:07', '2026-10-13 11:25:07', 0, 3.00, 0.10, 30.00, NULL, NULL),
+(242, 'Stone Coated Classic Roofing Tiles - Tile Red', 'stone-coated-classic-roofing-tiles-tile-red', NULL, 26, NULL, 'SCC-TILE-RED', 750.00, NULL, NULL, NULL, 'KES', 200, 5, 0, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, NULL, 'Stone coated classic roofing tiles in Tile Red.', '<h3>Stone Coated Roofing Tiles</h3><p>Stone Coated Roofing Tiles represent the pinnacle of roofing excellence, blending the timeless, sophisticated appearance of traditional Mediterranean tiles or asphalt shingles with the modern durability of zinc-aluminium coated steel.</p><p>Popular in Kenya for luxury residential homes and high-profile developments, these sheets feature a tough stone granule finish that effectively dampens rain noise and offers outstanding resistance to UV rays, hail, and extreme weather.</p><p>Although they require a higher initial investment, Stone Coated Tiles provide unmatched longevity, exceptional curb appeal, and significant added value to any property, offering a truly premium, maintenance-free solution.</p>', 0, '2026-10-13 11:25:07', '2026-10-13 11:25:07', 0, 3.00, 0.10, 30.00, NULL, NULL),
+(243, 'Stone Coated Classic Roofing Tiles - Chocolate Brown', 'stone-coated-classic-roofing-tiles-chocolate-brown', NULL, 26, NULL, 'SCC-CHOCOLATE-BROWN', 750.00, NULL, NULL, NULL, 'KES', 200, 5, 0, NULL, NULL, NULL, NULL, 'new', NULL, 0, 1, NULL, 'Stone coated classic roofing tiles in Chocolate Brown.', '<h3>Stone Coated Roofing Tiles</h3><p>Stone Coated Roofing Tiles represent the pinnacle of roofing excellence, blending the timeless, sophisticated appearance of traditional Mediterranean tiles or asphalt shingles with the modern durability of zinc-aluminium coated steel.</p><p>Popular in Kenya for luxury residential homes and high-profile developments, these sheets feature a tough stone granule finish that effectively dampens rain noise and offers outstanding resistance to UV rays, hail, and extreme weather.</p><p>Although they require a higher initial investment, Stone Coated Tiles provide unmatched longevity, exceptional curb appeal, and significant added value to any property, offering a truly premium, maintenance-free solution.</p>', 0, '2026-10-13 11:25:07', '2026-10-13 11:25:07', 0, 3.00, 0.10, 30.00, NULL, NULL),
+(244, 'Stone Coated Roman Roofing Tiles - Charcoal Grey', 'stone-coated-roman-roofing-tiles-charcoal-grey', NULL, 27, NULL, 'SCR-CHARCOAL-GREY', 750.00, NULL, NULL, NULL, 'KES', 200, 5, 0, NULL, NULL, NULL, NULL, 'new', 'Order your Mabati from Trinity Mabati Factory\n\nInvest in Longevity\nOur roofing sheets feature an Aluminum-Zinc base that provides exceptional protection against corrosion, doubling the lifespan compared to ordinary roofing.\n\nWorry-Free Color\nEnjoy peace of mind with our superior paint quality, which comes with a comprehensive fade-free warranty of up to 15 years.\n\nAchieve Your Vision\nCustomize the look of your building with our extensive range of available colors to perfectly suit your design.\n\nSmarter Installation, Better Protection\nBy providing lengths tailored to your project, we reduce the number of seams. This drastically lowers the risk of leaks and saves you money by cutting down on material waste.\n\nA Flawless Finish\nComplete your project with our matching accessories, ensuring a perfectly integrated and aesthetically pleasing total roofing system.', 0, 1, NULL, 'Stone coated Roman roofing tiles in Charcoal Grey.', '<h3>Stone Coated Roofing Tiles</h3><p>Stone Coated Roofing Tiles represent the pinnacle of roofing excellence, blending the timeless, sophisticated appearance of traditional Mediterranean tiles or asphalt shingles with the modern durability of zinc-aluminium coated steel.</p><p>Popular in Kenya for luxury residential homes and high-profile developments, these sheets feature a tough stone granule finish that effectively dampens rain noise and offers outstanding resistance to UV rays, hail, and extreme weather.</p><p>Although they require a higher initial investment, Stone Coated Tiles provide unmatched longevity, exceptional curb appeal, and significant added value to any property, offering a truly premium, maintenance-free solution.</p>', 0, '2026-10-13 11:26:22', '2026-10-13 11:26:22', 0, 3.00, 0.10, 30.00, NULL, NULL),
+(245, 'Stone Coated Roman Roofing Tiles - Tile Red', 'stone-coated-roman-roofing-tiles-tile-red', NULL, 27, NULL, 'SCR-TILE-RED', 750.00, NULL, NULL, NULL, 'KES', 200, 5, 0, NULL, NULL, NULL, NULL, 'new', 'Order your Mabati from Trinity Mabati Factory\n\nInvest in Longevity\nOur roofing sheets feature an Aluminum-Zinc base that provides exceptional protection against corrosion, doubling the lifespan compared to ordinary roofing.\n\nWorry-Free Color\nEnjoy peace of mind with our superior paint quality, which comes with a comprehensive fade-free warranty of up to 15 years.\n\nAchieve Your Vision\nCustomize the look of your building with our extensive range of available colors to perfectly suit your design.\n\nSmarter Installation, Better Protection\nBy providing lengths tailored to your project, we reduce the number of seams. This drastically lowers the risk of leaks and saves you money by cutting down on material waste.\n\nA Flawless Finish\nComplete your project with our matching accessories, ensuring a perfectly integrated and aesthetically pleasing total roofing system.', 0, 1, 'uploads/products/images/1791902282-stone-coated-roman-roofing-tiles-tile-red.webp', 'Stone coated Roman roofing tiles in Tile Red.', '<h3>Stone Coated Roofing Tiles</h3><p>Stone Coated Roofing Tiles represent the pinnacle of roofing excellence, blending the timeless, sophisticated appearance of traditional Mediterranean tiles or asphalt shingles with the modern durability of zinc-aluminium coated steel.</p><p>Popular in Kenya for luxury residential homes and high-profile developments, these sheets feature a tough stone granule finish that effectively dampens rain noise and offers outstanding resistance to UV rays, hail, and extreme weather.</p><p>Although they require a higher initial investment, Stone Coated Tiles provide unmatched longevity, exceptional curb appeal, and significant added value to any property, offering a truly premium, maintenance-free solution.</p>', 0, '2026-10-13 11:26:22', '2026-10-13 17:38:02', 0, 3.00, 0.10, 30.00, NULL, NULL),
+(246, 'Box Profile - Charcoal Grey', 'box-profile-charcoal-grey', NULL, 20, NULL, 'BP-CHARCOAL-GREY', 550.00, NULL, NULL, NULL, 'KES', 200, 5, 1, NULL, NULL, NULL, NULL, 'new', 'Order your Mabati from Trinity Mabati Factory\n\nInvest in Longevity\nOur roofing sheets feature an Aluminum-Zinc base that provides exceptional protection against corrosion, doubling the lifespan compared to ordinary roofing.\n\nWorry-Free Color\nEnjoy peace of mind with our superior paint quality, which comes with a comprehensive fade-free warranty of up to 15 years.\n\nAchieve Your Vision\nCustomize the look of your building with our extensive range of available colors to perfectly suit your design.\n\nSmarter Installation, Better Protection\nBy providing lengths tailored to your project, we reduce the number of seams. This drastically lowers the risk of leaks and saves you money by cutting down on material waste.\n\nA Flawless Finish\nComplete your project with our matching accessories, ensuring a perfectly integrated and aesthetically pleasing total roofing system.', 0, 1, NULL, 'Box Profile roofing sheet in Charcoal Grey.', '<h3>Box Profile Roofing Sheets</h3><p>Box Profile roofing sheets, often chosen for their contemporary and clean aesthetic, represent a superior structural option in the Kenyan market. Characterized by their distinct rectangular ribs, they offer enhanced load-bearing capacity and rigidity compared to standard corrugated sheets, making them ideal for large-span structures, industrial buildings, and high-end residential projects.</p><p>While typically commanding a slightly higher price point than mabati, the box profile design provides exceptional strength, better runoff during intense rain, and a modern, premium finish, appealing to customers seeking both maximum durability and visual impact.</p>', 0, '2026-10-13 11:31:45', '2026-10-13 11:31:45', 1, 1.00, 0.10, 30.00, '30G', 'Matte'),
+(247, 'Box Profile - Tile Red', 'box-profile-tile-red', NULL, 20, NULL, 'BP-TILE-RED', 550.00, NULL, NULL, NULL, 'KES', 200, 5, 1, NULL, NULL, NULL, NULL, 'new', 'Order your Mabati from Trinity Mabati Factory\n\nInvest in Longevity\nOur roofing sheets feature an Aluminum-Zinc base that provides exceptional protection against corrosion, doubling the lifespan compared to ordinary roofing.\n\nWorry-Free Color\nEnjoy peace of mind with our superior paint quality, which comes with a comprehensive fade-free warranty of up to 15 years.\n\nAchieve Your Vision\nCustomize the look of your building with our extensive range of available colors to perfectly suit your design.\n\nSmarter Installation, Better Protection\nBy providing lengths tailored to your project, we reduce the number of seams. This drastically lowers the risk of leaks and saves you money by cutting down on material waste.\n\nA Flawless Finish\nComplete your project with our matching accessories, ensuring a perfectly integrated and aesthetically pleasing total roofing system.', 0, 1, NULL, 'Box Profile roofing sheet in Tile Red.', '<h3>Box Profile Roofing Sheets</h3><p>Box Profile roofing sheets, often chosen for their contemporary and clean aesthetic, represent a superior structural option in the Kenyan market. Characterized by their distinct rectangular ribs, they offer enhanced load-bearing capacity and rigidity compared to standard corrugated sheets, making them ideal for large-span structures, industrial buildings, and high-end residential projects.</p><p>While typically commanding a slightly higher price point than mabati, the box profile design provides exceptional strength, better runoff during intense rain, and a modern, premium finish, appealing to customers seeking both maximum durability and visual impact.</p>', 0, '2026-10-13 11:31:45', '2026-10-13 11:31:45', 1, 1.00, 0.10, 30.00, '30G', 'Matte'),
+(248, 'Box Profile - Maroon', 'box-profile-maroon', NULL, 20, NULL, 'BP-MAROON', 550.00, NULL, NULL, NULL, 'KES', 200, 5, 1, NULL, NULL, NULL, NULL, 'new', 'Order your Mabati from Trinity Mabati Factory\n\nInvest in Longevity\nOur roofing sheets feature an Aluminum-Zinc base that provides exceptional protection against corrosion, doubling the lifespan compared to ordinary roofing.\n\nWorry-Free Color\nEnjoy peace of mind with our superior paint quality, which comes with a comprehensive fade-free warranty of up to 15 years.\n\nAchieve Your Vision\nCustomize the look of your building with our extensive range of available colors to perfectly suit your design.\n\nSmarter Installation, Better Protection\nBy providing lengths tailored to your project, we reduce the number of seams. This drastically lowers the risk of leaks and saves you money by cutting down on material waste.\n\nA Flawless Finish\nComplete your project with our matching accessories, ensuring a perfectly integrated and aesthetically pleasing total roofing system.', 0, 1, NULL, 'Box Profile roofing sheet in Maroon.', '<h3>Box Profile Roofing Sheets</h3><p>Box Profile roofing sheets, often chosen for their contemporary and clean aesthetic, represent a superior structural option in the Kenyan market. Characterized by their distinct rectangular ribs, they offer enhanced load-bearing capacity and rigidity compared to standard corrugated sheets, making them ideal for large-span structures, industrial buildings, and high-end residential projects.</p><p>While typically commanding a slightly higher price point than mabati, the box profile design provides exceptional strength, better runoff during intense rain, and a modern, premium finish, appealing to customers seeking both maximum durability and visual impact.</p>', 0, '2026-10-13 11:31:45', '2026-10-13 11:31:45', 1, 1.00, 0.10, 30.00, '30G', 'Matte'),
+(249, 'Box Profile - Forest Green', 'box-profile-forest-green', NULL, 20, NULL, 'BP-FOREST-GREEN', 550.00, NULL, NULL, NULL, 'KES', 0, 5, 1, NULL, NULL, NULL, NULL, 'new', 'Order your Mabati from Trinity Mabati Factory\n\nInvest in Longevity\nOur roofing sheets feature an Aluminum-Zinc base that provides exceptional protection against corrosion, doubling the lifespan compared to ordinary roofing.\n\nWorry-Free Color\nEnjoy peace of mind with our superior paint quality, which comes with a comprehensive fade-free warranty of up to 15 years.\n\nAchieve Your Vision\nCustomize the look of your building with our extensive range of available colors to perfectly suit your design.\n\nSmarter Installation, Better Protection\nBy providing lengths tailored to your project, we reduce the number of seams. This drastically lowers the risk of leaks and saves you money by cutting down on material waste.\n\nA Flawless Finish\nComplete your project with our matching accessories, ensuring a perfectly integrated and aesthetically pleasing total roofing system.', 0, 1, 'uploads/products/images/1791902379-6a9eea46cb193082a8150d2ba6009e9d38dc3edd-1.webp', 'Box Profile roofing sheet in Forest Green.', '<h3>Box Profile Roofing Sheets</h3><p>Box Profile roofing sheets, often chosen for their contemporary and clean aesthetic, represent a superior structural option in the Kenyan market. Characterized by their distinct rectangular ribs, they offer enhanced load-bearing capacity and rigidity compared to standard corrugated sheets, making them ideal for large-span structures, industrial buildings, and high-end residential projects.</p><p>While typically commanding a slightly higher price point than mabati, the box profile design provides exceptional strength, better runoff during intense rain, and a modern, premium finish, appealing to customers seeking both maximum durability and visual impact.</p>', 0, '2026-10-13 11:31:45', '2026-10-13 17:39:39', 0, 1.00, 0.10, 30.00, NULL, NULL),
+(250, 'Corrugated Roofing Sheet - Forest Green', 'corrugated-roofing-sheet-forest-green', NULL, 21, NULL, 'CR-FOREST-GREEN', 550.00, NULL, NULL, NULL, 'KES', 0, 5, 1, NULL, NULL, NULL, NULL, 'new', 'Order your Mabati from Trinity Mabati Factory\n\nInvest in Longevity\nOur roofing sheets feature an Aluminum-Zinc base that provides exceptional protection against corrosion, doubling the lifespan compared to ordinary roofing.\n\nWorry-Free Color\nEnjoy peace of mind with our superior paint quality, which comes with a comprehensive fade-free warranty of up to 15 years.\n\nAchieve Your Vision\nCustomize the look of your building with our extensive range of available colors to perfectly suit your design.\n\nSmarter Installation, Better Protection\nBy providing lengths tailored to your project, we reduce the number of seams. This drastically lowers the risk of leaks and saves you money by cutting down on material waste.\n\nA Flawless Finish\nComplete your project with our matching accessories, ensuring a perfectly integrated and aesthetically pleasing total roofing system.', 0, 1, 'uploads/products/images/1791901981-corrugated-roofing-sheet-forest-green.webp', 'Corrugated roofing sheet in Forest Green.', '<h3>Corrugated Roofing Sheets</h3><p>Corrugated roofing sheets, widely known across Kenya as mabati, represent the most economical roofing solution, making them highly favored for projects ranging from modern housing to functional commercial structures. These sheets are specifically valued for their superior ability to handle the diverse Kenyan climate, offering proven durability against heavy seasonal rains and intense equatorial sun.</p><p>Available in various gauges (thicknesses) and attractive colored finishes, they are lightweight, easy to transport and install, providing a practical, high-value, and long-lasting choice perfectly suited for any budget-conscious construction.</p>', 0, '2026-10-13 11:48:42', '2026-10-13 17:33:01', 0, 1.00, 0.10, 30.00, NULL, NULL),
+(251, 'Corrugated Roofing Sheet - Charcoal Grey', 'corrugated-roofing-sheet-charcoal-grey', NULL, 21, NULL, 'CR-CHARCOAL-GREY', 550.00, NULL, NULL, NULL, 'KES', 200, 5, 1, NULL, NULL, NULL, NULL, 'new', 'Order your Mabati from Trinity Mabati Factory\n\nInvest in Longevity\nOur roofing sheets feature an Aluminum-Zinc base that provides exceptional protection against corrosion, doubling the lifespan compared to ordinary roofing.\n\nWorry-Free Color\nEnjoy peace of mind with our superior paint quality, which comes with a comprehensive fade-free warranty of up to 15 years.\n\nAchieve Your Vision\nCustomize the look of your building with our extensive range of available colors to perfectly suit your design.\n\nSmarter Installation, Better Protection\nBy providing lengths tailored to your project, we reduce the number of seams. This drastically lowers the risk of leaks and saves you money by cutting down on material waste.\n\nA Flawless Finish\nComplete your project with our matching accessories, ensuring a perfectly integrated and aesthetically pleasing total roofing system.', 0, 1, NULL, 'Corrugated roofing sheet in Charcoal Grey.', '<h3>Corrugated Roofing Sheets</h3><p>Corrugated roofing sheets, widely known across Kenya as mabati, represent the most economical roofing solution, making them highly favored for projects ranging from modern housing to functional commercial structures. These sheets are specifically valued for their superior ability to handle the diverse Kenyan climate, offering proven durability against heavy seasonal rains and intense equatorial sun.</p><p>Available in various gauges (thicknesses) and attractive colored finishes, they are lightweight, easy to transport and install, providing a practical, high-value, and long-lasting choice perfectly suited for any budget-conscious construction.</p>', 0, '2026-10-13 11:48:42', '2026-10-13 11:48:42', 1, 1.00, 0.10, 30.00, '30G', 'Matte'),
+(252, 'Corrugated Roofing Sheet - Tile Red', 'corrugated-roofing-sheet-tile-red', NULL, 21, NULL, 'CR-TILE-RED', 550.00, NULL, NULL, NULL, 'KES', 200, 5, 1, NULL, NULL, NULL, NULL, 'new', 'Order your Mabati from Trinity Mabati Factory\n\nInvest in Longevity\nOur roofing sheets feature an Aluminum-Zinc base that provides exceptional protection against corrosion, doubling the lifespan compared to ordinary roofing.\n\nWorry-Free Color\nEnjoy peace of mind with our superior paint quality, which comes with a comprehensive fade-free warranty of up to 15 years.\n\nAchieve Your Vision\nCustomize the look of your building with our extensive range of available colors to perfectly suit your design.\n\nSmarter Installation, Better Protection\nBy providing lengths tailored to your project, we reduce the number of seams. This drastically lowers the risk of leaks and saves you money by cutting down on material waste.\n\nA Flawless Finish\nComplete your project with our matching accessories, ensuring a perfectly integrated and aesthetically pleasing total roofing system.', 0, 1, NULL, 'Corrugated roofing sheet in Tile Red.', '<h3>Corrugated Roofing Sheets</h3><p>Corrugated roofing sheets, widely known across Kenya as mabati, represent the most economical roofing solution, making them highly favored for projects ranging from modern housing to functional commercial structures. These sheets are specifically valued for their superior ability to handle the diverse Kenyan climate, offering proven durability against heavy seasonal rains and intense equatorial sun.</p><p>Available in various gauges (thicknesses) and attractive colored finishes, they are lightweight, easy to transport and install, providing a practical, high-value, and long-lasting choice perfectly suited for any budget-conscious construction.</p>', 0, '2026-10-13 11:48:42', '2026-10-13 11:48:42', 1, 1.00, 0.10, 30.00, '30G', 'Matte'),
+(253, 'Corrugated Roofing Sheet - Maroon', 'corrugated-roofing-sheet-maroon', NULL, 21, NULL, 'CR-MAROON', 550.00, NULL, NULL, NULL, 'KES', 200, 5, 1, NULL, NULL, NULL, NULL, 'new', 'Order your Mabati from Trinity Mabati Factory\n\nInvest in Longevity\nOur roofing sheets feature an Aluminum-Zinc base that provides exceptional protection against corrosion, doubling the lifespan compared to ordinary roofing.\n\nWorry-Free Color\nEnjoy peace of mind with our superior paint quality, which comes with a comprehensive fade-free warranty of up to 15 years.\n\nAchieve Your Vision\nCustomize the look of your building with our extensive range of available colors to perfectly suit your design.\n\nSmarter Installation, Better Protection\nBy providing lengths tailored to your project, we reduce the number of seams. This drastically lowers the risk of leaks and saves you money by cutting down on material waste.\n\nA Flawless Finish\nComplete your project with our matching accessories, ensuring a perfectly integrated and aesthetically pleasing total roofing system.', 0, 1, NULL, 'Corrugated roofing sheet in Maroon.', '<h3>Corrugated Roofing Sheets</h3><p>Corrugated roofing sheets, widely known across Kenya as mabati, represent the most economical roofing solution, making them highly favored for projects ranging from modern housing to functional commercial structures. These sheets are specifically valued for their superior ability to handle the diverse Kenyan climate, offering proven durability against heavy seasonal rains and intense equatorial sun.</p><p>Available in various gauges (thicknesses) and attractive colored finishes, they are lightweight, easy to transport and install, providing a practical, high-value, and long-lasting choice perfectly suited for any budget-conscious construction.</p>', 0, '2026-10-13 11:48:42', '2026-10-13 11:48:42', 1, 1.00, 0.10, 30.00, '30G', 'Matte'),
+(254, 'Corrugated Roofing Sheet - Maasai Red', 'corrugated-roofing-sheet-maasai-red', NULL, 21, NULL, 'CR-MAASAI-RED', 550.00, NULL, NULL, NULL, 'KES', 0, 5, 1, NULL, NULL, NULL, NULL, 'new', 'Order your Mabati from Trinity Mabati Factory\n\nInvest in Longevity\nOur roofing sheets feature an Aluminum-Zinc base that provides exceptional protection against corrosion, doubling the lifespan compared to ordinary roofing.\n\nWorry-Free Color\nEnjoy peace of mind with our superior paint quality, which comes with a comprehensive fade-free warranty of up to 15 years.\n\nAchieve Your Vision\nCustomize the look of your building with our extensive range of available colors to perfectly suit your design.\n\nSmarter Installation, Better Protection\nBy providing lengths tailored to your project, we reduce the number of seams. This drastically lowers the risk of leaks and saves you money by cutting down on material waste.\n\nA Flawless Finish\nComplete your project with our matching accessories, ensuring a perfectly integrated and aesthetically pleasing total roofing system.', 0, 1, 'uploads/products/images/1791891287-7e7793ba136f1fa9f950ca39b91f46878bf8d08b.jpg', 'Corrugated roofing sheet in Maasai Red.', '<h3>Corrugated Roofing Sheets</h3><p>Corrugated roofing sheets, widely known across Kenya as mabati, represent the most economical roofing solution, making them highly favored for projects ranging from modern housing to functional commercial structures. These sheets are specifically valued for their superior ability to handle the diverse Kenyan climate, offering proven durability against heavy seasonal rains and intense equatorial sun.</p><p>Available in various gauges (thicknesses) and attractive colored finishes, they are lightweight, easy to transport and install, providing a practical, high-value, and long-lasting choice perfectly suited for any budget-conscious construction.</p>', 0, '2026-10-13 11:48:42', '2026-10-13 14:34:47', 0, 1.00, 0.10, 30.00, NULL, NULL),
+(255, 'Corrugated Alluzinc Roofing Sheet - Non Colored', 'corrugated-alluzinc-roofing-sheet-non-colored', NULL, 21, NULL, 'CR-ALLUZINC-NON-COLORED', 550.00, NULL, NULL, NULL, 'KES', 200, 5, 0, NULL, NULL, NULL, NULL, 'new', 'Order your Mabati from Trinity Mabati Factory\n\nInvest in Longevity\nOur roofing sheets feature an Aluminum-Zinc base that provides exceptional protection against corrosion, doubling the lifespan compared to ordinary roofing.\n\nWorry-Free Color\nEnjoy peace of mind with our superior paint quality, which comes with a comprehensive fade-free warranty of up to 15 years.\n\nAchieve Your Vision\nCustomize the look of your building with our extensive range of available colors to perfectly suit your design.\n\nSmarter Installation, Better Protection\nBy providing lengths tailored to your project, we reduce the number of seams. This drastically lowers the risk of leaks and saves you money by cutting down on material waste.\n\nA Flawless Finish\nComplete your project with our matching accessories, ensuring a perfectly integrated and aesthetically pleasing total roofing system.', 0, 1, 'uploads/products/images/1791902067-corrugated-alluzinc-roofing-sheet-non-colored.webp', 'Non colored corrugated Alluzinc roofing sheet.', '<h3>Corrugated Roofing Sheets</h3><p>Corrugated roofing sheets, widely known across Kenya as mabati, represent the most economical roofing solution, making them highly favored for projects ranging from modern housing to functional commercial structures. These sheets are specifically valued for their superior ability to handle the diverse Kenyan climate, offering proven durability against heavy seasonal rains and intense equatorial sun.</p><p>Available in various gauges (thicknesses) and attractive colored finishes, they are lightweight, easy to transport and install, providing a practical, high-value, and long-lasting choice perfectly suited for any budget-conscious construction.</p>', 0, '2026-10-13 11:48:42', '2026-10-13 17:34:27', 0, 1.00, 0.10, 30.00, NULL, NULL);
 
 --
 -- Triggers `su_products`
@@ -1056,9 +1160,7 @@ CREATE TABLE `su_products` (
 DELIMITER $$
 CREATE TRIGGER `trg_su_products_default_category_insert` BEFORE INSERT ON `su_products` FOR EACH ROW BEGIN
                 IF NEW.category_id IS NULL THEN
-                    SET NEW.category_id = (
-                        SELECT id FROM su_product_categories WHERE slug = 'uncategorized' LIMIT 1
-                    );
+                    SET NEW.category_id = (SELECT id FROM su_product_categories WHERE is_default = 1 LIMIT 1);
                 END IF;
             END
 $$
@@ -1066,9 +1168,7 @@ DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `trg_su_products_default_category_update` BEFORE UPDATE ON `su_products` FOR EACH ROW BEGIN
                 IF NEW.category_id IS NULL THEN
-                    SET NEW.category_id = (
-                        SELECT id FROM su_product_categories WHERE slug = 'uncategorized' LIMIT 1
-                    );
+                    SET NEW.category_id = (SELECT id FROM su_product_categories WHERE is_default = 1 LIMIT 1);
                 END IF;
             END
 $$
@@ -1088,6 +1188,64 @@ CREATE TABLE `su_product_attributes` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `su_product_attributes`
+--
+
+INSERT INTO `su_product_attributes` (`id`, `product_id`, `name`, `slug`, `created_at`) VALUES
+(21, 212, 'Gauge', 'gauge', '2026-10-13 06:43:02'),
+(22, 212, 'Finish', 'finish', '2026-10-13 06:43:02'),
+(23, 213, 'Gauge', 'gauge', '2026-10-13 06:43:02'),
+(24, 213, 'Finish', 'finish', '2026-10-13 06:43:02'),
+(25, 214, 'Gauge', 'gauge', '2026-10-13 06:43:02'),
+(26, 214, 'Finish', 'finish', '2026-10-13 06:43:02'),
+(27, 215, 'Gauge', 'gauge', '2026-10-13 06:43:02'),
+(28, 215, 'Finish', 'finish', '2026-10-13 06:43:02'),
+(29, 216, 'Gauge', 'gauge', '2026-10-13 06:43:02'),
+(30, 216, 'Finish', 'finish', '2026-10-13 06:43:02'),
+(31, 217, 'Gauge', 'gauge', '2026-10-13 06:43:02'),
+(32, 217, 'Finish', 'finish', '2026-10-13 06:43:02'),
+(45, 225, 'Gauge', 'gauge', '2026-10-13 06:55:23'),
+(46, 225, 'Finish', 'finish', '2026-10-13 06:55:23'),
+(47, 226, 'Gauge', 'gauge', '2026-10-13 06:55:23'),
+(48, 226, 'Finish', 'finish', '2026-10-13 06:55:23'),
+(49, 227, 'Gauge', 'gauge', '2026-10-13 06:55:23'),
+(50, 227, 'Finish', 'finish', '2026-10-13 06:55:23'),
+(51, 228, 'Gauge', 'gauge', '2026-10-13 06:55:23'),
+(52, 228, 'Finish', 'finish', '2026-10-13 06:55:23'),
+(53, 229, 'Gauge', 'gauge', '2026-10-13 07:10:23'),
+(54, 229, 'Finish', 'finish', '2026-10-13 07:10:23'),
+(55, 230, 'Gauge', 'gauge', '2026-10-13 07:10:23'),
+(56, 230, 'Finish', 'finish', '2026-10-13 07:10:23'),
+(57, 231, 'Gauge', 'gauge', '2026-10-13 07:19:32'),
+(58, 231, 'Finish', 'finish', '2026-10-13 07:19:32'),
+(59, 232, 'Gauge', 'gauge', '2026-10-13 07:19:32'),
+(60, 232, 'Finish', 'finish', '2026-10-13 07:19:32'),
+(61, 233, 'Gauge', 'gauge', '2026-10-13 07:19:32'),
+(62, 233, 'Finish', 'finish', '2026-10-13 07:19:32'),
+(63, 234, 'Gauge', 'gauge', '2026-10-13 07:19:33'),
+(64, 234, 'Finish', 'finish', '2026-10-13 07:19:33'),
+(67, 246, 'Gauge', 'gauge', '2026-10-13 11:31:45'),
+(68, 246, 'Finish', 'finish', '2026-10-13 11:31:45'),
+(69, 247, 'Gauge', 'gauge', '2026-10-13 11:31:45'),
+(70, 247, 'Finish', 'finish', '2026-10-13 11:31:45'),
+(71, 248, 'Gauge', 'gauge', '2026-10-13 11:31:45'),
+(72, 248, 'Finish', 'finish', '2026-10-13 11:31:45'),
+(77, 251, 'Gauge', 'gauge', '2026-10-13 11:48:42'),
+(78, 251, 'Finish', 'finish', '2026-10-13 11:48:42'),
+(79, 252, 'Gauge', 'gauge', '2026-10-13 11:48:42'),
+(80, 252, 'Finish', 'finish', '2026-10-13 11:48:42'),
+(81, 253, 'Gauge', 'gauge', '2026-10-13 11:48:42'),
+(82, 253, 'Finish', 'finish', '2026-10-13 11:48:42'),
+(85, 254, 'Gauge', 'gauge', '2026-10-13 11:34:47'),
+(86, 254, 'Finish', 'finish', '2026-10-13 11:34:47'),
+(87, 250, 'Gauge', 'gauge', '2026-10-13 14:33:01'),
+(88, 250, 'Finish', 'finish', '2026-10-13 14:33:01'),
+(89, 235, 'Gauge', 'gauge', '2026-10-13 14:36:06'),
+(90, 235, 'Finish', 'finish', '2026-10-13 14:36:06'),
+(91, 249, 'Gauge', 'gauge', '2026-10-13 14:39:39'),
+(92, 249, 'Finish', 'finish', '2026-10-13 14:39:39');
+
 -- --------------------------------------------------------
 
 --
@@ -1101,6 +1259,105 @@ CREATE TABLE `su_product_attribute_values` (
   `slug` varchar(100) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `su_product_attribute_values`
+--
+
+INSERT INTO `su_product_attribute_values` (`id`, `attribute_id`, `value`, `slug`, `created_at`) VALUES
+(58, 21, '30G', '30g', '2026-10-13 06:43:02'),
+(59, 21, '28G', '28g', '2026-10-13 06:43:02'),
+(60, 22, 'Matte', 'matte', '2026-10-13 06:43:02'),
+(61, 22, 'Glossy', 'glossy', '2026-10-13 06:43:02'),
+(62, 23, '30G', '30g', '2026-10-13 06:43:02'),
+(63, 23, '28G', '28g', '2026-10-13 06:43:02'),
+(64, 24, 'Matte', 'matte', '2026-10-13 06:43:02'),
+(65, 24, 'Glossy', 'glossy', '2026-10-13 06:43:02'),
+(66, 25, '30G', '30g', '2026-10-13 06:43:02'),
+(67, 25, '28G', '28g', '2026-10-13 06:43:02'),
+(68, 26, 'Matte', 'matte', '2026-10-13 06:43:02'),
+(69, 26, 'Glossy', 'glossy', '2026-10-13 06:43:02'),
+(70, 27, '30G', '30g', '2026-10-13 06:43:02'),
+(71, 27, '28G', '28g', '2026-10-13 06:43:02'),
+(72, 28, 'Matte', 'matte', '2026-10-13 06:43:02'),
+(73, 28, 'Glossy', 'glossy', '2026-10-13 06:43:02'),
+(74, 29, '30G', '30g', '2026-10-13 06:43:02'),
+(75, 29, '28G', '28g', '2026-10-13 06:43:02'),
+(76, 30, 'Matte', 'matte', '2026-10-13 06:43:02'),
+(77, 30, 'Glossy', 'glossy', '2026-10-13 06:43:02'),
+(78, 31, '30G', '30g', '2026-10-13 06:43:02'),
+(79, 31, '28G', '28g', '2026-10-13 06:43:02'),
+(80, 32, 'Matte', 'matte', '2026-10-13 06:43:02'),
+(81, 32, 'Glossy', 'glossy', '2026-10-13 06:43:02'),
+(94, 45, '30G', '30g', '2026-10-13 06:55:23'),
+(95, 46, 'Matte', 'matte', '2026-10-13 06:55:23'),
+(96, 47, '30G', '30g', '2026-10-13 06:55:23'),
+(97, 48, 'Matte', 'matte', '2026-10-13 06:55:23'),
+(98, 49, '30G', '30g', '2026-10-13 06:55:23'),
+(99, 50, 'Matte', 'matte', '2026-10-13 06:55:23'),
+(100, 51, '30G', '30g', '2026-10-13 06:55:23'),
+(101, 52, 'Matte', 'matte', '2026-10-13 06:55:23'),
+(102, 53, '30G', '30g', '2026-10-13 07:10:23'),
+(103, 53, '28G', '28g', '2026-10-13 07:10:23'),
+(104, 54, 'Matte', 'matte', '2026-10-13 07:10:23'),
+(105, 54, 'Glossy', 'glossy', '2026-10-13 07:10:23'),
+(106, 55, '30G', '30g', '2026-10-13 07:10:23'),
+(107, 55, '28G', '28g', '2026-10-13 07:10:23'),
+(108, 56, 'Matte', 'matte', '2026-10-13 07:10:23'),
+(109, 56, 'Glossy', 'glossy', '2026-10-13 07:10:23'),
+(110, 57, '30G', '30g', '2026-10-13 07:19:32'),
+(111, 57, '28G', '28g', '2026-10-13 07:19:32'),
+(112, 58, 'Matte', 'matte', '2026-10-13 07:19:32'),
+(113, 58, 'Glossy', 'glossy', '2026-10-13 07:19:32'),
+(114, 59, '30G', '30g', '2026-10-13 07:19:32'),
+(115, 59, '28G', '28g', '2026-10-13 07:19:32'),
+(116, 60, 'Matte', 'matte', '2026-10-13 07:19:32'),
+(117, 60, 'Glossy', 'glossy', '2026-10-13 07:19:32'),
+(118, 61, '30G', '30g', '2026-10-13 07:19:32'),
+(119, 61, '28G', '28g', '2026-10-13 07:19:32'),
+(120, 62, 'Matte', 'matte', '2026-10-13 07:19:32'),
+(121, 62, 'Glossy', 'glossy', '2026-10-13 07:19:32'),
+(122, 63, '30G', '30g', '2026-10-13 07:19:33'),
+(123, 63, '28G', '28g', '2026-10-13 07:19:33'),
+(124, 64, 'Matte', 'matte', '2026-10-13 07:19:33'),
+(125, 64, 'Glossy', 'glossy', '2026-10-13 07:19:33'),
+(130, 67, '30G', '30g', '2026-10-13 11:31:45'),
+(131, 67, '28G', '28g', '2026-10-13 11:31:45'),
+(132, 68, 'Matte', 'matte', '2026-10-13 11:31:45'),
+(133, 69, '30G', '30g', '2026-10-13 11:31:45'),
+(134, 69, '28G', '28g', '2026-10-13 11:31:45'),
+(135, 70, 'Matte', 'matte', '2026-10-13 11:31:45'),
+(136, 71, '30G', '30g', '2026-10-13 11:31:45'),
+(137, 71, '28G', '28g', '2026-10-13 11:31:45'),
+(138, 72, 'Matte', 'matte', '2026-10-13 11:31:45'),
+(142, 70, 'Glossy', 'glossy', '2026-10-13 11:36:16'),
+(147, 77, '30G', '30g', '2026-10-13 11:48:42'),
+(148, 77, '28G', '28g', '2026-10-13 11:48:42'),
+(149, 78, 'Matte', 'matte', '2026-10-13 11:48:42'),
+(150, 78, 'Glossy', 'glossy', '2026-10-13 11:48:42'),
+(151, 79, '30G', '30g', '2026-10-13 11:48:42'),
+(152, 79, '28G', '28g', '2026-10-13 11:48:42'),
+(153, 80, 'Matte', 'matte', '2026-10-13 11:48:42'),
+(154, 80, 'Glossy', 'glossy', '2026-10-13 11:48:42'),
+(155, 81, '30G', '30g', '2026-10-13 11:48:42'),
+(156, 81, '28G', '28g', '2026-10-13 11:48:42'),
+(157, 82, 'Matte', 'matte', '2026-10-13 11:48:42'),
+(158, 82, 'Glossy', 'glossy', '2026-10-13 11:48:42'),
+(163, 85, '30G', '30g', '2026-10-13 11:34:47'),
+(164, 85, '28G', '28g', '2026-10-13 11:34:47'),
+(165, 86, 'Matte', 'matte', '2026-10-13 11:34:47'),
+(166, 86, 'Glossy', 'glossy', '2026-10-13 11:34:47'),
+(167, 87, '30G', '30g', '2026-10-13 14:33:01'),
+(168, 87, '28G', '28g', '2026-10-13 14:33:01'),
+(169, 88, 'Matte', 'matte', '2026-10-13 14:33:01'),
+(170, 88, 'Glossy', 'glossy', '2026-10-13 14:33:01'),
+(171, 89, '30G', '30g', '2026-10-13 14:36:06'),
+(172, 89, '28G', '28g', '2026-10-13 14:36:06'),
+(173, 90, 'Matte', 'matte', '2026-10-13 14:36:06'),
+(174, 90, 'Glossy', 'glossy', '2026-10-13 14:36:06'),
+(175, 91, '30G', '30g', '2026-10-13 14:39:39'),
+(176, 91, '28G', '28g', '2026-10-13 14:39:39'),
+(177, 92, 'Matte', 'matte', '2026-10-13 14:39:39');
 
 -- --------------------------------------------------------
 
@@ -1117,17 +1374,34 @@ CREATE TABLE `su_product_categories` (
   `featured_image` varchar(255) DEFAULT NULL,
   `banner_image` varchar(255) DEFAULT NULL,
   `description` text DEFAULT NULL,
+  `is_default` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `su_product_categories`
+--
+
+INSERT INTO `su_product_categories` (`id`, `name`, `slug`, `parent_id`, `icon`, `featured_image`, `banner_image`, `description`, `is_default`, `created_at`) VALUES
+(18, 'Tile Profiles', 'tile-profiles', NULL, NULL, '1791898633-3fe34b00b13474cc284bd33dcdc97c50e8702124.webp', NULL, 'Quality tile-profile roofing sheets from Trinity Mabati Factory', 0, '2026-10-13 06:20:32'),
+(19, 'Stone Coated Profiles', 'stone-coated-profiles', NULL, NULL, '1791898562-maroon-stone-coated-metallic-roof-tiles.jpg', NULL, 'Durable stone-coated roofing tiles for residential and commercial buildings', 0, '2026-10-13 06:20:32'),
+(20, 'Box Profile', 'box-profile', NULL, NULL, '1791898440-6a9eea46cb193082a8150d2ba6009e9d38dc3edd.webp', NULL, 'Box-profile metal roofing sheets for residential and commercial projects', 0, '2026-10-13 06:20:32'),
+(21, 'Corrugated Sheets', 'corrugated-sheets', NULL, NULL, '1791896988-7e7793ba136f1fa9f950ca39b91f46878bf8d08b.jpg', NULL, 'Corrugated metal roofing sheets for a wide range of building applications', 0, '2026-10-13 06:20:32'),
+(22, 'Trinity Versatile', 'trinity-versatile', 18, NULL, '1791898614-3fe34b00b13474cc284bd33dcdc97c50e8702124.webp', NULL, 'Trinity Versatile tile-profile roofing sheets', 0, '2026-10-13 06:20:32'),
+(23, 'Trinity Eurotile', 'trinity-eurotile', 18, NULL, '1791898705-ff89ea29ffa69711c8a5c76650c991bedfc32858.webp', NULL, 'Trinity Eurotile roofing sheets', 0, '2026-10-13 06:20:32'),
+(24, 'Trinity Orientile', 'trinity-orientile', 18, NULL, '1791898756-d2a41681759cd25c2068af316c8e39d012d3967a.webp', NULL, 'Trinity Orientile roofing sheets', 0, '2026-10-13 06:20:32'),
+(25, 'Shingle Roofing Tiles', 'shingle-roofing-tiles', 19, NULL, NULL, NULL, 'Stone-coated shingle roofing tiles', 0, '2026-10-13 06:20:32'),
+(26, 'Classic Roofing Tiles', 'classic-roofing-tiles', 19, NULL, '1791898522-maroon-stone-coated-metallic-roof-tiles.jpg', NULL, 'Classic stone-coated roofing tiles', 0, '2026-10-13 06:20:32'),
+(27, 'Roman Roofing Tiles', 'roman-roofing-tiles', 19, NULL, NULL, NULL, 'Roman-style stone-coated roofing tiles', 0, '2026-10-13 06:20:32');
 
 --
 -- Triggers `su_product_categories`
 --
 DELIMITER $$
 CREATE TRIGGER `trg_su_product_categories_protect_default` BEFORE DELETE ON `su_product_categories` FOR EACH ROW BEGIN
-                IF OLD.slug = 'uncategorized' THEN
+                IF OLD.is_default = 1 THEN
                     SIGNAL SQLSTATE '45000'
-                    SET MESSAGE_TEXT = 'The Uncategorized category cannot be deleted: it is the default fallback category for products.';
+                    SET MESSAGE_TEXT = 'The default category cannot be deleted. Set another category as default first.';
                 END IF;
             END
 $$
@@ -1143,6 +1417,49 @@ CREATE TABLE `su_product_category` (
   `product_id` int(10) UNSIGNED NOT NULL,
   `category_id` int(10) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `su_product_category`
+--
+
+INSERT INTO `su_product_category` (`product_id`, `category_id`) VALUES
+(212, 22),
+(213, 22),
+(214, 22),
+(215, 22),
+(216, 22),
+(217, 22),
+(225, 24),
+(226, 24),
+(227, 24),
+(228, 24),
+(229, 24),
+(230, 24),
+(231, 23),
+(232, 23),
+(233, 23),
+(234, 23),
+(235, 23),
+(236, 25),
+(237, 25),
+(238, 25),
+(239, 25),
+(240, 26),
+(241, 26),
+(242, 26),
+(243, 26),
+(244, 27),
+(245, 27),
+(246, 20),
+(247, 20),
+(248, 20),
+(249, 20),
+(250, 21),
+(251, 21),
+(252, 21),
+(253, 21),
+(254, 21),
+(255, 21);
 
 -- --------------------------------------------------------
 
@@ -1206,6 +1523,70 @@ CREATE TABLE `su_product_variants` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `su_product_variants`
+--
+
+INSERT INTO `su_product_variants` (`id`, `product_id`, `variant_code`, `sku`, `price`, `sale_price`, `cost_price`, `stock_quantity`, `image`, `variant_signature`, `created_at`, `updated_at`) VALUES
+(57, 212, 'TV-TILE-RED-30G-MATTE', 'TV-TILE-RED-30G-MATTE', 650.00, NULL, NULL, 200, NULL, '6f33027e2ed16da7a618ac88d51ff7c75a08167e11dba17194c85c55198f694b', '2026-10-13 06:43:02', '2026-10-13 06:46:43'),
+(58, 212, 'TV-TILE-RED-28G-MATTE', 'TV-TILE-RED-28G-MATTE', 750.00, NULL, NULL, 200, NULL, '962ea13e340aedeb248e251ab3c810d6ed43fa9dc7fa292f72e96d2939ba5baa', '2026-10-13 06:43:02', '2026-10-13 06:46:43'),
+(59, 213, 'TV-MAROON-30G-MATTE', 'TV-MAROON-30G-MATTE', 650.00, NULL, NULL, 200, NULL, '476c20c2948ace983adbc406a04aec3cc9998b3f2e2545176a7a97c5c2d224e3', '2026-10-13 06:43:02', '2026-10-13 06:46:43'),
+(60, 213, 'TV-MAROON-28G-MATTE', 'TV-MAROON-28G-MATTE', 750.00, NULL, NULL, 200, NULL, 'b143f0f25cef6c4a0362f9430e3353ca0b1ce960a0afda3d363a06d07d21412a', '2026-10-13 06:43:02', '2026-10-13 06:46:43'),
+(61, 214, 'TV-FOREST-GREEN-30G-MATTE', 'TV-FOREST-GREEN-30G-MATTE', 650.00, NULL, NULL, 200, NULL, '243928040d2b201e16461b49be299bfcea0893856d86b4033b8bf0c1f9507178', '2026-10-13 06:43:02', '2026-10-13 06:46:43'),
+(62, 214, 'TV-FOREST-GREEN-28G-MATTE', 'TV-FOREST-GREEN-28G-MATTE', 750.00, NULL, NULL, 200, NULL, 'c262eb50da9cb234ebbbedcd0ae315194c31c9a631e1ca9ce3ef0279c5d8e675', '2026-10-13 06:43:02', '2026-10-13 06:46:43'),
+(63, 215, 'TV-MAASAI-RED-30G-MATTE', 'TV-MAASAI-RED-30G-MATTE', 650.00, NULL, NULL, 200, NULL, 'f28fa2ed4474de48dc730db0669f6f190f2eb3a00f23327730ce5314ac92f6b6', '2026-10-13 06:43:02', '2026-10-13 06:46:43'),
+(64, 215, 'TV-MAASAI-RED-28G-MATTE', 'TV-MAASAI-RED-28G-MATTE', 750.00, NULL, NULL, 200, NULL, '8eece210032e42014d6f1463150908acfd0c7f08c3f22abe54d0ac613aa4e5ae', '2026-10-13 06:43:02', '2026-10-13 06:46:43'),
+(65, 216, 'TV-CHOCOLATE-BROWN-30G-MATTE', 'TV-CHOCOLATE-BROWN-30G-MATTE', 650.00, NULL, NULL, 200, NULL, '859686acb93e3d7a2f1ab336c342f48a87b3f200015aa495ae420499c8251205', '2026-10-13 06:43:02', '2026-10-13 06:46:43'),
+(66, 216, 'TV-CHOCOLATE-BROWN-28G-MATTE', 'TV-CHOCOLATE-BROWN-28G-MATTE', 750.00, NULL, NULL, 200, NULL, '576edefcfa9dc35f8b2dd16c4110a722fa21b16102fc2ea8128ccd87b1b711ff', '2026-10-13 06:43:02', '2026-10-13 06:46:43'),
+(67, 217, 'TV-CHARCOAL-GREY-30G-MATTE', 'TV-CHARCOAL-GREY-30G-MATTE', 650.00, NULL, NULL, 200, NULL, '05c25664277291a2e5dba52c7f05d06ca57c697e06d787d49070891347ce9885', '2026-10-13 06:43:02', '2026-10-13 06:46:43'),
+(68, 217, 'TV-CHARCOAL-GREY-28G-MATTE', 'TV-CHARCOAL-GREY-28G-MATTE', 750.00, NULL, NULL, 200, NULL, '43c68b176f3b30566ef06fafe18500c6f27d5e405e7cc6e9f00e21889c720ba0', '2026-10-13 06:43:02', '2026-10-13 06:46:43'),
+(75, 225, 'TO-CHARCOAL-GREY-30G-MATTE', 'TO-CHARCOAL-GREY-30G-MATTE', 650.00, NULL, NULL, 200, NULL, '934efb3b617f7ae099ad9f52d465ff1abccd2bc63dc338fd18fb19b33fd17161', '2026-10-13 06:55:23', '2026-10-13 06:55:23'),
+(76, 226, 'TO-TILE-RED-30G-MATTE', 'TO-TILE-RED-30G-MATTE', 650.00, NULL, NULL, 200, NULL, '4d82e66e04dcff3703d08e8e43aa24313806f1f543b7d814f5ac32cc2cb77197', '2026-10-13 06:55:23', '2026-10-13 06:55:23'),
+(77, 227, 'TO-MAROON-30G-MATTE', 'TO-MAROON-30G-MATTE', 650.00, NULL, NULL, 200, NULL, '50b93846ab1efcf8c170ca5640d73611099214826c35a4c872ec5db964e2c8db', '2026-10-13 06:55:23', '2026-10-13 06:55:23'),
+(78, 228, 'TO-CHOCOLATE-BROWN-30G-MATTE', 'TO-CHOCOLATE-BROWN-30G-MATTE', 650.00, NULL, NULL, 200, NULL, '846bd1f66ff3dbdd85f34dd2cd7de2e70e5fc30f10dbde7f186cc3a1e735fb70', '2026-10-13 06:55:23', '2026-10-13 06:55:23'),
+(79, 229, 'TO-MAASAI-RED-30G-MATTE', 'TO-MAASAI-RED-30G-MATTE', 650.00, NULL, NULL, 200, NULL, '10022e1f847e47ec2ef2652047ae83804f53732b68d9915c02761bc7f8789cc5', '2026-10-13 07:10:23', '2026-10-13 07:10:23'),
+(80, 229, 'TO-MAASAI-RED-28G-MATTE', 'TO-MAASAI-RED-28G-MATTE', 750.00, NULL, NULL, 200, NULL, '717e5f9e9aef53f073c919344367fb77eb6ee44bffb211541be1fc46072d1ae6', '2026-10-13 07:10:23', '2026-10-13 07:10:23'),
+(81, 230, 'TO-FOREST-GREEN-30G-MATTE', 'TO-FOREST-GREEN-30G-MATTE', 650.00, NULL, NULL, 200, NULL, '1b3bd92fd9e9c49069747b865df07700b6c5823a4593325dd6f6b61b59e49c9f', '2026-10-13 07:10:23', '2026-10-13 07:10:23'),
+(82, 230, 'TO-FOREST-GREEN-28G-MATTE', 'TO-FOREST-GREEN-28G-MATTE', 750.00, NULL, NULL, 200, NULL, '780882accdf55089e42436a7ec6d57eaf4f03132b089528f54d31fdc00e18194', '2026-10-13 07:10:23', '2026-10-13 07:10:23'),
+(83, 231, 'TE-CHARCOAL-GREY-30G-MATTE', 'TE-CHARCOAL-GREY-30G-MATTE', 650.00, NULL, NULL, 200, NULL, '3046297f1a0330e5d4046f70643e5158b3d5c673dbf5d6d84e9aad635c7be8c7', '2026-10-13 07:19:32', '2026-10-13 07:19:32'),
+(84, 231, 'TE-CHARCOAL-GREY-28G-MATTE', 'TE-CHARCOAL-GREY-28G-MATTE', 750.00, NULL, NULL, 200, NULL, 'dc0329573cb13adb8299a3a1c7d48f6f40d412c48468ee7271aa214e503980bb', '2026-10-13 07:19:32', '2026-10-13 07:19:32'),
+(85, 232, 'TE-TILE-RED-30G-MATTE', 'TE-TILE-RED-30G-MATTE', 650.00, NULL, NULL, 200, NULL, '019c4142e7ad391ffcb946d2acd3c433c0370275398eadfc214119e095d166eb', '2026-10-13 07:19:32', '2026-10-13 07:19:32'),
+(86, 232, 'TE-TILE-RED-28G-MATTE', 'TE-TILE-RED-28G-MATTE', 750.00, NULL, NULL, 200, NULL, 'c94fe0fbb84b0a20d5c865d0f79122f779eb7baab3417912632d8fb6de9644fa', '2026-10-13 07:19:32', '2026-10-13 07:19:32'),
+(87, 233, 'TE-MAROON-30G-MATTE', 'TE-MAROON-30G-MATTE', 650.00, NULL, NULL, 200, NULL, 'c0434c92560497934e93c651da76f5a1a36aaf9ba692919375650a3d27d95555', '2026-10-13 07:19:32', '2026-10-13 07:19:32'),
+(88, 233, 'TE-MAROON-28G-MATTE', 'TE-MAROON-28G-MATTE', 750.00, NULL, NULL, 200, NULL, '02d838864bc3bd25c846f4922249f836ae0f52025a255d12669e468007163fac', '2026-10-13 07:19:33', '2026-10-13 07:19:33'),
+(89, 234, 'TE-FOREST-GREEN-30G-MATTE', 'TE-FOREST-GREEN-30G-MATTE', 650.00, NULL, NULL, 200, NULL, 'cd68a854712a9450d8bc3e8526e8a4e63b8043ed1d60776e591a45f919c4498d', '2026-10-13 07:19:33', '2026-10-13 07:19:33'),
+(90, 234, 'TE-FOREST-GREEN-28G-MATTE', 'TE-FOREST-GREEN-28G-MATTE', 750.00, NULL, NULL, 200, NULL, '6ae6fb6b12e197e9566f613cc5b5c6c8ec4bcf1af76dd2078ab251cde44f7494', '2026-10-13 07:19:33', '2026-10-13 07:19:33'),
+(93, 246, 'BP-CHARCOAL-GREY-30G-MATTE', 'BP-CHARCOAL-GREY-30G-MATTE', 550.00, NULL, NULL, 200, NULL, '5db7b0111b9250535c833ef0544d0730caa2c16771a631fd24f6321eaa9469d8', '2026-10-13 11:31:45', '2026-10-13 11:31:45'),
+(94, 246, 'BP-CHARCOAL-GREY-28G-MATTE', 'BP-CHARCOAL-GREY-28G-MATTE', 720.00, NULL, NULL, 200, NULL, 'c4c5ec055e84202e67229af180cc35d7ea47742b505e3cd9369e097055444243', '2026-10-13 11:31:45', '2026-10-13 11:31:45'),
+(95, 247, 'BP-TILE-RED-30G-MATTE', 'BP-TILE-RED-30G-MATTE', 550.00, NULL, NULL, 200, NULL, '7a567e0f42de8b9eb2b442491e4fce1ad29855175c141cc29047119556b5cb9c', '2026-10-13 11:31:45', '2026-10-13 11:31:45'),
+(96, 247, 'BP-TILE-RED-28G-MATTE', 'BP-TILE-RED-28G-MATTE', 720.00, NULL, NULL, 200, NULL, 'd02e769a509435d25209afb8411d5e5779c4a98aaaf1eb6133b4b175622da68c', '2026-10-13 11:31:45', '2026-10-13 11:31:45'),
+(97, 248, 'BP-MAROON-30G-MATTE', 'BP-MAROON-30G-MATTE', 550.00, NULL, NULL, 200, NULL, '44a2f8a685327879a393e88793a808d2b58d63c41f148e17817471fa1d7e0039', '2026-10-13 11:31:45', '2026-10-13 11:31:45'),
+(98, 248, 'BP-MAROON-28G-MATTE', 'BP-MAROON-28G-MATTE', 720.00, NULL, NULL, 200, NULL, '22e26c08a8077b7489d5123a7c94ab408b7ce85af7f3e951498345edb4b48564', '2026-10-13 11:31:45', '2026-10-13 11:31:45'),
+(101, 247, 'BP-TILE-RED-28G-GLOSSY', 'BP-TILE-RED-28G-GLOSSY', 700.00, NULL, NULL, 200, NULL, '7db2ce2eb5754f5ad7b00c7525fd3c66a05fbb55c74e058012643e439c1988d1', '2026-10-13 11:36:16', '2026-10-13 11:36:16'),
+(105, 251, 'CR-CHARCOAL-GREY-30G-MATTE', 'CR-CHARCOAL-GREY-30G-MATTE', 550.00, NULL, NULL, 200, NULL, '759ed682bf153e8f001598617cbbf2a301a324e40f1e5913adaa8db04dce9685', '2026-10-13 11:48:42', '2026-10-13 11:48:42'),
+(106, 251, 'CR-CHARCOAL-GREY-28G-MATTE', 'CR-CHARCOAL-GREY-28G-MATTE', 720.00, NULL, NULL, 200, NULL, '96f4cdd780f057b225d1ca50ff8d8cc3f1985409e4dfca9b1839781f5f71220d', '2026-10-13 11:48:42', '2026-10-13 11:48:42'),
+(107, 251, 'CR-CHARCOAL-GREY-28G-GLOSSY', 'CR-CHARCOAL-GREY-28G-GLOSSY', 700.00, NULL, NULL, 200, NULL, '3f0015a11cbadd4ba450d80cf0a0a856e4bf194a4e99b50ee80ab25833a075b6', '2026-10-13 11:48:42', '2026-10-13 11:48:42'),
+(108, 252, 'CR-TILE-RED-30G-MATTE', 'CR-TILE-RED-30G-MATTE', 550.00, NULL, NULL, 200, NULL, '5e61f5ef0d14025cda34df535483744fee2090a1813cebab2f8d75df2fb3bd68', '2026-10-13 11:48:42', '2026-10-13 11:48:42'),
+(109, 252, 'CR-TILE-RED-28G-MATTE', 'CR-TILE-RED-28G-MATTE', 720.00, NULL, NULL, 200, NULL, '37a3b014f14d144fd1a2fc90800e2ad618f4a93571ff888a978b8357a63dba55', '2026-10-13 11:48:42', '2026-10-13 11:48:42'),
+(110, 252, 'CR-TILE-RED-28G-GLOSSY', 'CR-TILE-RED-28G-GLOSSY', 700.00, NULL, NULL, 200, NULL, 'da01c5c4e5ee2a29d6b6036d7ff53a7c7fcaa64a8b4be1d6a75640083481ff63', '2026-10-13 11:48:42', '2026-10-13 11:48:42'),
+(111, 253, 'CR-MAROON-30G-MATTE', 'CR-MAROON-30G-MATTE', 550.00, NULL, NULL, 200, NULL, '1620ff7baaaa7e093f8a6d5229472158e0722c61b1f06ba966b477ff13da2133', '2026-10-13 11:48:42', '2026-10-13 11:48:42'),
+(112, 253, 'CR-MAROON-28G-MATTE', 'CR-MAROON-28G-MATTE', 720.00, NULL, NULL, 200, NULL, 'ac53265b2671a83ce9cf78626a22c8e4b9f1ab1fbf5a0b7eb633d3caed3be808', '2026-10-13 11:48:42', '2026-10-13 11:48:42'),
+(113, 253, 'CR-MAROON-28G-GLOSSY', 'CR-MAROON-28G-GLOSSY', 700.00, NULL, NULL, 200, NULL, '2d030b3873ebd7aa19c2927d3d9343b7a6c497e7fc074a5ca3c27600d4dc90e7', '2026-10-13 11:48:42', '2026-10-13 11:48:42'),
+(117, 254, '30G / Matte', 'NAWV-00111000', 550.00, NULL, NULL, 0, NULL, 'b0e7f750f81ac8c5c413c11053fb1d3ce19c8bcc7513136d4b51691df4ee8d0a', '2026-10-13 14:34:47', '2026-10-13 14:34:47'),
+(118, 254, '30G / Glossy', 'NAWV-00111001', 550.00, NULL, NULL, 0, NULL, '29f72c69855a3012bbb4d8663e65dbe8e112fa25fa1093dceb6956347ff83407', '2026-10-13 14:34:47', '2026-10-13 14:34:47'),
+(119, 254, '28G / Matte', 'NAWV-00111002', 550.00, NULL, NULL, 0, NULL, '78a64583c09f5c859bfea5f4ff039236cbea4b113f4d3b87a5981878a9153616', '2026-10-13 14:34:47', '2026-10-13 14:34:47'),
+(120, 254, '28G / Glossy', 'NAWV-00111003', 550.00, NULL, NULL, 0, NULL, '3a099d63cde97d9f472f83908f00fe88481967e57ff656f4a10ecb5d32d64f90', '2026-10-13 14:34:47', '2026-10-13 14:34:47'),
+(121, 250, '30G / Matte', 'NAWV-00111004', 550.00, NULL, NULL, 0, NULL, 'f7ff8b16e8194709f404ab189e6e254d607224ea87d689b7f3e32c6daa31e932', '2026-10-13 17:33:01', '2026-10-13 17:33:01'),
+(122, 250, '30G / Glossy', 'NAWV-00111005', 550.00, NULL, NULL, 0, NULL, '853c8b1fbb6526646514160fc3dc282e7451fb8f349d6d00722255b6f8c0fa70', '2026-10-13 17:33:01', '2026-10-13 17:33:01'),
+(123, 250, '28G / Matte', 'NAWV-00111006', 550.00, NULL, NULL, 0, NULL, '9b27429e2165b801bd9696058a00f4efbcaeedacdf1a12a164d623f1bf85cd04', '2026-10-13 17:33:01', '2026-10-13 17:33:01'),
+(124, 250, '28G / Glossy', 'NAWV-00111007', 550.00, NULL, NULL, 0, NULL, 'fedf32c6a0e11a084e6976e6f0733736df8ab2066932d8345c640adf8ad6af5c', '2026-10-13 17:33:01', '2026-10-13 17:33:01'),
+(125, 235, '30G / Matte', 'NAWV-00111008', 1950.00, NULL, NULL, 0, NULL, '1f8a8604d721a1e3b4034a6470c5b12bf54c4a61212bbe6a5d2888cd0ece36c5', '2026-10-13 17:36:06', '2026-10-13 17:36:06'),
+(126, 235, '30G / Glossy', 'NAWV-00111009', 1950.00, NULL, NULL, 0, NULL, '19001ba96349f427244eaa99fdb499f79e811c395e210241d06b624c7c73448a', '2026-10-13 17:36:06', '2026-10-13 17:36:06'),
+(127, 235, '28G / Matte', 'NAWV-00111010', 1950.00, NULL, NULL, 0, NULL, '9cccbf49253bbdc5c31ec89d7459397ded2cba0bc0fae9d0ac22dc36cbead9ba', '2026-10-13 17:36:06', '2026-10-13 17:36:06'),
+(128, 235, '28G / Glossy', 'NAWV-00111011', 1950.00, NULL, NULL, 0, NULL, '8c20389fa2fec8da88a42aabe8c09ffb062dfa33b1710fa3797442933ac6c1f6', '2026-10-13 17:36:06', '2026-10-13 17:36:06'),
+(129, 249, '30G / Matte', 'NAWV-00111012', 550.00, NULL, NULL, 0, NULL, '79891ddb8b353717b8f22368d7bb33153c9116f6872bfdb8af1e29a26d542317', '2026-10-13 17:39:39', '2026-10-13 17:39:39'),
+(130, 249, '28G / Matte', 'NAWV-00111013', 550.00, NULL, NULL, 0, NULL, '219230fdb16e0a758249d8b6e090cdd30738e82df8240fc7a8dc5fccd04b4c23', '2026-10-13 17:39:39', '2026-10-13 17:39:39');
+
 -- --------------------------------------------------------
 
 --
@@ -1219,6 +1600,128 @@ CREATE TABLE `su_product_variant_attributes` (
   `attribute_value_id` int(10) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `su_product_variant_attributes`
+--
+
+INSERT INTO `su_product_variant_attributes` (`id`, `variant_id`, `attribute_id`, `attribute_value_id`) VALUES
+(57, 57, 21, 58),
+(58, 57, 22, 60),
+(59, 58, 21, 59),
+(60, 58, 22, 60),
+(61, 59, 23, 62),
+(62, 59, 24, 64),
+(63, 60, 23, 63),
+(64, 60, 24, 64),
+(65, 61, 25, 66),
+(66, 61, 26, 68),
+(67, 62, 25, 67),
+(68, 62, 26, 68),
+(69, 63, 27, 70),
+(70, 63, 28, 72),
+(71, 64, 27, 71),
+(72, 64, 28, 72),
+(73, 65, 29, 74),
+(74, 65, 30, 76),
+(75, 66, 29, 75),
+(76, 66, 30, 76),
+(77, 67, 31, 78),
+(78, 67, 32, 80),
+(79, 68, 31, 79),
+(80, 68, 32, 80),
+(93, 75, 45, 94),
+(94, 75, 46, 95),
+(95, 76, 47, 96),
+(96, 76, 48, 97),
+(97, 77, 49, 98),
+(98, 77, 50, 99),
+(99, 78, 51, 100),
+(100, 78, 52, 101),
+(101, 79, 53, 102),
+(102, 79, 54, 104),
+(103, 80, 53, 103),
+(104, 80, 54, 104),
+(105, 81, 55, 106),
+(106, 81, 56, 108),
+(107, 82, 55, 107),
+(108, 82, 56, 108),
+(109, 83, 57, 110),
+(110, 83, 58, 112),
+(111, 84, 57, 111),
+(112, 84, 58, 112),
+(113, 85, 59, 114),
+(114, 85, 60, 116),
+(115, 86, 59, 115),
+(116, 86, 60, 116),
+(117, 87, 61, 118),
+(118, 87, 62, 120),
+(119, 88, 61, 119),
+(120, 88, 62, 120),
+(121, 89, 63, 122),
+(122, 89, 64, 124),
+(123, 90, 63, 123),
+(124, 90, 64, 124),
+(129, 93, 67, 130),
+(130, 93, 68, 132),
+(131, 94, 67, 131),
+(132, 94, 68, 132),
+(133, 95, 69, 133),
+(134, 95, 70, 135),
+(135, 96, 69, 134),
+(136, 96, 70, 135),
+(137, 97, 71, 136),
+(138, 97, 72, 138),
+(139, 98, 71, 137),
+(140, 98, 72, 138),
+(145, 101, 69, 134),
+(146, 101, 70, 142),
+(153, 105, 77, 147),
+(154, 105, 78, 149),
+(155, 106, 77, 148),
+(156, 106, 78, 149),
+(157, 107, 77, 148),
+(158, 107, 78, 150),
+(159, 108, 79, 151),
+(160, 108, 80, 153),
+(161, 109, 79, 152),
+(162, 109, 80, 153),
+(163, 110, 79, 152),
+(164, 110, 80, 154),
+(165, 111, 81, 155),
+(166, 111, 82, 157),
+(167, 112, 81, 156),
+(168, 112, 82, 157),
+(169, 113, 81, 156),
+(170, 113, 82, 158),
+(177, 117, 85, 163),
+(178, 117, 86, 165),
+(179, 118, 85, 163),
+(180, 118, 86, 166),
+(181, 119, 85, 164),
+(182, 119, 86, 165),
+(183, 120, 85, 164),
+(184, 120, 86, 166),
+(185, 121, 87, 167),
+(186, 121, 88, 169),
+(187, 122, 87, 167),
+(188, 122, 88, 170),
+(189, 123, 87, 168),
+(190, 123, 88, 169),
+(191, 124, 87, 168),
+(192, 124, 88, 170),
+(193, 125, 89, 171),
+(194, 125, 90, 173),
+(195, 126, 89, 171),
+(196, 126, 90, 174),
+(197, 127, 89, 172),
+(198, 127, 90, 173),
+(199, 128, 89, 172),
+(200, 128, 90, 174),
+(201, 129, 91, 175),
+(202, 129, 92, 177),
+(203, 130, 91, 176),
+(204, 130, 92, 177);
+
 -- --------------------------------------------------------
 
 --
@@ -1228,7 +1731,7 @@ CREATE TABLE `su_product_variant_attributes` (
 CREATE TABLE `su_quotations` (
   `id` int(10) UNSIGNED NOT NULL,
   `quotation_code` varchar(50) NOT NULL,
-  `user_id` int(10) UNSIGNED NOT NULL,
+  `user_id` int(10) UNSIGNED DEFAULT NULL,
   `prepared_by` int(10) UNSIGNED DEFAULT NULL,
   `status` enum('draft','sent','accepted','rejected','expired','converted') NOT NULL DEFAULT 'draft',
   `subtotal` decimal(12,2) NOT NULL DEFAULT 0.00,
@@ -1240,7 +1743,11 @@ CREATE TABLE `su_quotations` (
   `notes` text DEFAULT NULL,
   `converted_order_id` int(10) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `customer_first_name` varchar(100) DEFAULT NULL,
+  `customer_last_name` varchar(100) DEFAULT NULL,
+  `customer_phone` varchar(30) DEFAULT NULL,
+  `customer_email` varchar(190) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1447,15 +1954,15 @@ CREATE TABLE `su_settings` (
 INSERT INTO `su_settings` (`id`, `setting_key`, `setting_value`, `description`, `updated_at`) VALUES
 (1, 'company_name', 'Your Company Name', 'Registered company name', '2026-09-17 05:42:36'),
 (2, 'site_name', 'Trinity Mabati', 'Display name shown across the site', '2026-10-13 05:23:37'),
-(3, 'contact_email', 'support@finamax.co.ke', 'Public support email shown in the header, footer and contact page', '2026-09-18 03:10:33'),
-(4, 'contact_phone', '0792829872', 'Public phone number shown in the header, footer and contact page', '2026-09-18 03:10:12'),
-(5, 'contact_whatsapp', '254792829872', 'WhatsApp number in international format without a plus sign, used for wa.me links', '2026-09-18 03:10:12'),
+(3, 'contact_email', 'info@trinitymabati.com', 'Public support email shown in the header, footer and contact page', '2026-10-13 12:39:41'),
+(4, 'contact_phone', '0740 550 105', 'Public phone number shown in the header, footer and contact page', '2026-10-13 12:39:41'),
+(5, 'contact_whatsapp', '0740 550 105', 'WhatsApp number in international format without a plus sign, used for wa.me links', '2026-10-13 12:39:41'),
 (6, 'contact_address', 'Nairobi, Kenya', 'Physical location shown in the footer and contact page', '2026-09-17 05:42:36'),
-(7, 'social_facebook', '', 'Facebook page URL, leave blank to hide the icon', '2026-09-17 05:42:36'),
-(8, 'social_instagram', '', 'Instagram profile URL, leave blank to hide the icon', '2026-09-17 05:42:36'),
-(9, 'social_twitter', '', 'X (Twitter) profile URL, leave blank to hide the icon', '2026-09-17 05:42:36'),
+(7, 'social_facebook', 'https://facebook.com', 'Facebook page URL, leave blank to hide the icon', '2026-10-13 12:39:41'),
+(8, 'social_instagram', 'https://instagramcom', 'Instagram profile URL, leave blank to hide the icon', '2026-10-13 12:42:37'),
+(9, 'social_twitter', 'https://x.com', 'X (Twitter) profile URL, leave blank to hide the icon', '2026-10-13 12:42:37'),
 (10, 'social_tiktok', '', 'TikTok profile URL, leave blank to hide the icon', '2026-09-17 05:42:36'),
-(11, 'social_youtube', '', 'YouTube channel URL, leave blank to hide the icon', '2026-09-17 05:42:36'),
+(11, 'social_youtube', 'https://youtube.com', 'YouTube channel URL, leave blank to hide the icon', '2026-10-13 12:42:37'),
 (12, 'social_linkedin', '', 'LinkedIn page URL, leave blank to hide the icon', '2026-09-17 05:42:36'),
 (13, 'whatsapp_default_message', 'Hello, I would like to know more about your products.', 'Pre-filled message for the floating WhatsApp button', '2026-09-17 05:42:36'),
 (14, 'login_2fa_method', 'none', 'Customer login verification method: none, email or sms', '2026-09-17 05:42:36'),
@@ -1466,7 +1973,13 @@ INSERT INTO `su_settings` (`id`, `setting_key`, `setting_value`, `description`, 
 (19, 'logo_main', 'uploads/branding/logo_main-20261013082337-9afa0e.png', NULL, '2026-10-13 05:23:37'),
 (20, 'site_icon', 'uploads/branding/site_icon-20261013082337-eb69e7.png', NULL, '2026-10-13 05:23:37'),
 (21, 'apple_touch_icon', 'uploads/branding/apple_touch_icon-20261013082337-a8fb66.png', NULL, '2026-10-13 05:23:37'),
-(22, 'logo_white', 'uploads/branding/logo_white-20261013084322-c937aa.png', NULL, '2026-10-13 05:43:22');
+(22, 'logo_white', 'uploads/branding/logo_white-20261013084322-c937aa.png', NULL, '2026-10-13 05:43:22'),
+(23, 'branch_nairobi_name', 'Nairobi Outlet', 'Trinity Mabati Factory outlet contact details', '2026-10-13 12:56:11'),
+(24, 'branch_nairobi_address', 'Enterprise Road, B. Binico Enterprises, Nairobi, Kenya.', 'Trinity Mabati Factory outlet contact details', '2026-10-13 12:56:11'),
+(25, 'branch_nairobi_phone', '0740 550 105', 'Trinity Mabati Factory outlet contact details', '2026-10-13 15:18:06'),
+(26, 'branch_migori_name', 'Migori Outlet', 'Trinity Mabati Factory outlet contact details', '2026-10-13 12:56:11'),
+(27, 'branch_migori_address', 'Kimaiga, next to Dolion Hotel', 'Trinity Mabati Factory outlet contact details', '2026-10-13 12:56:11'),
+(28, 'branch_migori_phone', '0796 593 842', 'Trinity Mabati Factory outlet contact details', '2026-10-13 15:18:06');
 
 -- --------------------------------------------------------
 
@@ -2447,7 +2960,540 @@ INSERT INTO `su_visitors_logs` (`id`, `ip_address`, `user_agent`, `visited_url`,
 (607, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/blog', 'http://localhost/trinitymabati/', 'Wp8S94r1YkhgR3a4e6SVLVEVstW8tFEnBSNucrdE', 2, NULL, '2026-10-13 08:52:13'),
 (608, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/login', 'http://localhost/trinitymabati/manage/dashboard', 'wsKnrHhlkyn19UWbtbhdL0DYProhngSJmtLbVwkq', NULL, NULL, '2026-10-13 08:54:16'),
 (609, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/login', 'http://localhost/trinitymabati/login', 'wsKnrHhlkyn19UWbtbhdL0DYProhngSJmtLbVwkq', NULL, NULL, '2026-10-13 08:54:21'),
-(610, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/blog', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 08:54:54');
+(610, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/blog', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 08:54:54'),
+(611, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/blog', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:00:12'),
+(612, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/blog', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:20:39'),
+(613, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:20:57'),
+(614, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:34:23'),
+(615, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/box-profile', 'http://localhost/trinitymabati/categories/tile-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:34:25'),
+(616, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/box-profile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:34:27'),
+(617, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:34:33'),
+(618, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/products', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:34:45'),
+(619, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:34:47'),
+(620, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:43:07'),
+(621, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:43:09'),
+(622, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:43:14'),
+(623, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/products', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:43:44'),
+(624, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:43:45'),
+(625, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:43:46'),
+(626, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/box-profile', 'http://localhost/trinitymabati/categories/tile-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:43:48'),
+(627, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/categories/box-profile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:44:29'),
+(628, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/tile-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:44:32'),
+(629, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:44:37'),
+(630, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:46:50'),
+(631, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-versatile-roofing-sheet-tile-red', 'http://localhost/trinitymabati/products', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:46:56'),
+(632, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/trinity-versatile-roofing-sheet-tile-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:47:49'),
+(633, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-versatile-roofing-sheet-maasai-red', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:48:22'),
+(634, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/box-profile', 'http://localhost/trinitymabati/products/trinity-versatile-roofing-sheet-maasai-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:51:39'),
+(635, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/categories/box-profile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:51:42'),
+(636, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:51:44'),
+(637, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:51:45'),
+(638, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/trinity-versatile', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:55:39'),
+(639, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/categories/trinity-versatile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:55:53'),
+(640, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-versatile-roofing-sheet-maroon', 'http://localhost/trinitymabati/categories/trinity-versatile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:56:14'),
+(641, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-versatile-roofing-sheet-maroon', 'http://localhost/trinitymabati/categories/trinity-versatile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:58:37'),
+(642, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products?category_id=22', 'http://localhost/trinitymabati/products/trinity-versatile-roofing-sheet-maroon', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:58:41'),
+(643, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/products?category_id=22', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:58:44'),
+(644, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-charcoal-grey', 'http://localhost/trinitymabati/categories/trinity-orientile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 09:58:48'),
+(645, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/cart', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-charcoal-grey', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:02:39'),
+(646, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:03:19'),
+(647, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/trinity-orientile', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:04:26'),
+(648, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-tile-red', 'http://localhost/trinitymabati/categories/trinity-orientile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:04:29'),
+(649, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-tile-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:05:09'),
+(650, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-chocolate-brown', 'http://localhost/trinitymabati/categories/trinity-orientile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:05:24'),
+(651, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/trinity-orientile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:06:53'),
+(652, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/trinity-versatile', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:07:05'),
+(653, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/categories/trinity-versatile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:07:59'),
+(654, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-forest-green', 'http://localhost/trinitymabati/categories/trinity-orientile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:08:10'),
+(655, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-chocolate-brown', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-forest-green', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:08:26'),
+(656, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-chocolate-brown', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-forest-green', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:08:38'),
+(657, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-maasai-red', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-forest-green', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:08:51'),
+(658, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-maasai-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:09:25'),
+(659, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/cart', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:09:47'),
+(660, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-maasai-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:10:31'),
+(661, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/trinity-orientile', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:10:37'),
+(662, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-maasai-red', 'http://localhost/trinitymabati/categories/trinity-orientile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:10:41'),
+(663, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-charcoal-grey', 'http://localhost/trinitymabati/categories/trinity-orientile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:11:03'),
+(664, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-maasai-red', 'http://localhost/trinitymabati/categories/trinity-orientile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:11:32'),
+(665, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-chocolate-brown', 'http://localhost/trinitymabati/categories/trinity-orientile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:12:22'),
+(666, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-chocolate-brown', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:15:32'),
+(667, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:15:34'),
+(668, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/tile-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:16:23'),
+(669, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-maasai-red', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:16:29'),
+(670, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-maasai-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:17:25'),
+(671, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-maasai-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:19:39'),
+(672, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:19:42'),
+(673, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-forest-green', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:19:54'),
+(674, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-forest-green', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:23:13'),
+(675, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:23:21'),
+(676, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:23:30'),
+(677, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-versatile-roofing-sheet-forest-green', 'http://localhost/trinitymabati/categories/trinity-versatile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:23:45'),
+(678, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-versatile-roofing-sheet-forest-green', 'http://localhost/trinitymabati/categories/trinity-versatile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:26:37'),
+(679, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/products/trinity-versatile-roofing-sheet-forest-green', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:26:58'),
+(680, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-maasai-red', 'http://localhost/trinitymabati/categories/trinity-orientile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:27:02'),
+(681, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-maasai-red', 'http://localhost/trinitymabati/categories/trinity-orientile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:27:41'),
+(682, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-tile-red', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-maasai-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:27:54'),
+(683, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-tile-red', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-maasai-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:29:54'),
+(684, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-tile-red', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-maasai-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:30:25'),
+(685, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-maroon', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-tile-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:30:34'),
+(686, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-maroon', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:30:40'),
+(687, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:30:43'),
+(688, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-forest-green', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:30:46');
+INSERT INTO `su_visitors_logs` (`id`, `ip_address`, `user_agent`, `visited_url`, `referrer_url`, `session_id`, `user_id`, `country`, `visit_time`) VALUES
+(689, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:33:58'),
+(690, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-chocolate-brown', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:34:37'),
+(691, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-chocolate-brown', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:44:34'),
+(692, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-chocolate-brown', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:44:38'),
+(693, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-chocolate-brown', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:44:43'),
+(694, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-charcoal-grey', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-chocolate-brown', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:44:52'),
+(695, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-maroon', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-charcoal-grey', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:45:00'),
+(696, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-maroon', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:48:31'),
+(697, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:48:35'),
+(698, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:48:38'),
+(699, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/trinity-orientile', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:50:16'),
+(700, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-maasai-red', 'http://localhost/trinitymabati/categories/trinity-orientile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:50:19'),
+(701, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-maasai-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:53:31'),
+(702, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:53:44'),
+(703, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/cart', 'http://localhost/trinitymabati/categories/tile-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:53:53'),
+(704, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/checkout', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:54:11'),
+(705, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:59:09'),
+(706, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 10:59:46'),
+(707, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:00:13'),
+(708, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-chocolate-brown', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:00:48'),
+(709, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-chocolate-brown', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:04:41'),
+(710, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-forest-green', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-chocolate-brown', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:05:44'),
+(711, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-forest-green', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-chocolate-brown', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:10:40'),
+(712, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-forest-green', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:10:54'),
+(713, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-forest-green', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:11:26'),
+(714, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-chocolate-brown', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:11:36'),
+(715, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-tile-red', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-chocolate-brown', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:11:58'),
+(716, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-tile-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:13:19'),
+(717, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:13:40'),
+(718, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-charcoal-grey', 'http://localhost/trinitymabati/categories/trinity-orientile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:13:46'),
+(719, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/trinity-orientile-roofing-sheet-charcoal-grey', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:13:57'),
+(720, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:15:07'),
+(721, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:16:35'),
+(722, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:16:38'),
+(723, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-chocolate-brown', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:16:40'),
+(724, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-chocolate-brown', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:21:17'),
+(725, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/stone-coated-shingle-roofing-tiles-maroon', 'http://localhost/trinitymabati/categories/shingle-roofing-tiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:21:24'),
+(726, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/stone-coated-shingle-roofing-tiles-maroon', 'http://localhost/trinitymabati/categories/shingle-roofing-tiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:25:23'),
+(727, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/products/stone-coated-shingle-roofing-tiles-maroon', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:25:25'),
+(728, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/stone-coated-shingle-roofing-tiles-chocolate-brown', 'http://localhost/trinitymabati/categories/shingle-roofing-tiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:25:35'),
+(729, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/shingle-roofing-tiles', 'http://localhost/trinitymabati/products/stone-coated-shingle-roofing-tiles-maroon', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:26:29'),
+(730, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/categories/shingle-roofing-tiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:26:32'),
+(731, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/stone-coated-shingle-roofing-tiles-forest-green', 'http://localhost/trinitymabati/categories/shingle-roofing-tiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:26:37'),
+(732, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/box-profile', 'http://localhost/trinitymabati/products/stone-coated-shingle-roofing-tiles-forest-green', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:31:55'),
+(733, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/box-profile-charcoal-grey', 'http://localhost/trinitymabati/categories/box-profile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:32:03'),
+(734, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/box-profile-forest-green', 'http://localhost/trinitymabati/products/box-profile-charcoal-grey', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:33:15'),
+(735, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/box-profile-forest-green', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:33:44'),
+(736, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/shingle-roofing-tiles', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:33:50'),
+(737, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/stone-coated-shingle-roofing-tiles-forest-green', 'http://localhost/trinitymabati/categories/shingle-roofing-tiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:34:25'),
+(738, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/cart', 'http://localhost/trinitymabati/products/stone-coated-shingle-roofing-tiles-forest-green', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:34:52'),
+(739, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/box-profile', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:35:08'),
+(740, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/categories/box-profile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:35:10'),
+(741, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:35:11'),
+(742, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:35:13'),
+(743, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:36:22'),
+(744, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/tile-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:36:25'),
+(745, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/box-profile-maroon', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:36:34'),
+(746, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/box-profile', 'http://localhost/trinitymabati/products/box-profile-maroon', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:36:39'),
+(747, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/box-profile-maroon', 'http://localhost/trinitymabati/categories/box-profile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:36:45'),
+(748, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/products/box-profile-maroon', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:48:55'),
+(749, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-tile-red', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:49:07'),
+(750, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/cart', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-tile-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:52:03'),
+(751, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:52:54'),
+(752, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/cart', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:52:57'),
+(753, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:53:08'),
+(754, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 11:53:49'),
+(755, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 12:47:51'),
+(756, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 13:40:53'),
+(757, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/cart', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 13:40:56'),
+(758, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 13:43:21'),
+(759, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:14:04'),
+(760, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:14:07'),
+(761, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:17:06'),
+(762, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-charcoal-grey', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:17:09'),
+(763, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-charcoal-grey', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:29:02'),
+(764, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-charcoal-grey', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:29:06'),
+(765, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-charcoal-grey', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:29:28'),
+(766, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/corrugated-alluzinc-roofing-sheet-non-colored', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-charcoal-grey', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:31:03'),
+(767, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/corrugated-alluzinc-roofing-sheet-non-colored', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-charcoal-grey', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:33:09'),
+(768, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/corrugated-alluzinc-roofing-sheet-non-colored', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-charcoal-grey', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:34:52'),
+(769, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/corrugated-alluzinc-roofing-sheet-non-colored', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-charcoal-grey', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:34:55'),
+(770, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-maasai-red', 'http://localhost/trinitymabati/products/corrugated-alluzinc-roofing-sheet-non-colored', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:35:09'),
+(771, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-maasai-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:40:04'),
+(772, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:40:18'),
+(773, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-maasai-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:40:34'),
+(774, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-maasai-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:41:39'),
+(775, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-maasai-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:54:00'),
+(776, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-maasai-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:54:27'),
+(777, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-maasai-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:54:35'),
+(778, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-maasai-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:54:51'),
+(779, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:55:31'),
+(780, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:55:40'),
+(781, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:55:48'),
+(782, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:55:50'),
+(783, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/cart', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:56:01'),
+(784, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:56:05'),
+(785, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/trinity-orientile', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:56:37'),
+(786, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:56:59'),
+(787, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/quotation', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:57:20'),
+(788, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/quotation', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:57:37'),
+(789, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/quotation', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:57:47'),
+(790, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/quotation', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:58:30'),
+(791, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/cart', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:58:56'),
+(792, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 14:58:58'),
+(793, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:02:52'),
+(794, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:03:07'),
+(795, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:03:11'),
+(796, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:03:32'),
+(797, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/quotation', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:03:35'),
+(798, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:03:37'),
+(799, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/quotation', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:03:42'),
+(800, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:03:45'),
+(801, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-charcoal-grey', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:03:47'),
+(802, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-charcoal-grey', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:03:52'),
+(803, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/box-profile', 'http://localhost/trinitymabati/quotation', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:03:58'),
+(804, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/box-profile-tile-red', 'http://localhost/trinitymabati/categories/box-profile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:04:00'),
+(805, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/products/box-profile-tile-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:04:04'),
+(806, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/quotation', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:04:19'),
+(807, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/cart', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:04:21'),
+(808, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/cart', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:04:25'),
+(809, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:04:34'),
+(810, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-charcoal-grey', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:04:35'),
+(811, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-charcoal-grey', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:05:35'),
+(812, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-charcoal-grey', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:05:53'),
+(813, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-charcoal-grey', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:05:58'),
+(814, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-charcoal-grey', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:06:01'),
+(815, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-charcoal-grey', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:06:04'),
+(816, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:06:05'),
+(817, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:06:07'),
+(818, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:06:15'),
+(819, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:06:18'),
+(820, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:06:25'),
+(821, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/about', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:06:51'),
+(822, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/about', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:06:54'),
+(823, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:07:12'),
+(824, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:07:14'),
+(825, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:07:18'),
+(826, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/roman-roofing-tiles', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:07:36'),
+(827, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/roman-roofing-tiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:10:24'),
+(828, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:11:01'),
+(829, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:11:13'),
+(830, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:13:21'),
+(831, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/classic-roofing-tiles', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:13:33'),
+(832, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/categories/classic-roofing-tiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:13:35'),
+(833, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:13:47'),
+(834, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:16:02'),
+(835, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:16:04'),
+(836, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:16:41'),
+(837, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:16:44'),
+(838, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:16:53'),
+(839, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:17:05'),
+(840, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:20:07'),
+(841, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:20:20'),
+(842, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/cart', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:20:29'),
+(843, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/cart', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:20:34'),
+(844, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:20:47'),
+(845, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:20:49');
+INSERT INTO `su_visitors_logs` (`id`, `ip_address`, `user_agent`, `visited_url`, `referrer_url`, `session_id`, `user_id`, `country`, `visit_time`) VALUES
+(846, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-maasai-red', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:20:51'),
+(847, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/box-profile', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-maasai-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:24:21'),
+(848, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/box-profile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:24:23'),
+(849, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:24:44'),
+(850, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/quotation', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:25:30'),
+(851, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/quotation', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:25:33'),
+(852, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/cart', 'http://localhost/trinitymabati/quotation', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:25:39'),
+(853, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:25:47'),
+(854, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:29:00'),
+(855, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:29:06'),
+(856, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-forest-green', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:29:07'),
+(857, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-forest-green', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:29:57'),
+(858, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/blog', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:31:48'),
+(859, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/blog', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:34:24'),
+(860, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/cart', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:35:39'),
+(861, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:35:43'),
+(862, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:35:46'),
+(863, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:36:33'),
+(864, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:36:37'),
+(865, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:37:10'),
+(866, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:37:26'),
+(867, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:37:31'),
+(868, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:38:21'),
+(869, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:39:46'),
+(870, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:41:52'),
+(871, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:42:41'),
+(872, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:42:49'),
+(873, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:43:05'),
+(874, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:43:44'),
+(875, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:51:52'),
+(876, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:51:57'),
+(877, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:53:19'),
+(878, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:56:20'),
+(879, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:56:24'),
+(880, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:57:00'),
+(881, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:57:54'),
+(882, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products', 'http://localhost/trinitymabati/quotation', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:58:12'),
+(883, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:58:50'),
+(884, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:59:10'),
+(885, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/box-profile', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:59:11'),
+(886, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/box-profile-tile-red', 'http://localhost/trinitymabati/categories/box-profile?sort=price_asc', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:59:18'),
+(887, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/box-profile-tile-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 15:59:22'),
+(888, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/box-profile-tile-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:02:27'),
+(889, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/box-profile-tile-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:02:50'),
+(890, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/box-profile-tile-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:09:51'),
+(891, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:09:55'),
+(892, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/box-profile-tile-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:09:58'),
+(893, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:10:00'),
+(894, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/trinity-orientile', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:10:35'),
+(895, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:10:46'),
+(896, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/box-profile-tile-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:11:22'),
+(897, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:22:15'),
+(898, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/stone-coated-classic-roofing-tiles-forest-green', 'http://localhost/trinitymabati/categories/classic-roofing-tiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:22:19'),
+(899, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/stone-coated-classic-roofing-tiles-forest-green', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:22:29'),
+(900, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:22:36'),
+(901, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:22:39'),
+(902, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:22:46'),
+(903, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:22:53'),
+(904, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:23:00'),
+(905, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:25:26'),
+(906, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:26:28'),
+(907, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:26:54'),
+(908, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:32:40'),
+(909, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/box-profile', 'http://localhost/trinitymabati/categories/tile-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:33:19'),
+(910, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/box-profile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:34:04'),
+(911, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/box-profile', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:34:08'),
+(912, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:34:12'),
+(913, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/classic-roofing-tiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:35:25'),
+(914, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/classic-roofing-tiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:35:31'),
+(915, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:35:33'),
+(916, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/classic-roofing-tiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:36:07'),
+(917, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:36:13'),
+(918, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:38:33'),
+(919, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/tile-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:39:20'),
+(920, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:39:25'),
+(921, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:41:04'),
+(922, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:43:01'),
+(923, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:49:33'),
+(924, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:49:56'),
+(925, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:50:06'),
+(926, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:50:25'),
+(927, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', NULL, 'zLmFKNONxbIJYU1EQGlAv1uOPPrxzLUHYyx95ZRe', NULL, NULL, '2026-10-13 16:50:36'),
+(928, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:52:20'),
+(929, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:52:23'),
+(930, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:52:26'),
+(931, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:54:05'),
+(932, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/box-profile-maroon', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:55:42'),
+(933, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/box-profile-maroon', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:55:52'),
+(934, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/cart', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:56:06'),
+(935, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/cart', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:56:10'),
+(936, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/cart', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:56:12'),
+(937, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:57:13'),
+(938, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/about', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 16:58:59'),
+(939, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/about', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:01:06'),
+(940, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:01:46'),
+(941, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:04:00'),
+(942, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:04:28'),
+(943, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:05:48'),
+(944, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:06:14'),
+(945, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:08:53'),
+(946, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:09:05'),
+(947, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:12:17'),
+(948, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:13:03'),
+(949, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:15:28'),
+(950, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:19:37'),
+(951, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:19:44'),
+(952, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/trinity-orientile', 'http://localhost/trinitymabati/categories', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:19:59'),
+(953, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/trinity-orientile', 'http://localhost/trinitymabati/categories', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:20:08'),
+(954, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/categories', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:20:17'),
+(955, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:20:18'),
+(956, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:20:50'),
+(957, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:21:20'),
+(958, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/quotation', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:21:22'),
+(959, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:22:09'),
+(960, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:22:11'),
+(961, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:22:17'),
+(962, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:23:28'),
+(963, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:23:42'),
+(964, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:23:45'),
+(965, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:24:16'),
+(966, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories?category=corrugated-sheets', 'http://localhost/trinitymabati/categories', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:24:26'),
+(967, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories?category=stone-coated-profiles', 'http://localhost/trinitymabati/categories?category=corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:24:33'),
+(968, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories?category=classic-roofing-tiles', 'http://localhost/trinitymabati/categories?category=stone-coated-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:24:50'),
+(969, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories?category=roman-roofing-tiles', 'http://localhost/trinitymabati/categories?category=classic-roofing-tiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:26:02'),
+(970, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/categories?category=roman-roofing-tiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:26:51'),
+(971, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:26:53'),
+(972, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:27:00'),
+(973, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/box-profile', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:27:06'),
+(974, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/categories/box-profile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:28:12'),
+(975, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:28:14'),
+(976, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/classic-roofing-tiles', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:28:28'),
+(977, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/categories/classic-roofing-tiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:28:30'),
+(978, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/categories/classic-roofing-tiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:28:42'),
+(979, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:30:58'),
+(980, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/blog', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:31:05'),
+(981, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/blog', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:31:09'),
+(982, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:31:41'),
+(983, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-forest-green', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:31:48'),
+(984, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-forest-green', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:33:10'),
+(985, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/corrugated-roofing-sheet-forest-green', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:33:20'),
+(986, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/corrugated-alluzinc-roofing-sheet-non-colored', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:33:28'),
+(987, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/corrugated-alluzinc-roofing-sheet-non-colored', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:34:35'),
+(988, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/corrugated-alluzinc-roofing-sheet-non-colored', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:34:37'),
+(989, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-chocolate-brown', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:35:04'),
+(990, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-chocolate-brown', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:36:10'),
+(991, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/trinity-eurotile-roofing-sheet-chocolate-brown', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:36:12'),
+(992, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/stone-coated-roman-roofing-tiles-tile-red', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:36:24'),
+(993, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/stone-coated-roman-roofing-tiles-tile-red', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:38:05'),
+(994, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/stone-coated-roman-roofing-tiles-tile-red', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:38:08'),
+(995, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/box-profile-forest-green', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:38:15'),
+(996, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/box-profile-forest-green', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:39:42'),
+(997, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/box-profile-forest-green', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:39:44'),
+(998, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/about', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:41:21'),
+(999, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/about', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:41:52'),
+(1000, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:44:54'),
+(1001, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/box-profile', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:45:32'),
+(1002, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/box-profile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:45:34'),
+(1003, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:45:40'),
+(1004, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:45:43'),
+(1005, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:46:31'),
+(1006, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/classic-roofing-tiles', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:47:01'),
+(1007, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/roman-roofing-tiles', 'http://localhost/trinitymabati/categories/classic-roofing-tiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:47:07'),
+(1008, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/shingle-roofing-tiles', 'http://localhost/trinitymabati/categories/roman-roofing-tiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:47:12'),
+(1009, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'http://localhost/trinitymabati/categories/shingle-roofing-tiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:47:18'),
+(1010, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/trinity-orientile', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:47:23'),
+(1011, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/tile-profiles', 'http://localhost/trinitymabati/categories/trinity-orientile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:47:24');
+INSERT INTO `su_visitors_logs` (`id`, `ip_address`, `user_agent`, `visited_url`, `referrer_url`, `session_id`, `user_id`, `country`, `visit_time`) VALUES
+(1012, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/tile-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:48:07'),
+(1013, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:48:09'),
+(1014, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:48:38'),
+(1015, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/corrugated-alluzinc-roofing-sheet-non-colored', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:48:46'),
+(1016, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/products/corrugated-alluzinc-roofing-sheet-non-colored', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:49:15'),
+(1017, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/products/corrugated-alluzinc-roofing-sheet-non-colored', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:49:16'),
+(1018, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:49:39'),
+(1019, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/classic-roofing-tiles', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:49:46'),
+(1020, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'http://localhost/trinitymabati/categories/classic-roofing-tiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:49:48'),
+(1021, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:49:49'),
+(1022, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/box-profile', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:49:53'),
+(1023, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/box-profile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:49:54'),
+(1024, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:51:01'),
+(1025, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 17:51:03'),
+(1026, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:02:07'),
+(1027, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:02:17'),
+(1028, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:02:35'),
+(1029, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:02:39'),
+(1030, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:03:46'),
+(1031, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:04:49'),
+(1032, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:05:13'),
+(1033, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:05:16'),
+(1034, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:11:36'),
+(1035, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:15:28'),
+(1036, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:15:47'),
+(1037, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/about', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:17:00'),
+(1038, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/about', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:17:30'),
+(1039, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/about', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:18:09'),
+(1040, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:18:16'),
+(1041, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/about', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:18:18'),
+(1042, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/about', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:18:22'),
+(1043, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:18:23'),
+(1044, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/classic-roofing-tiles', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:18:25'),
+(1045, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/classic-roofing-tiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:18:27'),
+(1046, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:18:29'),
+(1047, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:18:31'),
+(1048, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:18:36'),
+(1049, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/quotation', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:18:38'),
+(1050, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:18:41'),
+(1051, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/quotation', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:18:49'),
+(1052, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/about', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:19:00'),
+(1053, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/about', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:20:07'),
+(1054, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:20:09'),
+(1055, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:20:11'),
+(1056, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:25:18'),
+(1057, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:28:43'),
+(1058, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/box-profile', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:29:31'),
+(1059, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/categories/box-profile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:29:33'),
+(1060, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:30:19'),
+(1061, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:30:32'),
+(1062, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:30:34'),
+(1063, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/about', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:30:40'),
+(1064, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/about', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:31:02'),
+(1065, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/quotation', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:32:34'),
+(1066, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/quotation', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:32:36'),
+(1067, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/quotation', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:32:38'),
+(1068, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/quotation', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:32:40'),
+(1069, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/quotation', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:32:42'),
+(1070, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/box-profile', 'http://localhost/trinitymabati/quotation', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:32:54'),
+(1071, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/box-profile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:32:56'),
+(1072, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/box-profile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:33:46'),
+(1073, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:33:50'),
+(1074, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/about', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:33:53'),
+(1075, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/about', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:34:20'),
+(1076, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:34:44'),
+(1077, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:34:47'),
+(1078, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/about', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:34:48'),
+(1079, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/about', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:34:50'),
+(1080, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:35:00'),
+(1081, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:35:06'),
+(1082, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:35:27'),
+(1083, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/box-profile', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:38:02'),
+(1084, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/about', 'http://localhost/trinitymabati/categories/box-profile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:38:04'),
+(1085, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/about', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:38:06'),
+(1086, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:39:13'),
+(1087, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:39:15'),
+(1088, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:39:18'),
+(1089, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:39:28'),
+(1090, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:40:05'),
+(1091, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:41:23'),
+(1092, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/quotation', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:46:38'),
+(1093, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/cart', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:48:18'),
+(1094, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/cart', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:48:24'),
+(1095, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/cart', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:48:25'),
+(1096, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/cart', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:48:27'),
+(1097, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:48:29'),
+(1098, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:48:34'),
+(1099, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:49:43'),
+(1100, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:52:00'),
+(1101, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/cart', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:52:23'),
+(1102, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:53:37'),
+(1103, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:53:42'),
+(1104, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:54:02'),
+(1105, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:54:28'),
+(1106, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/quotation', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:55:44'),
+(1107, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:56:30'),
+(1108, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:56:58'),
+(1109, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:57:04'),
+(1110, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:57:07'),
+(1111, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:57:10'),
+(1112, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:57:14'),
+(1113, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:57:17'),
+(1114, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 18:59:39'),
+(1115, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:01:26'),
+(1116, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:03:18'),
+(1117, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/quotation', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:03:22'),
+(1118, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/quotation', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:05:16'),
+(1119, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:06:16'),
+(1120, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/classic-roofing-tiles', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:06:19'),
+(1121, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/about', 'http://localhost/trinitymabati/categories/classic-roofing-tiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:06:22'),
+(1122, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/about', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:06:31'),
+(1123, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:07:01'),
+(1124, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:10:27'),
+(1125, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:10:30'),
+(1126, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/box-profile', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:10:39'),
+(1127, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:10:42'),
+(1128, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/trinity-eurotile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:11:18'),
+(1129, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/about', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:11:39'),
+(1130, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/contact', 'http://localhost/trinitymabati/about', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:11:42'),
+(1131, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:11:47'),
+(1132, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/contact', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:12:37'),
+(1133, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:12:39'),
+(1134, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:15:22'),
+(1135, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/box-profile', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:15:24'),
+(1136, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'http://localhost/trinitymabati/categories/box-profile', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:15:26'),
+(1137, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/categories/corrugated-sheets', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:17:29'),
+(1138, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'http://localhost/trinitymabati/', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:17:32'),
+(1139, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati/about', 'http://localhost/trinitymabati/categories/stone-coated-profiles', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:17:40'),
+(1140, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36', 'http://localhost/trinitymabati', 'http://localhost/trinitymabati/about', 'BTc7pCmngghVjJieHihn7T4t8ix1FRmwdXxZu8a1', 2, NULL, '2026-10-13 19:17:42');
 
 -- --------------------------------------------------------
 
@@ -2539,6 +3585,21 @@ ALTER TABLE `su_cart_items`
   ADD KEY `cart_id` (`cart_id`),
   ADD KEY `product_id` (`product_id`),
   ADD KEY `variant_id` (`variant_id`);
+
+--
+-- Indexes for table `su_client_projects`
+--
+ALTER TABLE `su_client_projects`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `su_client_projects_slug_unique` (`slug`),
+  ADD KEY `su_client_projects_is_published_index` (`is_published`);
+
+--
+-- Indexes for table `su_client_testimonials`
+--
+ALTER TABLE `su_client_testimonials`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `su_client_testimonials_is_published_index` (`is_published`);
 
 --
 -- Indexes for table `su_contact_messages`
@@ -3068,7 +4129,7 @@ ALTER TABLE `su_wishlists`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `su_abandoned_carts`
@@ -3122,7 +4183,19 @@ ALTER TABLE `su_carts`
 -- AUTO_INCREMENT for table `su_cart_items`
 --
 ALTER TABLE `su_cart_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+
+--
+-- AUTO_INCREMENT for table `su_client_projects`
+--
+ALTER TABLE `su_client_projects`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `su_client_testimonials`
+--
+ALTER TABLE `su_client_testimonials`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `su_contact_messages`
@@ -3332,25 +4405,25 @@ ALTER TABLE `su_permissions`
 -- AUTO_INCREMENT for table `su_products`
 --
 ALTER TABLE `su_products`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=212;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=256;
 
 --
 -- AUTO_INCREMENT for table `su_product_attributes`
 --
 ALTER TABLE `su_product_attributes`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=93;
 
 --
 -- AUTO_INCREMENT for table `su_product_attribute_values`
 --
 ALTER TABLE `su_product_attribute_values`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=58;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=178;
 
 --
 -- AUTO_INCREMENT for table `su_product_categories`
 --
 ALTER TABLE `su_product_categories`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `su_product_labels`
@@ -3368,13 +4441,13 @@ ALTER TABLE `su_product_reviews`
 -- AUTO_INCREMENT for table `su_product_variants`
 --
 ALTER TABLE `su_product_variants`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=57;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=131;
 
 --
 -- AUTO_INCREMENT for table `su_product_variant_attributes`
 --
 ALTER TABLE `su_product_variant_attributes`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=57;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=205;
 
 --
 -- AUTO_INCREMENT for table `su_quotations`
@@ -3416,7 +4489,7 @@ ALTER TABLE `su_sessions`
 -- AUTO_INCREMENT for table `su_settings`
 --
 ALTER TABLE `su_settings`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- AUTO_INCREMENT for table `su_shipping_expenses`
@@ -3506,7 +4579,7 @@ ALTER TABLE `su_user_roles`
 -- AUTO_INCREMENT for table `su_visitors_logs`
 --
 ALTER TABLE `su_visitors_logs`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=611;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1141;
 
 --
 -- AUTO_INCREMENT for table `su_wishlists`
