@@ -371,6 +371,11 @@ class CheckoutController extends Controller
         }
 
         // ---------------
+        // Staff alert (never blocks checkout)
+        // ---------------
+        app(OrderEmailService::class)->sendNewOrderToStaff($order);
+
+        // ---------------
         // Mpesa handling
         // ---------------
         if ($paymentMethod && $paymentMethod->slug === 'mpesa') {

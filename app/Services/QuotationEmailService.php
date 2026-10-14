@@ -219,4 +219,37 @@ class QuotationEmailService
 
         return true;
     }
+
+    // ---------------
+    // Quotation converted to an order: notice to the customer.
+    // Returns false when nothing was sent. Throws on SMTP failure.
+    // ---------------
+    public function sendConvertedToClient(Quotation $quotation, string $orderCode): bool
+    {
+        $settings = $this->emailSettings();
+        $email    = $this->customerEmail($quotation);
+
+        if (! $settings?->mail_host || ! $email) {
+            return false;
+        }
+
+        $quotation->loadMissing(['customer', 'items']);
+
+        $this->send(
+            $settings,
+            $email,
+            $this->customerName($quotation),
+            'Quotation Converted to Order - ' . $quotation->quotation_code,
+            'emails.client.quotation_update',
+            [
+                'quotation'    => $quotation,
+                'customerName' => $this->customerName($quotation),
+                'headline'     => 'Your quotation is now an order',
+                'intro'        => 'Your quotation has been converted to order ' . $orderCode . '. Our team will be in touch to confirm payment and delivery details.',
+                'showItems'    => true,
+            ]
+        );
+
+        return true;
+    }
 }

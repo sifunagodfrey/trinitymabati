@@ -23,6 +23,21 @@ trait SendsPlatformEmail
     }
 
     // ---------------
+    // Super admins who receive staff alerts
+    // ---------------
+    protected function superAdmins()
+    {
+        return DB::table('su_users as u')
+            ->join('su_user_roles as ur', 'ur.user_id', '=', 'u.id')
+            ->join('su_roles as r', 'r.id', '=', 'ur.role_id')
+            ->where('r.slug', 'super_admin')
+            ->whereNull('u.deleted_at')
+            ->get(['u.first_name', 'u.last_name', 'u.email'])
+            ->filter(fn ($a) => ! empty($a->email))
+            ->unique('email');
+    }
+
+    // ---------------
     // Send one email via SMTP using the stored settings
     // ---------------
     protected function send(

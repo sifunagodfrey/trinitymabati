@@ -223,8 +223,7 @@ class QuotationsController extends Controller
     // ---------------
     // Convert an accepted quotation into a real order, copying its items
     // ---------------
-    public function convert(string $id)
-    {
+    public function convert(string $id, QuotationEmailService $emails)    {
         $quotation = Quotation::with('items')->findOrFail($id);
 
         if (!$quotation->user_id) {
@@ -265,8 +264,28 @@ class QuotationsController extends Controller
             return $order;
         });
 
+        // ---------------
+        // Tell the customer (a failed email never undoes the conversion)
+        // ---------------
+        $emailNote = '';
+
+        try {
+            $quotation->load('customer');
+
+            if ($emails->customerEmail($quotation)) {
+                $emails->sendConvertedToClient($quotation, $order->order_code);
+                $emailNote = ' Customer emailed.';
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Quotation converted email failed', [
+                'quotation' => $quotation->quotation_code,
+                'error'     => $e->getMessage(),
+            ]);
+            $emailNote = ' The customer email could not be sent.';
+        }
+
         return redirect()->route('manage.ecommerce.orders.index')
-            ->with('success', 'Quotation converted to order ' . $order->order_code . '.');
+            ->with('success', 'Quotation converted to order ' . $order->order_code . '.' . $emailNote);
     }
 
     // ---------------

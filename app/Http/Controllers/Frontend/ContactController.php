@@ -75,6 +75,11 @@ class ContactController extends Controller
             ]);
         }
 
+        // ---------------
+        // Staff alert (never blocks the submission)
+        // ---------------
+        app(ContactEmailService::class)->sendNewMessageToStaff($contactMessage);
+
         return redirect()->back()->with('success', 'Your message has been sent! We\'ll get back to you within 1–2 business days.');
     }
 }
