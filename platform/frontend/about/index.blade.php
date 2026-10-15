@@ -7,17 +7,19 @@
 
 @section('content')
 <section class="relative isolate overflow-hidden bg-gray-950">
-    <img src="{{ url('public/images/trinity-mabati-product-5.webp') }}" alt="Trinity Mabati roofing projects" class="absolute inset-0 h-full w-full object-cover opacity-45">
-    <video class="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-700" muted loop playsinline autoplay preload="metadata" poster="{{ url('public/images/trinity-mabati-product-5.webp') }}" aria-hidden="true" onplaying="this.classList.remove('opacity-0');this.classList.add('opacity-50')" onerror="this.classList.remove('opacity-50');this.classList.add('opacity-0')">
-        <source src="{{ url('public/videos/trinity-mabati-hero-video.mp4') }}" type="video/mp4">
-    </video>
+    {{-- The native poster disappears when playback starts; the video stays fully opaque. --}}
+    <video id="about-hero-video" class="absolute inset-0 h-full w-full object-cover"
+        data-desktop-src="{{ url('public/videos/trinity-mabati-hero-desktop.mp4') }}"
+        data-mobile-src="{{ url('public/videos/trinity-mabati-hero-mobile.mp4') }}"
+        muted loop playsinline preload="none" poster="{{ url('public/images/hrinity-mabati-hero.webp') }}"
+        aria-hidden="true" tabindex="-1"></video>
     <div class="absolute inset-0 bg-gradient-to-r from-black/85 via-black/65 to-black/20"></div>
     <div class="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
         <span class="text-sm font-bold uppercase tracking-widest text-red-200">About Us</span>
         <h1 class="mt-4 max-w-2xl text-4xl font-semibold leading-tight text-white sm:text-5xl">Getting to Know Us</h1>
         <p class="mt-5 max-w-2xl text-base leading-relaxed text-white/90 sm:text-lg">Your trusted source for quality roofing sheets and accessories across Kenya.</p>
         <div class="mt-8 flex flex-wrap gap-3">
-            <a href="{{ route('frontend.products') }}" class="inline-flex items-center gap-2 rounded-[4px] bg-primary px-6 py-3 font-bold text-white transition hover:brightness-110">Explore Our Mabati <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+            <a href="{{ route('frontend.categories') }}" class="inline-flex items-center gap-2 rounded-[4px] bg-primary px-6 py-3 font-bold text-white transition hover:brightness-110">Explore Our Mabati <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
             <a href="{{ route('frontend.quotation.index') }}" class="inline-flex items-center gap-2 rounded-[4px] border border-white/70 px-6 py-3 font-bold text-white transition hover:bg-white/10">Request a Quote</a>
         </div>
     </div>
@@ -101,3 +103,21 @@
     </div>
 </section>
 @endsection
+
+@push('scripts')
+<script>
+(function () {
+    function startAboutVideo() {
+        const video = document.getElementById('about-hero-video');
+        if (!video || window.matchMedia('(prefers-reduced-motion: reduce)').matches || navigator.connection?.saveData) return;
+        video.src = window.matchMedia('(min-width: 768px)').matches
+            ? video.dataset.desktopSrc : video.dataset.mobileSrc;
+        video.load();
+        const play = video.play();
+        if (play && play.catch) play.catch(function () {});
+    }
+    if (document.readyState === 'complete') startAboutVideo();
+    else window.addEventListener('load', startAboutVideo, {once: true});
+})();
+</script>
+@endpush

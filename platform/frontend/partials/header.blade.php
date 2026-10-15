@@ -16,14 +16,14 @@
         : collect();
 @endphp
 
-<header x-data="{ mobileOpen: false, mobileSubmenu: null, desktopMenu: null, searchOpen: false, q: '', results: [], loading: false, searchError: false, searchErrorMessage: '', searchTimer: null, searchController: null, searchVersion: 0,
-    openSearch() { this.searchOpen = true; this.headerVisible = true; this.desktopMenu = null; this.$nextTick(() => this.$refs.searchInput.focus()); this.scheduleSearch(); },
-    closeSearch(restoreFocus = false) { this.searchOpen = false; clearTimeout(this.searchTimer); this.searchController?.abort(); this.searchVersion++; this.loading = false; if (restoreFocus) this.$refs.searchToggle.focus(); },
+<header x-data="{ mobileOpen: false, mobileSubmenu: null, desktopMenu: null, searchOpen: false, searchTrigger: null, q: '', results: [], loading: false, searchError: false, searchErrorMessage: '', searchTimer: null, searchController: null, searchVersion: 0,
+    openSearch(trigger = null) { this.searchTrigger = trigger || this.$refs.searchToggle; this.mobileOpen = false; this.searchOpen = true; this.headerVisible = true; this.desktopMenu = null; this.$dispatch('storefront-search-state', { open: true }); this.$nextTick(() => this.$refs.searchInput.focus()); this.scheduleSearch(); },
+    closeSearch(restoreFocus = false) { this.searchOpen = false; clearTimeout(this.searchTimer); this.searchController?.abort(); this.searchVersion++; this.loading = false; this.$dispatch('storefront-search-state', { open: false }); if (restoreFocus) (this.searchTrigger || this.$refs.searchToggle)?.focus(); },
     scheduleSearch() { clearTimeout(this.searchTimer); this.searchController?.abort(); const version = ++this.searchVersion; this.results = []; this.loading = false; this.searchError = false; this.searchErrorMessage = ''; if (!this.q.trim()) return; this.loading = true; this.searchTimer = setTimeout(() => this.loadSearch(version), 200); },
     async loadSearch(version) { const controller = new AbortController(); this.searchController = controller; try { const url = new URL(this.$root.dataset.suggestionsUrl, window.location.origin); url.searchParams.set('q', this.q.trim()); const response = await fetch(url, { signal: controller.signal, headers: { Accept: 'application/json' } }); if (!response.ok) throw new Error('HTTP ' + response.status); if (!response.headers.get('content-type')?.includes('application/json')) throw new Error('Unexpected server response'); const data = await response.json(); if (!Array.isArray(data)) throw new Error('Unexpected product data'); if (version === this.searchVersion) this.results = Array.isArray(data) ? data.slice(0, 10) : []; } catch (error) { if (error.name !== 'AbortError' && version === this.searchVersion) { this.searchError = true; this.searchErrorMessage = 'Search is temporarily unavailable (' + error.message + '). Please try again.'; console.error('Product search failed:', error); } } finally { if (version === this.searchVersion) this.loading = false; } },
     destroy() { clearTimeout(this.searchTimer); this.searchController?.abort(); },
-    headerVisible: true, lastScrollY: 0, onScroll() { const y = window.scrollY || 0; if (this.mobileOpen || this.searchOpen || y < 90) { this.headerVisible = true; } else if (Math.abs(y - this.lastScrollY) > 5) { this.headerVisible = y < this.lastScrollY; } this.lastScrollY = y; } }" @scroll.window.throttle.50ms="onScroll()" @keydown.escape.window="mobileOpen = false; desktopMenu = null; if (searchOpen) closeSearch(true)" @click.outside="if (searchOpen) closeSearch()" data-suggestions-url="{{ route('frontend.search.suggestions') }}" :class="headerVisible ? 'translate-y-0' : '-translate-y-full'" class="sticky top-0 z-50 border-b border-gray-100 bg-white transition-transform duration-200 ease-out">
-    <div class="mx-auto grid min-h-[88px] max-w-7xl grid-cols-[44px_minmax(0,1fr)_96px] sm:grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-2 px-4 sm:px-6 lg:flex lg:min-h-[96px] lg:justify-between lg:gap-4 lg:px-8 xl:gap-6">
+    headerVisible: true, lastScrollY: 0, onScroll() { const y = window.scrollY || 0; if (this.mobileOpen || this.searchOpen || y < 90) { this.headerVisible = true; } else if (Math.abs(y - this.lastScrollY) > 5) { this.headerVisible = y < this.lastScrollY; } this.lastScrollY = y; } }" @storefront-search-toggle.window="searchOpen ? closeSearch(true) : openSearch($event.detail.trigger)" @scroll.window.throttle.50ms="onScroll()" @keydown.escape.window="mobileOpen = false; desktopMenu = null; if (searchOpen) closeSearch(true)" @click.outside="if (searchOpen) closeSearch()" data-suggestions-url="{{ route('frontend.search.suggestions') }}" :class="headerVisible ? 'translate-y-0' : '-translate-y-full'" class="sticky top-0 z-50 border-b border-gray-100 bg-white transition-transform duration-200 ease-out">
+    <div class="mx-auto grid min-h-[88px] max-w-7xl grid-cols-[44px_minmax(0,1fr)_44px] sm:grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-2 px-4 sm:px-6 lg:flex lg:min-h-[96px] lg:justify-between lg:gap-4 lg:px-8 xl:gap-6">
         <button type="button" @click="closeSearch(); mobileOpen = true" class="flex h-11 w-11 items-center justify-center text-gray-800 lg:hidden" aria-label="Open navigation" :aria-expanded="mobileOpen"><i class="fas fa-bars text-xl" aria-hidden="true"></i></button>
         <a href="{{ route('frontend.home') }}" class="min-w-0 justify-self-center lg:shrink-0" aria-label="Trinity Mabati Factory home">
             <img src="{{ $branding['logo_main'] }}" alt="Trinity Mabati Factory" class="mx-auto h-14 w-auto max-w-full object-contain sm:h-16 sm:max-w-[190px] lg:mx-0 lg:h-[72px] lg:max-w-[210px]" />
@@ -49,7 +49,7 @@
         </nav>
 
         <div class="flex shrink-0 items-center justify-self-end gap-2 lg:gap-4">
-            <button type="button" x-ref="searchToggle" @click="searchOpen ? closeSearch(true) : openSearch()" class="inline-flex h-11 w-11 items-center justify-center text-gray-800 hover:text-primary" aria-label="Search products" aria-controls="header-product-search" :aria-expanded="searchOpen">
+            <button type="button" x-ref="searchToggle" @click="searchOpen ? closeSearch(true) : openSearch($el)" class="hidden h-11 w-11 sm:inline-flex items-center justify-center text-gray-800 hover:text-primary" aria-label="Search products" aria-controls="header-product-search" :aria-expanded="searchOpen">
                 <i class="fas fa-search text-lg" aria-hidden="true"></i>
             </button>
             <a href="{{ route('frontend.cart') }}" class="relative inline-flex h-11 w-11 items-center justify-center text-gray-800 hover:text-primary" aria-label="Shopping cart">
@@ -100,7 +100,7 @@
                     <img src="{{ $branding['logo_main'] }}" alt="Trinity Mabati Factory" class="h-14 w-auto max-w-[200px] object-contain" />
                     <button type="button" @click="mobileOpen = false" aria-label="Close navigation" class="rounded p-2 text-gray-800"><i class="fas fa-times text-lg"></i></button>
                 </div>
-                <nav class="min-h-0 flex-1 overflow-hidden px-4 py-2" aria-label="Mobile main navigation">
+                <nav class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-2" aria-label="Mobile main navigation">
                     @foreach ($menuParents as $category)
                         @php $children = $childGroups->get($category->id, collect()); @endphp
                         <div class="border-b border-gray-100">
@@ -121,9 +121,20 @@
                     @endforeach
                     <a href="{{ route('frontend.about') }}" class="block border-b border-gray-100 py-3 text-sm font-semibold text-gray-800">About Us</a>
                     <a href="{{ route('frontend.contact') }}" class="block border-b border-gray-100 py-3 text-sm font-semibold text-gray-800">Contact Us</a>
-                    <a href="{{ route('frontend.cart') }}" class="block border-b border-gray-100 py-3 text-sm font-semibold text-gray-800">Cart</a>
+                    <a href="{{ route('frontend.cart') }}" class="flex items-center justify-between gap-3 border-b border-gray-100 py-3 text-sm font-semibold text-gray-800">
+                        <span><i class="fas fa-shopping-cart mr-2 text-primary" aria-hidden="true"></i>Shopping Cart</span>
+                        <span class="inline-flex min-w-6 items-center justify-center rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-white"
+                            x-text="$store.cart?.count ?? window.__cartCount ?? 0" aria-label="Items in cart">0</span>
+                    </a>
                 </nav>
-                <div class="border-t border-gray-100 p-5"><a href="{{ route('frontend.quotation.index') }}" class="block bg-primary px-5 py-3 text-center text-sm font-bold text-white">Get a Quote</a></div>
+                <div class="shrink-0 space-y-3 border-t border-gray-100 p-5">
+                    @auth
+                        <a href="{{ route('client.dashboard') }}" class="flex items-center justify-center gap-2 rounded-lg border border-primary px-5 py-3 text-sm font-semibold text-primary hover:bg-primary/5"><i class="fas fa-user" aria-hidden="true"></i>My Account</a>
+                    @else
+                        <a href="{{ route('login') }}" class="flex items-center justify-center gap-2 rounded-lg border border-primary px-5 py-3 text-sm font-semibold text-primary hover:bg-primary/5"><i class="fas fa-sign-in-alt" aria-hidden="true"></i>Login</a>
+                    @endauth
+                    <a href="{{ route('frontend.quotation.index') }}" class="block bg-primary px-5 py-3 text-center text-sm font-bold text-white">Get a Quote</a>
+                </div>
             </aside>
         </div>
     </template>

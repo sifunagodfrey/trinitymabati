@@ -57,7 +57,7 @@
                     genuine, KEBS-certified metal roofing sheets with an ironclad 15-year written warranty directly to your
                     construction site.</p>
                 <div class="mt-8 flex flex-wrap gap-3">
-                    <a href="{{ route('frontend.products') }}"
+                    <a href="{{ route('frontend.categories') }}"
                         class="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3.5 text-sm font-bold text-white transition hover:brightness-110">Explore
                         Our Mabati <i class="fas fa-arrow-right"></i></a>
                     <a href="{{ route('frontend.quotation.index') }}"

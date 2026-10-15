@@ -32,6 +32,14 @@
                 </a>
             @endif
 
+            <button type="button" x-data="{ searchExpanded: false }"
+                @click.stop="$dispatch('storefront-search-toggle', { trigger: $el })"
+                @storefront-search-state.window="searchExpanded = $event.detail.open"
+                :aria-expanded="searchExpanded" aria-controls="header-product-search" aria-label="Search products"
+                class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded text-white hover:text-white/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white sm:hidden">
+                <i class="fas fa-search text-sm" aria-hidden="true"></i>
+            </button>
+
             @if ($supportEmail !== '')
                 @if ($nairobiPhone !== '' || $migoriPhone !== '')
                     <span class="hidden text-white/60 sm:inline" aria-hidden="true">|</span>

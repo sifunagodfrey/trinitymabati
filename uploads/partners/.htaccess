@@ -1,0 +1,28 @@
+# Public image/video browser caching. No HTML, PHP or customer documents.
+# Apache/LiteSpeed: requires FileInfo overrides; the expires fallback also requires Indexes overrides.
+# Preserve the server's existing ETag, Last-Modified and byte-range handling.
+<IfModule mod_headers.c>
+    <FilesMatch "(?i)\.(?:avif|webp|jpe?g|png|gif|svg|ico|mp4|webm|mov|m4v|ogv)$">
+        Header set Cache-Control "public, max-age=604800, stale-while-revalidate=86400"
+    </FilesMatch>
+</IfModule>
+
+# Fallback when mod_headers is unavailable but mod_expires is enabled.
+<IfModule !mod_headers.c>
+    <IfModule mod_expires.c>
+        ExpiresActive On
+        ExpiresByType image/avif "access plus 7 days"
+        ExpiresByType image/webp "access plus 7 days"
+        ExpiresByType image/jpeg "access plus 7 days"
+        ExpiresByType image/png "access plus 7 days"
+        ExpiresByType image/gif "access plus 7 days"
+        ExpiresByType image/svg+xml "access plus 7 days"
+        ExpiresByType image/x-icon "access plus 7 days"
+        ExpiresByType image/vnd.microsoft.icon "access plus 7 days"
+        ExpiresByType video/mp4 "access plus 7 days"
+        ExpiresByType video/webm "access plus 7 days"
+        ExpiresByType video/quicktime "access plus 7 days"
+        ExpiresByType video/x-m4v "access plus 7 days"
+        ExpiresByType video/ogg "access plus 7 days"
+    </IfModule>
+</IfModule>
