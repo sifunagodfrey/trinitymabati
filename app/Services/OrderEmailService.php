@@ -107,6 +107,10 @@ class OrderEmailService
     // ---------------
     public function sendPaymentSuccessToClient($order): void
     {
+        // ---------------
+        // Admin Messages notification
+        // ---------------
+        app(AdminNotificationService::class)->paymentReceived($order);
         $settings = $this->emailSettings();
 
         if (! $settings?->mail_host) {
@@ -137,6 +141,10 @@ class OrderEmailService
     // ---------------
     public function sendPaymentFailedToClient($order, string $reason = ''): void
     {
+        // ---------------
+        // Admin Messages notification
+        // ---------------
+        app(AdminNotificationService::class)->paymentFailed($order, $reason);
         $settings = $this->emailSettings();
 
         if (! $settings?->mail_host) {

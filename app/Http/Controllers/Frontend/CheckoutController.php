@@ -374,7 +374,10 @@ class CheckoutController extends Controller
         // Staff alert (never blocks checkout)
         // ---------------
         app(OrderEmailService::class)->sendNewOrderToStaff($order);
-
+        // ---------------
+        // Admin Messages notification
+        // ---------------
+        app(\App\Services\AdminNotificationService::class)->orderPlaced($order);
         // ---------------
         // Mpesa handling
         // ---------------

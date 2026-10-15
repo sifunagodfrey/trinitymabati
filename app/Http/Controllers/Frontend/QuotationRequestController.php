@@ -170,7 +170,10 @@ class QuotationRequestController extends Controller
         $emails = app(QuotationEmailService::class);
         $emails->sendRequestReceivedToClient($quote);
         $emails->sendNewRequestToStaff($quote);
-
+        // ---------------
+        // Admin Messages notification
+        // ---------------
+        app(\App\Services\AdminNotificationService::class)->quotationSubmitted($quote);
         return redirect()->route('frontend.quotation.index')->with('quote_success', $quote->quotation_code);
     }
 }

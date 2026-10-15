@@ -137,7 +137,12 @@ class QuotationsController extends Controller
         $new       = $request->status;
 
         $quotation->update(['status' => $new]);
-
+        // ---------------
+        // Admin Messages notification (draft is internal)
+        // ---------------
+        if ($new !== 'draft' && $new !== $old) {
+            app(\App\Services\AdminNotificationService::class)->quotationStatusChanged($quotation, $old, $new);
+        }
         // ---------------
         // Draft is internal, and an unchanged status never re-emails
         // (use Send / Resend for that)
@@ -212,6 +217,7 @@ class QuotationsController extends Controller
 
         if ($wasDraft) {
             $quotation->update(['status' => 'sent']);
+            app(\App\Services\AdminNotificationService::class)->quotationStatusChanged($quotation, 'draft', 'sent');
         }
 
         return redirect()->back()->with(
@@ -263,7 +269,10 @@ class QuotationsController extends Controller
 
             return $order;
         });
-
+        // ---------------
+        // Admin Messages notification
+        // ---------------
+        app(\App\Services\AdminNotificationService::class)->quotationConverted($quotation, $order);
         // ---------------
         // Tell the customer (a failed email never undoes the conversion)
         // ---------------
