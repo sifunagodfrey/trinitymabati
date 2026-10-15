@@ -263,6 +263,7 @@ class CheckoutController extends Controller
         ]);
     }
 
+
     // ---------------
     // Process payment - includes virtual wallet
     // ---------------
@@ -362,14 +363,15 @@ class CheckoutController extends Controller
         AbandonedCartLog::where('user_id', auth()->id())->delete();
 
         // Order placement emails
-        try {
-            $orderEmailService = app(OrderEmailService::class);
-            $order->loadMissing(['user', 'items']);
-            $orderEmailService->sendNewOrderToClient($order);
-        } catch (\Throwable $e) {
-            Log::warning('Order placement email failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+        if ($paymentMethod->slug !== 'cash_on_delivery') {
+            try {
+                $orderEmailService = app(OrderEmailService::class);
+                $order->loadMissing(['user', 'items']);
+                $orderEmailService->sendNewOrderToClient($order);
+            } catch (\Throwable $e) {
+                Log::warning('Order placement email failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+            }
         }
-
         // ---------------
         // Staff alert (never blocks checkout)
         // ---------------
@@ -551,6 +553,16 @@ class CheckoutController extends Controller
                 $order->id, 'status:processing', 'Cash on delivery order confirmed'
             );
 
+            $order->refresh();
+
+            try {
+                app(OrderEmailService::class)->sendCodConfirmationToClient($order);
+            } catch (\Throwable $e) {
+                Log::warning('COD confirmation email failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+            }
+
+            app(\App\Services\AdminNotificationService::class)->codOrderPlaced($order);
+            app(\App\Services\AdminNotificationService::class)->codOrderForCustomer($order);
             if ($request->wantsJson()) {
                 return response()->json([
                     'success'    => true,

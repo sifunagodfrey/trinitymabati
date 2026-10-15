@@ -85,6 +85,44 @@ class AdminNotificationService
     }
 
     // ---------------
+    // Cash on delivery order confirmed (admins)
+    // ---------------
+    public function codOrderPlaced($order): void
+    {
+        $this->attempt(function () use ($order) {
+            $this->push(
+                'COD Order Confirmed: ' . $order->order_code,
+                implode("\n", [
+                    'Customer: ' . $this->orderCustomer($order),
+                    'Phone: ' . ($order->phone ?: '-'),
+                    'Total to collect: ' . $this->money($order->total, $order->currency ?? null),
+                    'Stock has been reserved. Dispatch and collect cash on delivery.',
+                ]),
+                route('manage.ecommerce.orders.show', $order->id)
+            );
+        });
+    }
+
+    // ---------------
+    // Cash on delivery order confirmed (the customer's own Messages inbox)
+    // ---------------
+    public function codOrderForCustomer($order): void
+    {
+        $this->attempt(function () use ($order) {
+            DB::table('su_system_messages')->insert([
+                'sender_id'    => null,
+                'recipient_id' => $order->user_id,
+                'subject'      => 'Order ' . $order->order_code . ' confirmed',
+                'message'      => 'Your order is confirmed. Please have ' . $this->money($order->total, $order->currency ?? null) . ' ready to pay in cash on delivery.',
+                'related_url'  => route('client.orders.show', $order->id),
+                'is_read'      => 0,
+                'is_user_read' => 0,
+                'created_at'   => now(),
+            ]);
+        });
+    }
+
+    // ---------------
     // Payment received
     // ---------------
     public function paymentReceived($order): void

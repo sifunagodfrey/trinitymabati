@@ -23,12 +23,14 @@ class OrderEmailService
     // ---------------
     private function resolveShippingNames($order): array
     {
-        $county   = DB::table('su_counties')->find($order->shipping_county_id);
-        $location = DB::table('su_location_pricing')->find($order->shipping_location_id);
+        $county = DB::table('su_counties')->find($order->shipping_county_id);
+        $town   = $order->shipping_town_id
+            ? DB::table('su_towns')->find($order->shipping_town_id)
+            : null;
 
         return [
             'countyName'   => $county?->name ?? '-',
-            'locationName' => $location?->location_name ?? '-',
+            'locationName' => $town?->name ?? '-',
         ];
     }
 
@@ -63,6 +65,32 @@ class OrderEmailService
         );
     }
 
+    // ---------------
+    // Cash on delivery: confirmation email to the client.
+    // ---------------
+    public function sendCodConfirmationToClient($order): void
+    {
+        $settings = $this->emailSettings();
+
+        if (! $settings?->mail_host) {
+            Log::warning('OrderEmailService: no email settings found in su_email_settings.');
+            return;
+        }
+
+        $order->loadMissing(['user', 'items']);
+
+        $user = $order->user;
+        if (! $user) return;
+
+        $this->send(
+            $settings,
+            $user->email,
+            trim($user->first_name . ' ' . $user->last_name),
+            'Order Confirmed (Pay on Delivery) - ' . $order->order_code,
+            'emails.client.order_cod_confirmed',
+            array_merge(['order' => $order], $this->resolveShippingNames($order))
+        );
+    }
     // ---------------
     // New order placed: alert every super admin.
     // Never throws, one failed recipient does not block the others.
@@ -166,7 +194,7 @@ class OrderEmailService
             array_merge(
                 [
                     'order'  => $order,
-                    'reason' => $reason ?: 'The payment could not be completed.',
+                    'reason' => $reason ?: 'The payment( could not be completed.',
                 ],
                 $this->resolveShippingNames($order)
             )

@@ -50,7 +50,7 @@
 
                             <p style="margin:0;text-align:center;">
                                 <a href="{{ route('manage.contact.show', $message->id) }}"
-                                   style="display:inline-block;background-color:#AAC527;color:#000000;font-weight:700;font-size:14px;text-decoration:none;padding:12px 24px;border-radius:8px;">
+                                   style="display:inline-block;background-color:#aa1f25;color:#000000;font-weight:700;font-size:14px;text-decoration:none;padding:12px 24px;border-radius:8px;">
                                     Read and Reply
                                 </a>
                             </p>
