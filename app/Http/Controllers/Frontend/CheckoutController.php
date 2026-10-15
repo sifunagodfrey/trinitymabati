@@ -275,6 +275,7 @@ class CheckoutController extends Controller
         ]);
     }
 
+
     // ---------------
     // Submit a manual payment for staff verification
     // ---------------
@@ -337,6 +338,15 @@ class CheckoutController extends Controller
             app(OrderEmailService::class)->sendNewOrderToStaff($order);
         } catch (\Throwable $exception) {
             Log::warning('Manual order email failed', ['order_id' => $order->id, 'error' => $exception->getMessage()]);
+        }
+        // Preserve the staff Messages notification from the incoming branch.
+        // Notifications run after commit and must not invalidate a placed order.
+        try {
+            app(\App\Services\AdminNotificationService::class)->orderPlaced($order);
+        } catch (\Throwable $exception) {
+            Log::warning('Manual order admin notification failed', [
+                'order_id' => $order->id, 'error' => $exception->getMessage(),
+            ]);
         }
         return redirect()->route('frontend.checkout.payment', ['order' => $order->order_code])->with('success', 'Order placed. Your payment is awaiting manual verification.');
     }

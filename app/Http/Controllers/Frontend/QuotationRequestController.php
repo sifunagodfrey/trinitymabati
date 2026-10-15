@@ -171,6 +171,15 @@ class QuotationRequestController extends Controller
         $emails->sendRequestReceivedToClient($quote);
         $emails->sendNewRequestToStaff($quote);
 
+        // Preserve the incoming admin Messages notification and local Analytics flash.
+        try {
+            app(\App\Services\AdminNotificationService::class)->quotationSubmitted($quote);
+        } catch (\Throwable $exception) {
+            \Illuminate\Support\Facades\Log::warning('Quotation admin notification failed', [
+                'quotation_id' => $quote->id, 'error' => $exception->getMessage(),
+            ]);
+        }
+
         return redirect()->route('frontend.quotation.index')->with('analytics_lead', 'quotation')->with('quote_success', $quote->quotation_code);
     }
 }

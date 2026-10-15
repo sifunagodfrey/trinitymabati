@@ -13,7 +13,7 @@
 
                     <!-- Header -->
                     <tr>
-                        <td style="background-color:#AAC527;padding:28px 32px;text-align:center;">
+                        <td style="background-color:#aa1f25;padding:28px 32px;text-align:center;">
                             <h1 style="color:#ffffff;margin:0;font-size:22px;font-weight:700;letter-spacing:-0.3px;">Trinity Mabati Factory</h1>
                             <p style="color: black;margin:6px 0 0;font-size:13px;">Your Trusted Multi-Vendor Platform</p>
                         </td>
