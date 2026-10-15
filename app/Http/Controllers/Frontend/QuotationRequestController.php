@@ -82,7 +82,7 @@ class QuotationRequestController extends Controller
         foreach ($products as $product) {
             $variants = $product->is_variant ? $product->variants : collect([null]);
             foreach ($variants as $variant) {
-                if ($product->is_variant && (!$variant || $variant->stock_quantity < 1)) continue;
+                if ($product->is_variant && (!$variant || !\App\Services\StockAvailability::isAvailable($variant->stock_quantity))) continue;
                 $length = $product->allow_custom_length ? 3 : null;
                 try {
                     $candidate = $this->resolve($product->id, $variant?->id, $length, 1);

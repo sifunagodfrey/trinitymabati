@@ -362,7 +362,8 @@ class ProductsController extends Controller
         // Calculate and Update Total Stock from Variants (if variant product)
         // ---------------
         if ($request->boolean('is_variant')) {
-            $totalVariantStock = $product->variants()->sum('stock_quantity');
+            $totalVariantStock = $product->variants()->whereNull('stock_quantity')->exists()
+                ? null : (int) $product->variants()->sum('stock_quantity');
             $product->update(['stock_quantity' => $totalVariantStock]);
         }
 
@@ -512,7 +513,8 @@ class ProductsController extends Controller
         // Calculate and Update Total Stock from Variants (if variant product)
         // ---------------
         if ($request->boolean('is_variant')) {
-            $totalVariantStock = $product->variants()->sum('stock_quantity');
+            $totalVariantStock = $product->variants()->whereNull('stock_quantity')->exists()
+                ? null : (int) $product->variants()->sum('stock_quantity');
             $product->update(['stock_quantity' => $totalVariantStock]);
         }
 
@@ -661,7 +663,7 @@ class ProductsController extends Controller
                 'price'             => $variantPricing['price'],
                 'sale_price'        => $variantPricing['sale_price'],
                 'cost_price'        => ($submitted['cost_price'] ?? '') !== '' ? $submitted['cost_price'] : null,
-                'stock_quantity'    => $submitted['stock'] ?? 0,
+                'stock_quantity'    => \App\Services\StockAvailability::normalize($submitted['stock'] ?? null),
                 'image'             => $variantImagePath,
                 'variant_signature' => $signature,
             ]);

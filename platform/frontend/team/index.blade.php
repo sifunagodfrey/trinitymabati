@@ -4,7 +4,12 @@
 @section('content')
 <section class="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-16 lg:px-8">
     <header class="mb-10 text-center"><h1 class="text-3xl font-semibold text-primary sm:text-4xl">Our Team</h1></header>
-    <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 sm:gap-6">
+    <style>
+        .trinity-team-page-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+        @media(min-width:640px) { .trinity-team-page-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px; } }
+        @media(min-width:1024px) { .trinity-team-page-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+    </style>
+    <div class="trinity-team-page-grid">
         @forelse($members as $member)
             @include('frontend.partials.team-card', ['member' => $member])
         @empty

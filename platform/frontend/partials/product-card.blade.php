@@ -18,7 +18,9 @@
         $pIsVariant = (bool) ($product['is_variant'] ?? false);
         $pSelling = isset($product['selling']) ? (float) $product['selling'] : null;
         $pStrike = isset($product['strike']) && $product['strike'] ? (float) $product['strike'] : null;
-        $pInStock = $product['in_stock'] ?? true;
+        $pInStock = array_key_exists('stock_quantity', $product)
+            ? \App\Services\StockAvailability::isAvailable($product['stock_quantity'])
+            : ($product['in_stock'] ?? true);
         $pMinSell = $pSelling;
         $pMaxSell = $pSelling;
     } else {
@@ -36,13 +38,13 @@
             $pMaxSell = $sellPrices->max();
             $pSelling = $pMinSell;
             $pStrike = null;
-            $pInStock = $product->variants->sum('stock_quantity') > 0;
+            $pInStock = \App\Services\StockAvailability::isAvailable(\App\Services\StockAvailability::forProduct($product));
         } else {
             $pSelling = (float) ($product->sale_price ?? ($product->price ?? 0));
             $pStrike = $product->sale_price && $product->price > $product->sale_price ? (float) $product->price : null;
             $pMinSell = $pSelling;
             $pMaxSell = $pSelling;
-            $pInStock = ($product->stock_quantity ?? 0) > 0;
+            $pInStock = \App\Services\StockAvailability::isAvailable($product->stock_quantity);
         }
     }
 

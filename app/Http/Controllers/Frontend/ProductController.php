@@ -185,16 +185,14 @@ class ProductController extends Controller
         $baseOriginal = (float) $product->price;
         $hasDiscount  = $product->sale_price && $product->sale_price < $product->price;
 
-        $baseStock = ($product->is_variant && $product->variants->isNotEmpty())
-            ? (int) $product->variants->sum('stock_quantity')
-            : (int) $product->stock_quantity;
+        $baseStock = \App\Services\StockAvailability::forProduct($product);
 
         $variantsJson = $product->variants->map(fn ($variant) => [
             'id'             => $variant->id,
             'variant_code'   => $variant->variant_code,
             'price'          => (float) $variant->price,
             'sale_price'     => $variant->sale_price ? (float) $variant->sale_price : null,
-            'stock_quantity' => (int) $variant->stock_quantity,
+            'stock_quantity' => \App\Services\StockAvailability::normalize($variant->stock_quantity),
             'image'          => $variant->image ? asset($variant->image) : null,
             'attrs'          => $variant->variantAttributes->map(fn ($va) => [
                 'attribute_id' => $va->attribute_id,

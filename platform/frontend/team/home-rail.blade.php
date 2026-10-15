@@ -2,7 +2,7 @@
     <style>
         .trinity-team-rail { display:flex; gap:12px; overflow-x:auto; padding-bottom:16px; scroll-snap-type:x mandatory; scroll-behavior:smooth; scrollbar-width:none; }
         .trinity-team-rail::-webkit-scrollbar { display:none; }
-        .trinity-team-rail-item { flex:0 0 calc((100% - 24px) / 2.1); min-width:0; scroll-snap-align:start; }
+        .trinity-team-rail-item { flex:0 0 calc((100% - 12px) / 2); min-width:0; scroll-snap-align:start; }
         @media(min-width:640px) { .trinity-team-rail { gap:16px; } .trinity-team-rail-item { flex-basis:calc((100% - 48px) / 3.5); } }
         @media(min-width:1024px) { .trinity-team-rail-item { flex-basis:calc((100% - 64px) / 4.5); } }
     </style>

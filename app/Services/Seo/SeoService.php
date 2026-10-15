@@ -146,7 +146,7 @@ class SeoService
             if ($product->brand?->name) $schema['brand'] = ['@type' => 'Brand', 'name' => $product->brand->name];
             $length = $product->allow_custom_length ? (float) ($product->default_length_m ?? 1) : 1;
             $price = (float) ($data['variantMinPrice'] ?? $data['basePrice'] ?? 0) * $length;
-            $stock = $product->is_variant ? $product->variants->sum('stock_quantity') : $product->stock_quantity;
+            $stock = \App\Services\StockAvailability::forProduct($product);
             if ($price > 0) {
                 $max = (float) ($data['variantMaxPrice'] ?? $data['variantMinPrice'] ?? $data['basePrice'] ?? 0) * $length;
                 $offer = ['@type' => $max > $price ? 'AggregateOffer' : 'Offer', 'priceCurrency' => 'KES',
@@ -154,7 +154,7 @@ class SeoService
                 if ($max > $price) {
                     $offer += ['lowPrice' => number_format($price, 2, '.', ''), 'highPrice' => number_format($max, 2, '.', ''), 'offerCount' => $product->variants->count()];
                 } else {
-                    $offer += ['price' => number_format($price, 2, '.', ''), 'availability' => 'https://schema.org/' . ($stock > 0 ? 'InStock' : 'OutOfStock')];
+                    $offer += ['price' => number_format($price, 2, '.', ''), 'availability' => 'https://schema.org/' . (\App\Services\StockAvailability::isAvailable($stock) ? 'InStock' : 'OutOfStock')];
                 }
                 $schema['offers'] = $offer;
             }

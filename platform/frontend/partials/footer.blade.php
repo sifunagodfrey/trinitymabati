@@ -4,21 +4,38 @@
      plus a slim legal bar at the base. Pulls contact details and
      socials from $site.
 ------------------- --}}
-<footer class="site-footer w-full mt-20">
+<footer class="site-footer w-full mt-20" style="border-top: 3px solid var(--primary-color);">
 
     {{-- Main columns --}}
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-12">
 
         {{-- Brand --}}
         <div class="lg:col-span-4">
-            <img src="{{ $branding['logo_white'] }}" alt="{{ config('app.name') }}" class="h-16 w-auto max-w-full object-contain lg:h-20">
+            <img src="{{ $branding['logo_white'] }}" alt="{{ config('app.name') }}"
+                class="h-16 w-auto max-w-full object-contain lg:h-20">
             <p class="mt-4 max-w-xs overflow-hidden text-sm leading-relaxed text-white/70" style="max-height: 3.25em;"
-                x-data="{ fullText: '', observer: null, lastWidth: 0,
-                    fitText() { const paragraph = this.$el; const copy = this.$refs.footerCopy; const maxHeight = parseFloat(getComputedStyle(paragraph).lineHeight) * 2; copy.textContent = this.fullText + ' '; if (paragraph.scrollHeight &lt;= maxHeight + 1) return; let low = 0, high = this.fullText.length; while (low &lt; high) { const mid = Math.ceil((low + high) / 2); copy.textContent = this.fullText.slice(0, mid).trimEnd() + '… '; if (paragraph.scrollHeight &lt;= maxHeight + 1) low = mid; else high = mid - 1; } copy.textContent = this.fullText.slice(0, low).trimEnd() + '… '; },
-                    init() { this.fullText = this.$refs.footerCopy.textContent.trim(); this.$nextTick(() => { this.fitText(); this.observer = new ResizeObserver(entries => { const width = entries[0].contentRect.width; if (width !== this.lastWidth) { this.lastWidth = width; this.fitText(); } }); this.observer.observe(this.$el); document.fonts.ready.then(() => { if (this.$el.isConnected) this.fitText(); }); }); },
+                x-data="{
+                    fullText: '',
+                    observer: null,
+                    lastWidth: 0,
+                    fitText() { const paragraph = this.$el; const copy = this.$refs.footerCopy; const maxHeight = parseFloat(getComputedStyle(paragraph).lineHeight) * 2;
+                        copy.textContent = this.fullText + ' '; if (paragraph.scrollHeight & lt; = maxHeight + 1) return; let low = 0,
+                            high = this.fullText.length; while (low & lt; high) { const mid = Math.ceil((low + high) / 2);
+                            copy.textContent = this.fullText.slice(0, mid).trimEnd() + '… '; if (paragraph.scrollHeight & lt; = maxHeight + 1) low = mid;
+                            else high = mid - 1; } copy.textContent = this.fullText.slice(0, low).trimEnd() + '… '; },
+                    init() { this.fullText = this.$refs.footerCopy.textContent.trim();
+                        this.$nextTick(() => { this.fitText();
+                            this.observer = new ResizeObserver(entries => { const width = entries[0].contentRect.width; if (width !== this.lastWidth) { this.lastWidth = width;
+                                    this.fitText(); } });
+                            this.observer.observe(this.$el);
+                            document.fonts.ready.then(() => { if (this.$el.isConnected) this.fitText(); }); }); },
                     destroy() { this.observer?.disconnect(); }
                 }">
-                <span x-ref="footerCopy">Trinity Mabati Factory delivers genuine, KEBS-certified metal roofing sheets with an ironclad 15-year written warranty directly to your construction site. </span><a href="{{ route('frontend.about') }}" class="whitespace-nowrap font-semibold text-white/80 transition hover:text-white">Read more <span aria-hidden="true">&rarr;</span><span class="sr-only"> about Trinity Mabati Factory</span></a>
+                <span x-ref="footerCopy">Trinity Mabati Factory delivers genuine, KEBS-certified metal roofing sheets
+                    with an ironclad 15-year written warranty directly to your construction site. </span><a
+                    href="{{ route('frontend.about') }}"
+                    class="whitespace-nowrap font-semibold text-white/80 transition hover:text-white">Read more <span
+                        aria-hidden="true">&rarr;</span><span class="sr-only"> about Trinity Mabati Factory</span></a>
             </p>
             @php
                 $socialIcons = [
@@ -30,15 +47,15 @@
                     'linkedin' => 'fa-linkedin-in',
                 ];
                 $footerSocials = collect($site['socials'] ?? [])
-                    ->filter(fn ($url, $network) => filled($url) && isset($socialIcons[$network]))
+                    ->filter(fn($url, $network) => filled($url) && isset($socialIcons[$network]))
                     ->take(4);
             @endphp
             @if ($footerSocials->isNotEmpty())
                 <div class="mt-5 flex flex-wrap items-center gap-3" aria-label="Social media links">
                     @foreach ($footerSocials as $network => $url)
                         <a href="{{ $url }}" target="_blank" rel="noopener noreferrer"
-                           aria-label="{{ ucfirst($network) }}"
-                           class="inline-flex h-10 w-10 items-center justify-center rounded-md bg-white/10 text-white transition hover:bg-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+                            aria-label="{{ ucfirst($network) }}"
+                            class="inline-flex h-10 w-10 items-center justify-center rounded-md bg-white/10 text-white transition hover:bg-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
                             <i class="fab {{ $socialIcons[$network] }} text-base" aria-hidden="true"></i>
                         </a>
                     @endforeach
@@ -48,7 +65,8 @@
 
         {{-- Product categories --}}
         <div class="lg:col-span-2">
-            <h4 class="text-white text-sm font-semibold uppercase tracking-wider" style="font-family: var(--font-ui);">Products</h4>
+            <h4 class="text-white text-sm font-semibold uppercase tracking-wider" style="font-family: var(--font-ui);">
+                Products</h4>
             @php
                 $footerCategories = \App\Models\Manage\Products\Category::query()
                     ->orderByRaw('CASE WHEN parent_id IS NULL THEN 0 ELSE 1 END')
@@ -58,7 +76,8 @@
             @endphp
             <ul class="mt-4 space-y-3 text-sm text-white/70">
                 @foreach ($footerCategories as $category)
-                    <li><a href="{{ route('frontend.categories.show', $category->slug) }}" class="hover:text-white transition">{{ $category->name }}</a></li>
+                    <li><a href="{{ route('frontend.categories.show', $category->slug) }}"
+                            class="hover:text-white transition">{{ $category->name }}</a></li>
                 @endforeach
             </ul>
         </div>
@@ -71,8 +90,10 @@
                 <li><a href="{{ route('frontend.about') }}" class="hover:text-white transition">About Us</a></li>
                 <li><a href="{{ route('frontend.team') }}" class="hover:text-white transition">Our Team</a></li>
                 <li><a href="{{ route('frontend.partners') }}" class="hover:text-white transition">Partners</a></li>
-                <li><a href="{{ route('frontend.project-gallery') }}" class="hover:text-white transition">Project Gallery</a></li>
-                <li><a href="{{ route('frontend.quotation.index') }}" class="hover:text-white transition">Request Quotation</a>
+                <li><a href="{{ route('frontend.project-gallery') }}" class="hover:text-white transition">Project
+                        Gallery</a></li>
+                <li><a href="{{ route('frontend.quotation.index') }}" class="hover:text-white transition">Request
+                        Quotation</a>
                 </li>
                 <li><a href="{{ route('frontend.blog') }}" class="hover:text-white transition">Blog &amp; Tips</a></li>
                 <li><a href="{{ route('frontend.contact') }}" class="hover:text-white transition">Contact Us</a></li>
@@ -117,11 +138,11 @@
 
     {{-- Legal bar --}}
     <div class="border-t" style="border-color: rgba(255,255,255,0.08);">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/50">
+        <div
+            class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/50">
             <p>&copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
             <div class="flex items-center gap-5">
-                <a href="{{ route('frontend.privacy-policy.public') }}"
-                    class="hover:text-white transition">Privacy</a>
+                <a href="{{ route('frontend.privacy-policy.public') }}" class="hover:text-white transition">Privacy</a>
                 <a href="{{ route('frontend.terms') }}" class="hover:text-white transition">Terms</a>
                 <a href="{{ route('frontend.refund-policy') }}" class="hover:text-white transition">Refunds</a>
             </div>

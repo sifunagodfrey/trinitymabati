@@ -653,7 +653,7 @@
     <section class="bg-white py-16 sm:py-20" aria-labelledby="home-faq-heading">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="mx-auto mb-10 max-w-2xl text-center">
-                <h2 id="home-faq-heading" class="text-3xl font-extrabold text-gray-900 sm:text-4xl">Frequently Asked
+                <h2 id="home-faq-heading" class="text-3xl font-extrabold text-primary sm:text-4xl">Frequently Asked
                     Question</h2>
             </div>
             <div class="grid items-start gap-5 lg:grid-cols-2">

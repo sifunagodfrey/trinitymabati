@@ -38,10 +38,12 @@ class StockService
                     if ($item->variant_id) {
                         DB::table('su_product_variants')
                             ->where('id', $item->variant_id)
+                            ->whereNotNull('stock_quantity')
                             ->update(['stock_quantity' => DB::raw('GREATEST(stock_quantity - ' . (int) $item->quantity . ', 0)')]);
                     } elseif ($item->product_id) {
                         DB::table('su_products')
                             ->where('id', $item->product_id)
+                            ->whereNotNull('stock_quantity')
                             ->update(['stock_quantity' => DB::raw('GREATEST(stock_quantity - ' . (int) $item->quantity . ', 0)')]);
                     }
                 }
@@ -81,10 +83,12 @@ class StockService
                     if ($item->variant_id) {
                         DB::table('su_product_variants')
                             ->where('id', $item->variant_id)
+                            ->whereNotNull('stock_quantity')
                             ->increment('stock_quantity', (int) $item->quantity);
                     } elseif ($item->product_id) {
                         DB::table('su_products')
                             ->where('id', $item->product_id)
+                            ->whereNotNull('stock_quantity')
                             ->increment('stock_quantity', (int) $item->quantity);
                     }
                 }
@@ -126,15 +130,13 @@ class StockService
     public function checkProduct(Product $product): void
     {
         $threshold = (int) ($product->low_stock_threshold ?? 5);
-        $stock     = $product->is_variant && $product->variants->isNotEmpty()
-            ? (int) $product->variants->sum('stock_quantity')
-            : (int) $product->stock_quantity;
+        $stock = StockAvailability::forProduct($product);
 
         $openAlert = LowStockAlert::where('product_id', $product->id)
             ->whereNull('resolved_at')
             ->first();
 
-        if ($stock > $threshold) {
+        if ($stock === null || $stock > $threshold) {
             if ($openAlert) {
                 $openAlert->update(['resolved_at' => now()]);
             }

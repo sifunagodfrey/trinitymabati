@@ -56,8 +56,8 @@
                 if (this.variants.length) {
                     const preferred = this.variants.find(v => {
                         const matches = (slug, desired) => !desired || v.attrs.some(a => String(this.attributeSlugs[String(a.attribute_id)] || '').toLowerCase() === slug && String(a.value).toLowerCase() === String(desired).toLowerCase());
-                        return v.stock_quantity > 0 && matches('gauge', this.preferredGauge) && matches('finish', this.preferredFinish);
-                    }) || this.variants.find(v => v.stock_quantity > 0) || this.variants[0];
+                        return (v.stock_quantity == null || v.stock_quantity === '' || Number(v.stock_quantity) > 0) && matches('gauge', this.preferredGauge) && matches('finish', this.preferredFinish);
+                    }) || this.variants.find(v => (v.stock_quantity == null || v.stock_quantity === '' || Number(v.stock_quantity) > 0)) || this.variants[0];
                     if (preferred.attrs && preferred.attrs.length) {
                         preferred.attrs.forEach(a => { this.selectedAttrs[a.attribute_id] = a.value; });
                     } else { this.selectedVariantId = preferred.id; }
@@ -121,7 +121,7 @@
             },
             get displayStock() {
                 if (this.activeVariant) return this.activeVariant.stock_quantity;
-                return {{ $baseStock }};
+                return {{ $baseStock === null ? 'null' : (int) $baseStock }};
             },
             get isOnSale() {
                 if (this.selectedBulkTier) return false;
