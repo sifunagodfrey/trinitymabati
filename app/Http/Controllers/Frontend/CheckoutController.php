@@ -12,14 +12,7 @@ use App\Models\Manage\Shipping\LocationPricing;
 use App\Models\Manage\Shipping\ShippingSetting;
 use App\Models\Manage\Payments\PaymentMethod;
 use App\Models\Payment\PaymentTransaction;
-use App\Services\LoyaltyService;
 use App\Services\OrderEmailService;
-use App\Services\Payment\MpesaService;
-use App\Services\Payment\PaystackService;
-use App\Services\Payment\PesapalService;
-use App\Models\Payment\PendingPesapal;
-use App\Services\WalletEmailService;
-use App\Services\WalletService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -49,6 +42,14 @@ class CheckoutController extends Controller
     {
         $s = ShippingSetting::first();
 
+        // A configured location price is the complete delivery charge, including zero.
+        if ($location !== null && $location->price !== null) {
+            $freeThreshold = (float) ($s?->free_shipping_threshold ?? 0);
+            return $freeThreshold > 0 && $subtotal >= $freeThreshold
+                ? 0.0
+                : round((float) $location->price, 2);
+        }
+
         $totalWeight = $items->sum(
             fn($item) => ((float) ($item->product?->weight ?? 0)) * $item->quantity
         );
@@ -66,7 +67,7 @@ class CheckoutController extends Controller
         $volumeMult    = (float) ($s?->volume_multiplier       ?? 0);
         $distRate      = (float) ($s?->distance_rate           ?? 0);
         $freeThold     = (float) ($s?->free_shipping_threshold ?? 0);
-        $distKm        = (float) ($location?->distance         ?? 0);
+        $distKm        = (float) ($location?->distance_km      ?? 0);
 
         $weightCharge   = $totalWeight > $threshold ? ($totalWeight - $threshold) * $weightRate : 0;
         $volumeCharge   = $volumeDiv > 0 ? ($totalVolume / $volumeDiv) * $volumeMult : 0;
@@ -142,7 +143,7 @@ class CheckoutController extends Controller
                 * $item->quantity,
         ])->values();
 
-        $paymentMethods = PaymentMethod::active()->orderBy('id')->get();
+        $paymentMethods = PaymentMethod::availableManual()->orderByDesc('is_default')->orderBy('id')->get();
 
         return view('frontend.checkout.index', compact(
             'items', 'subtotal', 'counties', 'shippingSettings', 'cartDimensions',
@@ -195,7 +196,13 @@ class CheckoutController extends Controller
             return redirect()->route('frontend.cart')->with('error', 'Your cart is empty.');
         }
 
-        $location     = LocationPricing::find($request->location_id);
+        $location = LocationPricing::whereHas('town', fn ($query) => $query->where('county_id', $request->county_id))
+            ->find($request->location_id);
+        if (!$location) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'location_id' => 'Please choose a delivery location in the selected county.',
+            ]);
+        }
         $items        = $cart->items;
         $subtotal     = $items->sum(fn($item) => $item->price_at_time * $item->quantity);
         $shippingCost = $this->calcShipping($items, $location, $subtotal);
@@ -213,7 +220,7 @@ class CheckoutController extends Controller
     }
 
     // ---------------
-    // Payment page - includes virtual wallet method
+    // Payment selection and manual verification status
     // ---------------
     public function payment(Request $request)
     {
@@ -228,6 +235,8 @@ class CheckoutController extends Controller
             return view('frontend.checkout.payment', [
                 'mode'  => 'confirmation',
                 'order' => $order,
+                'payment' => PaymentTransaction::where('order_id', $order->id)->orderByDesc('id')->first(),
+                'paymentMethods' => PaymentMethod::availableManual()->orderByDesc('is_default')->orderBy('id')->get(),
             ]);
         }
 
@@ -251,7 +260,10 @@ class CheckoutController extends Controller
         // ---------------
         // Only configured, active payment methods are offered.
         // ---------------
-        $paymentMethods = PaymentMethod::active()->orderBy('id')->get();
+        $paymentMethods = PaymentMethod::availableManual()->orderByDesc('is_default')->orderBy('id')->get();
+
+        $preferredId = \App\Models\Client\CustomerPaymentPreference::where('user_id', auth()->id())->value('payment_method_id');
+        if ($preferredId) $paymentMethods = $paymentMethods->sortBy(fn ($method) => (int) $method->id === (int) $preferredId ? 0 : 1)->values();
 
         return view('frontend.checkout.payment', [
             'mode'           => 'payment',
@@ -264,314 +276,117 @@ class CheckoutController extends Controller
     }
 
     // ---------------
-    // Process payment - includes virtual wallet
+    // Submit a manual payment for staff verification
     // ---------------
     public function processPayment(Request $request)
     {
-        $paymentMethodId = $request->input('payment_method_id');
-
-        $request->validate([
-            'payment_method_id' => 'required|integer|exists:su_payment_methods,id',
-            'phone'             => 'nullable|string|max:15',
-        ]);
-
+        $data = $this->manualPaymentInput($request);
         $checkout = session('checkout');
-        if (! $checkout) {
-            return redirect()->route('frontend.checkout')
-                ->with('error', 'Your session expired. Please restart checkout.');
-        }
-
-        $cart = Cart::where('user_id', auth()->id())
-            ->with([
-                'items.product',
-                'items.variant.variantAttributes.attributeValue',
-            ])
-            ->first();
-
-        if (! $cart || $cart->items->isEmpty()) {
-            return redirect()->route('frontend.cart')->with('error', 'Your cart is empty.');
-        }
-
-        $paymentMethod = PaymentMethod::findOrFail($paymentMethodId);
-
-        if ($paymentMethod->slug === 'mpesa') {
-            $request->validate(['phone' => 'required|string|max:15']);
-        }
-
-        $location      = LocationPricing::find($checkout['location_id']);
-        $items         = $cart->items;
-        $subtotal      = $items->sum(fn($item) => $item->price_at_time * $item->quantity);
-        $shippingCost  = $this->calcShipping($items, $location, $subtotal);
-
-        $grossTotal = $subtotal + $shippingCost;
-
-        $loyaltyDiscount = 0.0;
-        $orderTotal      = $grossTotal;
-        $orderCode       = $this->generateOrderCode();
-
-        $order = Order::create([
-            'user_id'              => auth()->id(),
-            'order_code'           => $orderCode,
-            'status'               => 'pending',
-            'payment_status'       => 'pending',
-            'shipping_status'      => 'pending',
-            'total'                => $orderTotal,
-            'shipping_cost'        => $shippingCost,
-            'discount'             => $loyaltyDiscount,
-            'shipping_county_id'   => $checkout['county_id'],
-            'shipping_town_id' => $location?->town_id,
-            'notes'                => $checkout['notes'],
-            'currency'             => 'KES',
-            'stock_deducted'       => 0,
-            'customer_confirmed'   => false,
-            'admin_confirmed'      => false,
-            'phone'                => $request->phone ?? auth()->user()->phone,
-        ]);
-
-        \App\Models\Manage\Ecommerce\OrderStatusHistory::record(
-            $order->id, 'status:pending', 'Order placed', auth()->id()
-        );
-
-        foreach ($items as $cartItem) {
-            $variantLabel = null;
-            if ($cartItem->variant) {
-                $parts = $cartItem->variant->variantAttributes
-                    ->map(fn ($va) => optional($va->attributeValue)->value)
-                    ->filter()
-                    ->values();
-                $variantLabel = $parts->isNotEmpty()
-                    ? $parts->implode(' / ')
-                    : ($cartItem->variant->variant_code ?: null);
-            }
-
-            OrderItem::create([
-                'order_id'      => $order->id,
-                'product_id'    => $cartItem->product_id,
-                'variant_id'    => $cartItem->variant_id,
-                'variant_label' => ($cartItem->sheet_length_m ? trim(($variantLabel ? $variantLabel . ' / ' : '') . number_format($cartItem->sheet_length_m, 2) . ' m') : $variantLabel),
-                'product_name'  => $cartItem->product?->name ?? 'Unknown Product',
-                'quantity'      => $cartItem->quantity,
-                'price'         => $cartItem->price_at_time,
-            ]);
-        }
-
-        $cart->items()->delete();
-        session()->forget('checkout');
-
-        AbandonedCart::where('user_id', auth()->id())->delete();
-        AbandonedCartLog::where('user_id', auth()->id())->delete();
-
-        // Order placement emails
+        if (!$checkout) return redirect()->route('frontend.checkout')->with('error', 'Your session expired. Please enter shipping details again.');
+        $proofPath = $request->hasFile('proof') ? $request->file('proof')->store('payment-proofs', 'local') : null;
         try {
-            $orderEmailService = app(OrderEmailService::class);
-            $order->loadMissing(['user', 'items']);
-            $orderEmailService->sendNewOrderToClient($order);
-        } catch (\Throwable $e) {
-            Log::warning('Order placement email failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
-        }
-
-        // ---------------
-        // Staff alert (never blocks checkout)
-        // ---------------
-        app(OrderEmailService::class)->sendNewOrderToStaff($order);
-
-        // ---------------
-        // Mpesa handling
-        // ---------------
-        if ($paymentMethod && $paymentMethod->slug === 'mpesa') {
-            try {
-                $mpesaService  = app(MpesaService::class);
-                $mpesaResponse = $mpesaService->initiateStkPush(
-                    $request->phone,
-                    $orderTotal,
-                    $orderCode,
-                    $order->id
-                );
-
-                $checkoutRequestId = $mpesaResponse['CheckoutRequestID'] ?? null;
-
-                PaymentTransaction::create([
-                    'user_id'   => auth()->id(),
-                    'order_id'  => $order->id,
-                    'amount'    => $orderTotal,
-                    'method_id' => $paymentMethod->id,
-                    'status'    => 'pending',
-                    'reference' => $checkoutRequestId,
+            $order = DB::transaction(function () use ($request, $data, $checkout, $proofPath) {
+                $cart = Cart::where('user_id', auth()->id())->lockForUpdate()->first();
+                if (!$cart) throw \Illuminate\Validation\ValidationException::withMessages(['payment' => 'Your cart is empty.']);
+                $items = $cart->items()->with(['product', 'variant.variantAttributes.attributeValue'])->get();
+                if ($items->isEmpty()) throw \Illuminate\Validation\ValidationException::withMessages(['payment' => 'Your cart is empty.']);
+                // Serialize manual order-code generation and recheck live method settings.
+                $methods = PaymentMethod::manual()->orderBy('id')->lockForUpdate()->get();
+                $method = $methods->firstWhere('id', (int) $data['payment_method_id']);
+                $this->assertManualMethod($method);
+                $location = LocationPricing::whereHas('town', fn ($query) => $query->where('county_id', $checkout['county_id']))
+                    ->find($checkout['location_id']);
+                if (!$location) throw \Illuminate\Validation\ValidationException::withMessages(['payment' => 'Please choose a valid delivery location.']);
+                $subtotal = $items->sum(fn ($item) => $item->price_at_time * $item->quantity);
+                $shipping = $this->calcShipping($items, $location, $subtotal);
+                $order = Order::create([
+                    'user_id' => auth()->id(), 'order_code' => $this->generateOrderCode(),
+                    'status' => 'pending', 'payment_status' => 'pending', 'shipping_status' => 'pending',
+                    'total' => $subtotal + $shipping, 'shipping_cost' => $shipping, 'discount' => 0,
+                    'shipping_county_id' => $checkout['county_id'], 'shipping_town_id' => $location->town_id,
+                    'notes' => $checkout['notes'] ?? null, 'currency' => 'KES', 'stock_deducted' => 0,
+                    'customer_confirmed' => false, 'admin_confirmed' => false, 'phone' => auth()->user()->phone,
                 ]);
-
-                $order->update(['mpesa_checkout_request_id' => $checkoutRequestId]);
-
-                if ($request->wantsJson()) {
-                    return response()->json([
-                        'success'    => true,
-                        'order_code' => $orderCode,
-                        'cid'        => $checkoutRequestId,
+                foreach ($items as $cartItem) {
+                    $variantLabel = null;
+                    if ($cartItem->variant) {
+                        $parts = $cartItem->variant->variantAttributes->map(fn ($value) => optional($value->attributeValue)->value)->filter()->values();
+                        $variantLabel = $parts->isNotEmpty() ? $parts->implode(' / ') : $cartItem->variant->variant_code;
+                    }
+                    OrderItem::create([
+                        'order_id' => $order->id, 'product_id' => $cartItem->product_id, 'variant_id' => $cartItem->variant_id,
+                        'variant_label' => $cartItem->sheet_length_m ? trim(($variantLabel ? $variantLabel . ' / ' : '') . number_format($cartItem->sheet_length_m, 2) . ' m') : $variantLabel,
+                        'product_name' => $cartItem->product?->name ?? 'Product', 'quantity' => $cartItem->quantity, 'price' => $cartItem->price_at_time,
                     ]);
                 }
+                app(\App\Services\ManualPaymentService::class)->submit($order, $method, $data['payment_reference'] ?? null, $proofPath);
+                \App\Models\Manage\Ecommerce\OrderStatusHistory::record($order->id, 'status:pending', 'Order placed; awaiting manual payment verification', auth()->id());
+                $cart->items()->delete();
+                AbandonedCart::where('user_id', auth()->id())->delete();
+                AbandonedCartLog::where('user_id', auth()->id())->delete();
+                return $order;
+            }, 3);
+        } catch (\Throwable $exception) {
+            if ($proofPath) \Illuminate\Support\Facades\Storage::disk('local')->delete($proofPath);
+            $this->rethrowManualPaymentError($exception);
+        }
+        session()->forget('checkout');
+        try {
+            $order->loadMissing(['user', 'items']);
+            app(OrderEmailService::class)->sendNewOrderToClient($order);
+            app(OrderEmailService::class)->sendNewOrderToStaff($order);
+        } catch (\Throwable $exception) {
+            Log::warning('Manual order email failed', ['order_id' => $order->id, 'error' => $exception->getMessage()]);
+        }
+        return redirect()->route('frontend.checkout.payment', ['order' => $order->order_code])->with('success', 'Order placed. Your payment is awaiting manual verification.');
+    }
 
-                return redirect()->route('frontend.checkout.mpesa.polling', [
-                    'order' => $orderCode,
-                    'cid'   => $checkoutRequestId,
-                ]);
-            } catch (\Exception $e) {
-                Log::error('Mpesa STK push failed at checkout', [
-                    'order_id' => $order->id,
-                    'error'    => $e->getMessage(),
-                ]);
-
-                if ($request->wantsJson()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => $e->getMessage(),
-                    ], 500);
+    public function resubmitPayment(Request $request, string $code)
+    {
+        $data = $this->manualPaymentInput($request);
+        $proofPath = $request->hasFile('proof') ? $request->file('proof')->store('payment-proofs', 'local') : null;
+        try {
+            $order = DB::transaction(function () use ($data, $code, $proofPath) {
+                $order = Order::where('order_code', $code)->where('user_id', auth()->id())->lockForUpdate()->firstOrFail();
+                if ($order->payment_status !== 'failed'
+                    || !PaymentTransaction::where('order_id', $order->id)->where('is_manual', true)->where('status', 'failed')->exists()) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['payment' => 'Only a rejected manual payment can be resubmitted.']);
                 }
-
-                return redirect()->route('client.orders.index')
-                    ->with('error', 'Your order was placed but M-Pesa could not be initiated: ' . $e->getMessage() . ' Please contact support or try again.');
-            }
+                $method = PaymentMethod::manual()->whereKey($data['payment_method_id'])->lockForUpdate()->first();
+                $this->assertManualMethod($method);
+                app(\App\Services\ManualPaymentService::class)->submit($order, $method, $data['payment_reference'] ?? null, $proofPath);
+                return $order;
+            }, 3);
+        } catch (\Throwable $exception) {
+            if ($proofPath) \Illuminate\Support\Facades\Storage::disk('local')->delete($proofPath);
+            $this->rethrowManualPaymentError($exception);
         }
+        return redirect()->route('frontend.checkout.payment', ['order' => $order->order_code])->with('success', 'Payment resubmitted for review.');
+    }
 
-// ---------------
-        // Paystack handling - hosted checkout redirect
-        // ---------------
-        if ($paymentMethod && $paymentMethod->slug === 'paystack') {
-            $email = trim((string) $request->input('payment_input')) ?: auth()->user()->email;
-
-            try {
-                $paystack  = app(PaystackService::class);
-                $reference = 'PSK-' . $order->id . '-' . strtoupper(substr(uniqid(), -6));
-
-                $init = $paystack->initializeTransaction(
-                    $email,
-                    (float) $orderTotal,
-                    $reference,
-                    route('frontend.checkout.paystack.callback'),
-                    ['order_id' => $order->id, 'order_code' => $orderCode]
-                );
-
-                PaymentTransaction::create([
-                    'user_id'   => auth()->id(),
-                    'order_id'  => $order->id,
-                    'amount'    => $orderTotal,
-                    'method_id' => $paymentMethod->id,
-                    'status'    => 'pending',
-                    'reference' => $init['reference'],
-                ]);
-
-                $order->update(['paystack_reference' => $init['reference']]);
-
-                return redirect()->away($init['authorization_url']);
-            } catch (\Exception $e) {
-                Log::error('Paystack initialization failed at checkout', [
-                    'order_id' => $order->id,
-                    'error'    => $e->getMessage(),
-                ]);
-
-                return redirect()->route('client.orders.index')
-                    ->with('error', 'Your order was placed but Paystack could not be initiated: ' . $e->getMessage() . ' Please contact support or try again.');
-            }
-        }
-
-        // ---------------
-        // Pesapal handling - hosted checkout redirect
-        // ---------------
-        if ($paymentMethod && $paymentMethod->slug === 'pesapal') {
-            $email = trim((string) $request->input('payment_input')) ?: auth()->user()->email;
-
-            try {
-                $pesapal   = app(PesapalService::class);
-                $reference = 'PSP-' . $order->id . '-' . strtoupper(substr(uniqid(), -6));
-
-                $submission = $pesapal->submitOrder(
-                    $reference,
-                    (float) $orderTotal,
-                    'Order ' . $orderCode,
-                    route('frontend.checkout.pesapal.callback'),
-                    $email,
-                    $order->phone,
-                    auth()->user()->first_name,
-                    auth()->user()->last_name
-                );
-
-                PendingPesapal::create([
-                    'order_tracking_id'  => $submission['order_tracking_id'],
-                    'merchant_reference' => $reference,
-                    'phone'              => $order->phone,
-                    'amount'             => $orderTotal,
-                    'currency'           => 'KES',
-                    'user_id'            => auth()->id(),
-                    'order_id'           => $order->id,
-                    'status'             => 'pending',
-                    'created_at'         => now(),
-                ]);
-
-                PaymentTransaction::create([
-                    'user_id'   => auth()->id(),
-                    'order_id'  => $order->id,
-                    'amount'    => $orderTotal,
-                    'method_id' => $paymentMethod->id,
-                    'status'    => 'pending',
-                    'reference' => $submission['order_tracking_id'],
-                ]);
-
-                $order->update(['pesapal_tracking_id' => $submission['order_tracking_id']]);
-
-                return redirect()->away($submission['redirect_url']);
-            } catch (\Exception $e) {
-                Log::error('Pesapal initialization failed at checkout', [
-                    'order_id' => $order->id,
-                    'error'    => $e->getMessage(),
-                ]);
-
-                return redirect()->route('client.orders.index')
-                    ->with('error', 'Your order was placed but Pesapal could not be initiated: ' . $e->getMessage() . ' Please contact support or try again.');
-            }
-        }
-
-        // ---------------
-        // Cash on delivery - reserve stock immediately
-        // ---------------
-        if ($paymentMethod && $paymentMethod->slug === 'cash_on_delivery') {
-            PaymentTransaction::create([
-                'user_id'   => auth()->id(),
-                'order_id'  => $order->id,
-                'amount'    => $orderTotal,
-                'method_id' => $paymentMethod->id,
-                'status'    => 'pending',
-                'reference' => 'COD-' . $order->id,
-            ]);
-
-            $order->update(['status' => 'processing']);
-
-            app(\App\Services\StockService::class)->deductForOrder($order);
-            \App\Models\Manage\Ecommerce\OrderStatusHistory::record(
-                $order->id, 'status:processing', 'Cash on delivery order confirmed'
-            );
-
-            if ($request->wantsJson()) {
-                return response()->json([
-                    'success'    => true,
-                    'order_code' => $orderCode,
-                ]);
-            }
-
-            return redirect()->route('frontend.checkout.payment', ['order' => $orderCode])
-                ->with('success', 'Your order has been placed! You will pay in cash on delivery.');
-        }
-
-        // ---------------
-        // All other real payment methods (fallback)
-        // ---------------
-        PaymentTransaction::create([
-            'user_id'   => auth()->id(),
-            'order_id'  => $order->id,
-            'amount'    => $orderTotal,
-            'method_id' => $paymentMethod->id,
-            'status'    => 'pending',
-            'reference' => null,
+    private function manualPaymentInput(Request $request): array
+    {
+        $reference = $request->input('payment_reference');
+        if (is_string($reference)) $request->merge(['payment_reference' => trim($reference) === '' ? null : strtoupper(trim($reference))]);
+        return $request->validate([
+            'payment_method_id' => ['required', 'integer'],
+            'payment_reference' => ['nullable', 'string', 'min:4', 'max:100'],
+            'proof' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
         ]);
+    }
 
-        return redirect()->route('frontend.checkout.payment', ['order' => $orderCode])
-            ->with('success', 'Your order has been placed successfully!');
+    private function assertManualMethod($method): void
+    {
+        if (!$method || !$method->is_manual || !$method->is_active || !$method->isConfigured()) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['payment_method_id' => 'This payment option is unavailable. Please select an enabled payment option.']);
+        }
+    }
+
+    private function rethrowManualPaymentError(\Throwable $exception): void
+    {
+        if ($exception instanceof \Illuminate\Database\QueryException && in_array((string) $exception->getCode(), ['23000', '23505'], true) && str_contains($exception->getMessage(), 'manual_reference')) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['payment_reference' => 'This payment reference has already been submitted.']);
+        }
+        throw $exception;
     }
 }

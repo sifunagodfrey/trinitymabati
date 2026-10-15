@@ -11,6 +11,12 @@ Route::middleware(['auth'])
     ->group(function () {
 
         Route::prefix('settings')->as('settings.')->group(function () {
+            Route::prefix('seo')->as('seo.')->middleware('role:super_admin,admin')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Manage\Settings\SeoController::class, 'index'])->name('index');
+                Route::post('/', [\App\Http\Controllers\Manage\Settings\SeoController::class, 'update'])->name('update');
+                Route::post('/metadata', [\App\Http\Controllers\Manage\Settings\SeoController::class, 'metadata'])->name('metadata');
+            });
+
 
             Route::prefix('branding')->as('branding.')->group(function () {
                 Route::get('/', [BrandingController::class, 'index'])->name('index');

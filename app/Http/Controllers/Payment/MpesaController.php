@@ -89,7 +89,7 @@ class MpesaController extends Controller
 
         $cid = $request->query('cid');
 
-        $transaction = PaymentTransaction::with('logs')
+        $transaction = PaymentTransaction::with('logs')->where('is_manual', false)
             ->where('reference', $cid)
             ->where('user_id', auth()->id())
             ->first();
@@ -240,7 +240,7 @@ class MpesaController extends Controller
             return $this->handleWalletMpesaCallback($checkoutRequestId, $resultCode, $resultDesc, $body);
         }
 
-        $transaction   = PaymentTransaction::where('reference', $checkoutRequestId)->first();
+        $transaction   = PaymentTransaction::where('is_manual', false)->where('reference', $checkoutRequestId)->first();
         $paymentMethod = PaymentMethod::where('slug', 'mpesa')->first();
 
         if ($resultCode == 0) {
@@ -381,7 +381,7 @@ class MpesaController extends Controller
 
         $cid = $request->input('cid');
 
-        $transaction = PaymentTransaction::where('reference', $cid)
+        $transaction = PaymentTransaction::where('is_manual', false)->where('reference', $cid)
             ->where('user_id', auth()->id())
             ->first();
 

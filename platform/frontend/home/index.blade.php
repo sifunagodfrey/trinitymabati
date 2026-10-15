@@ -21,12 +21,6 @@
                 'heading' => 'Corrugated Sheets',
                 'image' => 'trinity-mabati-product-2.webp',
             ],
-            [
-                'slug' => 'stone-coated-profiles',
-                'heading' => 'Stone Coated Profiles',
-                'image' => 'trinity-mabati-product-3.webp',
-            ],
-            ['slug' => 'box-profiles', 'heading' => 'Box Profile', 'image' => 'trinity-mabati-product-4.webp'],
         ];
     @endphp
 
@@ -34,19 +28,19 @@
         aria-label="Trinity Mabati Factory roofing">
         {{-- Keep the image visible immediately while the video buffers or when autoplay is unavailable. --}}
         <img src="{{ url('public/images/hrinity-mabati-hero.webp') }}" alt="Trinity Mabati roofing sheets"
-            class="absolute inset-0 h-full w-full object-cover" fetchpriority="high">
+            class="absolute inset-0 h-full w-full object-cover" fetchpriority="high" decoding="async">
         {{-- Desktop video (768px and up) --}}
         <video class="absolute inset-0 hidden h-full w-full object-cover opacity-0 transition-opacity duration-700 md:block"
-            src="{{ url('public/videos/trinity-mabati-hero-desktop.mp4') }}"
-            poster="{{ url('public/images/hrinity-mabati-hero.webp') }}" autoplay muted loop playsinline preload="auto"
+            data-video-src="{{ url('public/videos/trinity-mabati-hero-desktop.mp4') }}"
+            poster="{{ url('public/images/hrinity-mabati-hero.webp') }}" muted loop playsinline preload="none"
             aria-hidden="true" tabindex="-1"
             onplaying="this.classList.remove('opacity-0');this.classList.add('opacity-100')"
             onerror="this.classList.remove('opacity-100');this.classList.add('opacity-0')"></video>
 
         {{-- Mobile video (below 768px) --}}
         <video class="absolute inset-0 block h-full w-full object-cover opacity-0 transition-opacity duration-700 md:hidden"
-            src="{{ url('public/videos/trinity-mabati-hero-mobile.mp4') }}"
-            poster="{{ url('public/images/hrinity-mabati-hero.webp') }}" autoplay muted loop playsinline preload="auto"
+            data-video-src="{{ url('public/videos/trinity-mabati-hero-mobile.mp4') }}"
+            poster="{{ url('public/images/hrinity-mabati-hero.webp') }}" muted loop playsinline preload="none"
             aria-hidden="true" tabindex="-1"
             onplaying="this.classList.remove('opacity-0');this.classList.add('opacity-100')"
             onerror="this.classList.remove('opacity-100');this.classList.add('opacity-0')"></video>
@@ -221,7 +215,7 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <h3 class="truncate text-sm font-bold text-gray-900">Sue Wahome</h3>
-                                <p class="mt-0.5 text-xs text-gray-500">4 reviews · 4 months ago</p>
+                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>4 reviews</span><span aria-hidden="true">·</span><span class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img" aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i></span></p>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="22" height="22"
                                 role="img" aria-label="Google" class="shrink-0">
@@ -248,7 +242,7 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <h3 class="truncate text-sm font-bold text-gray-900">Iven</h3>
-                                <p class="mt-0.5 text-xs text-gray-500">1 review · 4 months ago</p>
+                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>1 review</span><span aria-hidden="true">·</span><span class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img" aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i></span></p>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="22" height="22"
                                 role="img" aria-label="Google" class="shrink-0">
@@ -275,7 +269,7 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <h3 class="truncate text-sm font-bold text-gray-900">Safari na Simon Mungai</h3>
-                                <p class="mt-0.5 text-xs text-gray-500">35 reviews · 10 months ago</p>
+                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>35 reviews</span><span aria-hidden="true">·</span><span class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img" aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i></span></p>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="22" height="22"
                                 role="img" aria-label="Google" class="shrink-0">
@@ -302,7 +296,7 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <h3 class="truncate text-sm font-bold text-gray-900">Sarah Musyimi</h3>
-                                <p class="mt-0.5 text-xs text-gray-500">42 reviews · 5 months ago</p>
+                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>42 reviews</span><span aria-hidden="true">·</span><span class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img" aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i></span></p>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="22" height="22"
                                 role="img" aria-label="Google" class="shrink-0">
@@ -329,7 +323,7 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <h3 class="truncate text-sm font-bold text-gray-900">Chinku Travels</h3>
-                                <p class="mt-0.5 text-xs text-gray-500">105 reviews · 11 months ago</p>
+                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>105 reviews</span><span aria-hidden="true">·</span><span class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img" aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i></span></p>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="22" height="22"
                                 role="img" aria-label="Google" class="shrink-0">
@@ -356,7 +350,7 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <h3 class="truncate text-sm font-bold text-gray-900">Mercy Daniel</h3>
-                                <p class="mt-0.5 text-xs text-gray-500">5 reviews · 11 months ago</p>
+                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>5 reviews</span><span aria-hidden="true">·</span><span class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img" aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i></span></p>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="22" height="22"
                                 role="img" aria-label="Google" class="shrink-0">
@@ -383,7 +377,7 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <h3 class="truncate text-sm font-bold text-gray-900">Wakio Kanyi</h3>
-                                <p class="mt-0.5 text-xs text-gray-500">2 reviews · 5 months ago</p>
+                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>2 reviews</span><span aria-hidden="true">·</span><span class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img" aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i></span></p>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="22" height="22"
                                 role="img" aria-label="Google" class="shrink-0">
@@ -409,7 +403,7 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <h3 class="truncate text-sm font-bold text-gray-900">Ndiema Kwemoi</h3>
-                                <p class="mt-0.5 text-xs text-gray-500">1 review · 6 months ago</p>
+                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>1 review</span><span aria-hidden="true">·</span><span class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img" aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i></span></p>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="22" height="22"
                                 role="img" aria-label="Google" class="shrink-0">
@@ -437,7 +431,7 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <h3 class="truncate text-sm font-bold text-gray-900">Sylvester Junior</h3>
-                                <p class="mt-0.5 text-xs text-gray-500">1 review · 11 months ago</p>
+                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>1 review</span><span aria-hidden="true">·</span><span class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img" aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i></span></p>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="22" height="22"
                                 role="img" aria-label="Google" class="shrink-0">
@@ -463,7 +457,7 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <h3 class="truncate text-sm font-bold text-gray-900">Wambui Mugo</h3>
-                                <p class="mt-0.5 text-xs text-gray-500">3 reviews · 11 months ago</p>
+                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>3 reviews</span><span aria-hidden="true">·</span><span class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img" aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i></span></p>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="22" height="22"
                                 role="img" aria-label="Google" class="shrink-0">
@@ -509,6 +503,10 @@
                 </div>
             </div>
     </section>
+
+    @if(isset($partners) && $partners->isNotEmpty())
+        @include('frontend.partners.home-rail', ['partners' => $partners])
+    @endif
 
     <section class="bg-white py-14 sm:py-20" aria-labelledby="how-to-order-heading">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -648,6 +646,10 @@
         </section>
     @endforeach
 
+    @if(isset($teamMembers) && $teamMembers->isNotEmpty())
+        @include('frontend.team.home-rail', ['members' => $teamMembers])
+    @endif
+
     <section class="bg-white py-16 sm:py-20" aria-labelledby="home-faq-heading">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="mx-auto mb-10 max-w-2xl text-center">
@@ -713,3 +715,23 @@
         </div>
     </section>
 @endsection
+
+@push('scripts')
+<script>
+(function () {
+    function startHeroVideo() {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || navigator.connection?.saveData) return;
+        const selector = window.matchMedia('(min-width: 768px)').matches
+            ? 'video[data-video-src].md\\:block' : 'video[data-video-src].md\\:hidden';
+        const video = document.querySelector(selector);
+        if (!video) return;
+        video.src = video.dataset.videoSrc;
+        video.load();
+        const play = video.play();
+        if (play && play.catch) play.catch(function () {});
+    }
+    if (document.readyState === 'complete') startHeroVideo();
+    else window.addEventListener('load', startHeroVideo, {once: true});
+})();
+</script>
+@endpush

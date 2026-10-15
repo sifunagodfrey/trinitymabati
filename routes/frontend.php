@@ -22,6 +22,12 @@ use Illuminate\Support\Facades\Route;
 // FRONTEND PAGES (PUBLIC)
 // -------------------
 
+// Search engine discovery endpoints (database-driven; cached for five minutes).
+Route::get('/robots.txt', [\App\Http\Controllers\Frontend\SeoController::class, 'robots'])->name('seo.robots');
+Route::get('/sitemap.xml', [\App\Http\Controllers\Frontend\SeoController::class, 'index'])->name('seo.sitemap');
+Route::get('/sitemaps/{type}/{page}.xml', [\App\Http\Controllers\Frontend\SeoController::class, 'part'])
+    ->where('type', 'pages|products|categories|projects|blog|content')->whereNumber('page')->name('seo.sitemap.part');
+
 // Home
 Route::get('/', [HomeController::class, 'index'])
     ->name('frontend.home');
@@ -43,7 +49,7 @@ Route::get('/categories/{slug}', [CategoryController::class, 'show'])
 
 // Search
 Route::get('/search', [SearchController::class, 'index'])->name('frontend.search');
-Route::get('/search/suggestions', [SearchController::class, 'suggestions'])->name('frontend.search.suggestions');
+Route::get('/search/suggestions', [SearchController::class, 'suggestions'])->middleware('throttle:120,1,suggestions')->name('frontend.search.suggestions');
 
 // Products
 Route::get('/products', [ProductController::class, 'index'])
@@ -107,6 +113,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/checkout/locations', [CheckoutController::class, 'locations'])->name('frontend.checkout.locations');
     Route::get('/checkout/payment', [CheckoutController::class, 'payment'])->name('frontend.checkout.payment');
     Route::post('/checkout/payment', [CheckoutController::class, 'processPayment'])->name('frontend.checkout.payment.store');
+    Route::post('/checkout/payment/{code}/resubmit', [CheckoutController::class, 'resubmitPayment'])->where('code', '[A-Za-z0-9]+')->name('frontend.checkout.payment.resubmit');
 
     // ---------------
     // Mpesa polling - after STK push is sent
@@ -120,8 +127,12 @@ Route::middleware('auth')->group(function () {
 // GENERAL
 // -------------------
 Route::get('/testimonials', [\App\Http\Controllers\Frontend\ClientStoriesController::class, 'testimonials'])->name('frontend.testimonials');
-Route::get('/client-projects', [\App\Http\Controllers\Frontend\ClientStoriesController::class, 'projects'])->name('frontend.projects');
+Route::get('/client-projects', fn () => redirect()->route('frontend.project-gallery', [], 301))->name('frontend.projects');
 Route::get('/client-projects/{slug}', [\App\Http\Controllers\Frontend\ClientStoriesController::class, 'project'])->name('frontend.projects.show');
+
+Route::get('/partners', [\App\Http\Controllers\Frontend\PartnerController::class, 'index'])->name('frontend.partners');
+Route::get('/our-team', [\App\Http\Controllers\Frontend\TeamController::class, 'index'])->name('frontend.team');
+Route::get('/project-gallery', [\App\Http\Controllers\Frontend\ClientStoriesController::class, 'projects'])->name('frontend.project-gallery');
 
 Route::get('/faq', [FaqController::class, 'index'])->name('frontend.faq');
 
@@ -131,10 +142,10 @@ Route::get('/contact', [App\Http\Controllers\Frontend\ContactController::class, 
 // Public order tracking (no login required)
 // ---------------
 Route::get('/track-order', [OrderTrackingController::class, 'show'])->name('frontend.track-order');
-Route::post('/track-order', [OrderTrackingController::class, 'track'])->name('frontend.track-order.track');
-Route::get('/contact-us', [App\Http\Controllers\Frontend\ContactController::class, 'index'])
+Route::post('/track-order', [OrderTrackingController::class, 'track'])->middleware('throttle:10,1,tracking')->name('frontend.track-order.track');
+Route::get('/contact-us', fn () => redirect()->route('frontend.contact', [], 301))
     ->name('frontend.contact.us');
-Route::post('/contact', [App\Http\Controllers\Frontend\ContactController::class, 'store'])->name('frontend.contact.store');
+Route::post('/contact', [App\Http\Controllers\Frontend\ContactController::class, 'store'])->middleware('throttle:5,1,contact')->name('frontend.contact.store');
 
 Route::post('/newsletter/subscribe', function () {
     return redirect()->back()->with('success', 'Subscribed successfully!');
@@ -164,7 +175,7 @@ Route::get('/refund-policy', [PageController::class, 'refundPolicy'])
 Route::get('/privacy-policy', [PageController::class, 'privacyPolicy'])
     ->name('frontend.privacy-policy.public');
 
-Route::get('/pages/{slug}', [PageController::class, 'show'])->name('frontend.pages.show');
+Route::get('/pages/{slug}', [PageController::class, 'canonicalShow'])->name('frontend.pages.show');
 // -------------------
 // ACCOUNT
 // -------------------

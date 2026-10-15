@@ -238,6 +238,7 @@ document.addEventListener('submit', function (e) {
             // Write directly to the Alpine store - reactive on every page
             // ---------------
             if (data.success) {
+                if (data.analytics && window.trinityTrack) window.trinityTrack('add_to_cart', data.analytics);
                 Alpine.store('cart').count = data.count;
                 showCartToast('Added to cart');
 

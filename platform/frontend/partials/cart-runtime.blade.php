@@ -96,6 +96,7 @@
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
                     if (data && data.success) {
+                        if (data.analytics && window.trinityTrack) window.trinityTrack('add_to_cart', data.analytics);
                         paintBadges(data.count);
                         showToast('Added to cart');
 

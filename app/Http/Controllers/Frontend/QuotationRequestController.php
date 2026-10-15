@@ -171,6 +171,6 @@ class QuotationRequestController extends Controller
         $emails->sendRequestReceivedToClient($quote);
         $emails->sendNewRequestToStaff($quote);
 
-        return redirect()->route('frontend.quotation.index')->with('quote_success', $quote->quotation_code);
+        return redirect()->route('frontend.quotation.index')->with('analytics_lead', 'quotation')->with('quote_success', $quote->quotation_code);
     }
 }

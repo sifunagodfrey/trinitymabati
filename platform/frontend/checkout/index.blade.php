@@ -190,13 +190,13 @@
                                     <p class="text-sm text-gray-500">No payment methods configured.</p>
                                 @endforelse
                             </div>
-                            <p class="text-xs text-gray-400 mt-3">You will select a payment method after placing the order.</p>
+                            <p class="text-xs text-gray-400 mt-3">Select a payment option on the next step. Payments are verified by our team.</p>
                         </div>
 
                         {{-- Place Order Button --}}
                         <button type="submit"
                             class="block w-full text-center px-6 py-3 bg-primary text-white font-bold rounded-[12px] hover:opacity-90 transition">
-                            Place Order
+                            Continue to Payment
                         </button>
 
                         <a href="{{ route('frontend.cart') }}"
@@ -222,8 +222,14 @@
     const totalWeight = cartDimensions.reduce((sum, d) => sum + d.weight, 0);
     const totalVolume = cartDimensions.reduce((sum, d) => sum + d.volume, 0);
 
-    function calcShipping(distanceKm) {
+    function calcShipping(distanceKm, locationPrice) {
         const s = shippingSettings;
+        const hasLocationPrice = locationPrice !== undefined && locationPrice !== null
+            && String(locationPrice).trim() !== '' && Number.isFinite(Number(locationPrice));
+        if (hasLocationPrice) {
+            return s.free_shipping_threshold > 0 && subtotalBase >= s.free_shipping_threshold
+                ? 0 : Math.round(Number(locationPrice) * 100) / 100;
+        }
         const weightCharge   = totalWeight > s.weight_threshold
             ? (totalWeight - s.weight_threshold) * s.weight_rate : 0;
         const volumeCharge   = s.volume_divisor > 0
@@ -235,7 +241,7 @@
         if (s.free_shipping_threshold > 0 && subtotalBase >= s.free_shipping_threshold) {
             shipping = 0;
         }
-        return Math.round(shipping);
+        return Math.round(shipping * 100) / 100;
     }
 
     // ---- Currency ----
@@ -309,6 +315,7 @@
                     const opt        = document.createElement('option');
                     opt.value        = loc.id;
                     opt.textContent  = loc.location_name;
+                    opt.dataset.price    = loc.price ?? '';
                     opt.dataset.distance = loc.distance || 0;
                     opt.dataset.days     = loc.estimated_delivery || 0;
                     locationSelect.appendChild(opt);
@@ -344,7 +351,7 @@
         }
         const distanceKm = parseFloat(selected.dataset.distance) || 0;
         const days        = parseFloat(selected.dataset.days)     || 0;
-        const shipping    = calcShipping(distanceKm);
+        const shipping    = calcShipping(distanceKm, selected.dataset.price);
         const total       = subtotalBase + shipping + servicesTotal;
 
         shippingCostDisplay.textContent = fmt(shipping);

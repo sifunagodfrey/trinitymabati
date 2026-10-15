@@ -10,4 +10,5 @@
  @if($project->description)<p class="mt-8 text-gray-700 leading-8 whitespace-pre-line">{{ $project->description }}</p>@endif
  @if(count($gallery))<h2 class="text-2xl font-bold mt-12 mb-5">Project Gallery</h2><div class="grid grid-cols-2 md:grid-cols-3 gap-4">@foreach($gallery as $photo)<a href="{{ asset($photo) }}" target="_blank" rel="noopener"><img src="{{ asset($photo) }}" alt="{{ $project->title }} gallery photo" loading="lazy" class="w-full aspect-square object-cover rounded-xl"></a>@endforeach</div>@endif
 </section>
+@include('frontend.partials.page-cta')
 @endsection

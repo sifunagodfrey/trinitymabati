@@ -43,14 +43,22 @@ class ClientStoriesController extends Controller
     public function create(string $kind)
     {
         $this->table($kind);
-        return view('manage.client-stories.form', ['kind' => $kind, 'item' => null]);
+        return view('manage.client-stories.form', array_merge(['kind' => $kind, 'item' => null], $this->formOptions()));
     }
 
     public function edit(string $kind, int $id)
     {
         $item = DB::table($this->table($kind))->find($id);
         abort_unless($item, 404);
-        return view('manage.client-stories.form', compact('kind', 'item'));
+        return view('manage.client-stories.form', array_merge(compact('kind', 'item'), $this->formOptions()));
+    }
+
+    private function formOptions(): array
+    {
+        return [
+            'rootProfiles' => DB::table('su_product_categories')->whereNull('parent_id')->orderBy('name')->pluck('name'),
+            'knownLocations' => DB::table('su_client_projects')->whereNotNull('location')->where('location', '!=', '')->distinct()->orderBy('location')->pluck('location'),
+        ];
     }
 
     private function validated(Request $request, string $kind, ?int $id = null): array
@@ -74,7 +82,7 @@ class ClientStoriesController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'alpha_dash', 'max:255', Rule::unique('su_client_projects', 'slug')->ignore($id)],
             'location' => ['nullable', 'string', 'max:160'],
-            'roofing_profile' => ['nullable', 'string', 'max:160'],
+            'roofing_profile' => ['nullable', 'string', 'max:160', Rule::exists('su_product_categories', 'name')->whereNull('parent_id')],
             'completion_date' => ['nullable', 'date'],
             'description' => ['nullable', 'string', 'max:20000'],
             'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
@@ -112,6 +120,7 @@ class ClientStoriesController extends Controller
                 $data['photo'] = $this->upload($request->file('photo'), $kind);
             }
         } else {
+            $data['completion_date'] = $data['completion_date'] ?? ($item->completion_date ?? now()->toDateString());
             $data['slug'] = $data['slug'] ?: Str::slug($data['title']);
             if (DB::table($table)->where('slug', $data['slug'])->when($id, fn($q) => $q->where('id', '!=', $id))->exists()) {
                 return back()->withErrors(['slug' => 'This project URL is already used. Enter a unique slug.'])->withInput();

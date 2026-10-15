@@ -136,7 +136,7 @@ class PesapalController extends Controller
     {
         $wasNotPaid = $order->payment_status !== 'paid';
 
-        PaymentTransaction::where('order_id', $order->id)
+        PaymentTransaction::where('is_manual', false)->where('order_id', $order->id)
             ->where('reference', $trackingId)
             ->update(['status' => 'successful', 'paid_at' => now()]);
 
@@ -184,7 +184,7 @@ class PesapalController extends Controller
     // ---------------
     protected function markFailed(Order $order, string $trackingId, string $reason): void
     {
-        PaymentTransaction::where('order_id', $order->id)
+        PaymentTransaction::where('is_manual', false)->where('order_id', $order->id)
             ->where('reference', $trackingId)
             ->update(['status' => 'failed']);
 

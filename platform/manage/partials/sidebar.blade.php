@@ -205,10 +205,12 @@
                             {{-- class="fas fa-image w-3.5 text-warning"></i> Hero Banners</a> --}}
                     <a href="{{ route('manage.content.pages.index') }}" class="{{ $subLink }}"><i
                             class="fas fa-file-alt w-3.5 text-primary"></i> Pages</a>
+                    <a href="{{ route('manage.content.partners.index') }}" class="{{ $subLink }}"><i class="fas fa-handshake w-3.5 text-primary"></i> Partners</a>
+                    <a href="{{ route('manage.content.team.index') }}" class="{{ $subLink }}"><i class="fas fa-users w-3.5 text-primary"></i> Our Team</a>
                     <a href="{{ route('manage.content.faqs.index') }}" class="{{ $subLink }}"><i
                             class="fas fa-circle-question w-3.5 text-info"></i> FAQs</a>
                     <a href="{{ route('manage.content.client-stories.index', 'testimonials') }}" class="{{ $subLink }}"><i class="fas fa-quote-left w-3.5"></i> Client Testimonials</a>
-                    <a href="{{ route('manage.content.client-stories.index', 'projects') }}" class="{{ $subLink }}"><i class="fas fa-helmet-safety w-3.5"></i> Client Projects</a>
+                    <a href="{{ route('manage.content.client-stories.index', 'projects') }}" class="{{ $subLink }}"><i class="fas fa-helmet-safety w-3.5"></i> Project Gallery</a>
                 </div>
             </div>
         @endif
@@ -321,6 +323,9 @@
                             class="fas fa-address-book w-3.5 text-success"></i> Contact &amp; Social</a>
                     <a href="{{ route('manage.settings.security.index') }}" class="{{ $subLink }}"><i
                             class="fas fa-shield-halved w-3.5 text-primary"></i> Login Security</a>
+                    @if (auth()->user()?->roles()->whereIn('slug', ['super_admin', 'admin'])->exists())
+                        <a href="{{ route('manage.settings.seo.index') }}" class="{{ $subLink }}"><i class="fas fa-magnifying-glass w-3.5 text-primary"></i> SEO & Analytics</a>
+                    @endif
                     <a href="{{ route('manage.settings.optimization.index') }}" class="{{ $subLink }}"><i
                             class="fas fa-tachometer-alt w-3.5 text-success"></i> Optimization</a>
                     <a href="{{ route('manage.settings.vat.index') }}" class="{{ $subLink }}"><i

@@ -1,0 +1,12 @@
+@extends('manage.layouts.app')
+@section('title', ($partner->exists ? 'Edit' : 'Add').' Partner')
+@section('content')
+<div class="mx-auto max-w-3xl space-y-5"><div class="flex items-center justify-between gap-3"><h1 class="text-2xl font-bold">{{ $partner->exists ? 'Edit' : 'Add' }} Partner</h1><a href="{{ route('manage.content.partners.index') }}" class="text-sm text-primary">Back to partners</a></div>
+@if($errors->any())<div role="alert" class="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700"><ul class="list-disc pl-5">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
+<form method="POST" enctype="multipart/form-data" action="{{ $partner->exists ? route('manage.content.partners.update', $partner->id) : route('manage.content.partners.store') }}" class="space-y-5 rounded-xl border border-gray-200 bg-white p-5 sm:p-7">@csrf @if($partner->exists) @method('PUT') @endif
+<div><label for="partner-name" class="mb-2 block text-sm font-semibold">Partner name *</label><input id="partner-name" name="name" maxlength="160" required value="{{ old('name', $partner->name) }}" class="w-full rounded-lg border px-3 py-2.5"></div>
+<div><label for="partner-image" class="mb-2 block text-sm font-semibold">Partner image {{ $partner->image ? '(leave empty to keep current image)' : '*' }}</label><input id="partner-image" name="image" type="file" accept="image/jpeg,image/png,image/webp" @required(!$partner->image) class="block w-full text-sm"><p class="mt-2 text-xs text-gray-500">JPG, PNG or WebP, up to 4 MB. Use a 2:1 image; images fill and crop to the card.</p>@if($partner->image)<img src="{{ asset($partner->image) }}" alt="Current partner image" class="mt-3 rounded-lg" style="width:240px;aspect-ratio:2/1;object-fit:cover;">@endif</div>
+<div><label for="partner-order" class="mb-2 block text-sm font-semibold">Display order</label><input id="partner-order" type="number" name="sort_order" min="0" max="1000000" value="{{ old('sort_order', $partner->sort_order ?? 0) }}" class="w-full rounded-lg border px-3 py-2.5"></div>
+<label class="flex items-center gap-2"><input type="checkbox" name="is_published" value="1" @checked(old('is_published', $partner->is_published ?? false))> Publish on website</label><button type="submit" class="rounded-lg bg-primary px-7 py-3 font-semibold text-white transition hover:opacity-90">Save partner</button>
+</form></div>
+@endsection

@@ -49,11 +49,17 @@
         {{-- Product categories --}}
         <div class="lg:col-span-2">
             <h4 class="text-white text-sm font-semibold uppercase tracking-wider" style="font-family: var(--font-ui);">Products</h4>
+            @php
+                $footerCategories = \App\Models\Manage\Products\Category::query()
+                    ->orderByRaw('CASE WHEN parent_id IS NULL THEN 0 ELSE 1 END')
+                    ->orderBy('id')
+                    ->limit(7)
+                    ->get(['name', 'slug']);
+            @endphp
             <ul class="mt-4 space-y-3 text-sm text-white/70">
-                <li><a href="{{ route('frontend.categories.show', 'tile-profiles') }}" class="hover:text-white transition">Tile Profiles</a></li>
-                <li><a href="{{ route('frontend.categories.show', 'stone-coated-profiles') }}" class="hover:text-white transition">Stone Coated Profiles</a></li>
-                <li><a href="{{ route('frontend.categories.show', 'box-profile') }}" class="hover:text-white transition">Box Profile</a></li>
-                <li><a href="{{ route('frontend.categories.show', 'corrugated-sheets') }}" class="hover:text-white transition">Corrugated Sheets</a></li>
+                @foreach ($footerCategories as $category)
+                    <li><a href="{{ route('frontend.categories.show', $category->slug) }}" class="hover:text-white transition">{{ $category->name }}</a></li>
+                @endforeach
             </ul>
         </div>
 
@@ -63,6 +69,9 @@
                 Company</h4>
             <ul class="mt-4 space-y-3 text-sm text-white/70">
                 <li><a href="{{ route('frontend.about') }}" class="hover:text-white transition">About Us</a></li>
+                <li><a href="{{ route('frontend.team') }}" class="hover:text-white transition">Our Team</a></li>
+                <li><a href="{{ route('frontend.partners') }}" class="hover:text-white transition">Partners</a></li>
+                <li><a href="{{ route('frontend.project-gallery') }}" class="hover:text-white transition">Project Gallery</a></li>
                 <li><a href="{{ route('frontend.quotation.index') }}" class="hover:text-white transition">Request Quotation</a>
                 </li>
                 <li><a href="{{ route('frontend.blog') }}" class="hover:text-white transition">Blog &amp; Tips</a></li>

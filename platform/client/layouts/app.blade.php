@@ -9,6 +9,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'My ' . config('app.name'))</title>
+    <meta name="robots" content="noindex, follow">
+    @include('frontend.partials.analytics')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @include('partials.branding')
     <link rel="icon" href="{{ $branding['site_icon'] }}">

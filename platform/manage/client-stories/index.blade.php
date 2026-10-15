@@ -3,8 +3,8 @@
 @section('content')
 <div class="max-w-6xl mx-auto space-y-6">
  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-  <div><h1 class="text-2xl font-bold text-gray-900">Client {{ ucfirst($kind) }}</h1><p class="text-sm text-gray-500">Only published content appears on the website.</p></div>
-  <a href="{{ route('manage.content.client-stories.create', $kind) }}" class="inline-flex justify-center rounded-lg bg-red-600 px-5 py-3 text-white font-semibold">+ Add {{ $kind === 'projects' ? 'project' : 'testimonial' }}</a>
+  <div><h1 class="text-2xl font-bold text-gray-900">{{ $kind === 'projects' ? 'Project Gallery' : 'Client Testimonials' }}</h1><p class="text-sm text-gray-500">Only published content appears on the website.</p></div>
+  <a href="{{ route('manage.content.client-stories.create', $kind) }}" class="inline-flex justify-center rounded-lg bg-primary px-5 py-3 text-white font-semibold">+ Add {{ $kind === 'projects' ? 'project' : 'testimonial' }}</a>
  </div>
  @if(session('success')) <div class="rounded-lg bg-green-50 p-4 text-green-800">{{ session('success') }}</div> @endif
  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">

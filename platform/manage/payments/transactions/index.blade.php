@@ -67,7 +67,7 @@
 
                                 {{-- Reference --}}
                                 <td class="px-4 py-4 text-xs text-muted font-mono max-w-[160px] truncate" title="{{ $txn->reference }}">
-                                    {{ $txn->reference }}
+                                    <a href="{{ route('manage.payments.transactions.show', $txn->id) }}" class="font-semibold text-primary hover:underline">{{ $txn->reference }}</a>
                                 </td>
 
                                 {{-- Order / Plan ref --}}

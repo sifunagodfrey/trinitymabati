@@ -13,6 +13,13 @@ use Illuminate\View\View;
 
 class PageController extends Controller
 {
+    public function canonicalShow(string $slug)
+    {
+        $canonical = app(SeoController::class)->pageUrl($slug);
+        if ($canonical !== request()->url()) return redirect()->away($canonical, 301);
+        return $this->show($slug);
+    }
+
     public function privacyPolicy(): View
     {
         return $this->show('privacy-policy');

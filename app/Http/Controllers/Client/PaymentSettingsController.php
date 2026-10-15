@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Payment\PaymentMethod;
+use App\Models\Manage\Payments\PaymentMethod;
 use App\Models\Client\CustomerPaymentPreference;
 
 class PaymentSettingsController extends Controller
@@ -17,7 +17,7 @@ class PaymentSettingsController extends Controller
         $user = auth()->user();
 
         // Fetch all active payment methods
-        $methods = PaymentMethod::active()
+        $methods = PaymentMethod::availableManual()
             ->orderBy('name')
             ->get(['id', 'name']);
 
@@ -25,6 +25,8 @@ class PaymentSettingsController extends Controller
         $currentPreference = CustomerPaymentPreference::where('user_id', $user->id)
             ->with('paymentMethod')
             ->first();
+
+        if ($currentPreference && !$methods->contains('id', $currentPreference->payment_method_id)) $currentPreference = null;
 
         return view('client.payment-settings.index', compact('methods', 'currentPreference'));
     }
@@ -37,8 +39,12 @@ class PaymentSettingsController extends Controller
         $user = auth()->user();
 
         $request->validate([
-            'preferred_method_id' => 'required|exists:su_payment_methods,id',
+            'preferred_method_id' => ['required', 'integer'],
         ]);
+
+        if (!PaymentMethod::availableManual()->whereKey($request->preferred_method_id)->exists()) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['preferred_method_id' => 'Please choose an enabled manual payment option.']);
+        }
 
         // Update or create preference
         CustomerPaymentPreference::updateOrCreate(

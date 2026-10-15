@@ -10,7 +10,7 @@ use Illuminate\View\View;
 
 class CategoryController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request)
     {
         $categories = Category::query()
             ->where(function ($query) {
@@ -22,6 +22,9 @@ class CategoryController extends Controller
 
         $selectedSlug = trim((string) $request->query('category', ''));
         $selectedCategory = $categories->firstWhere('slug', $selectedSlug);
+        if ($selectedCategory) {
+            return redirect()->route('frontend.categories.show', $selectedCategory->slug, 301);
+        }
         if (!$selectedCategory) {
             $selectedSlug = '';
         }
@@ -52,9 +55,16 @@ class CategoryController extends Controller
         return view('frontend.categories.index', compact('categories', 'categoryImages', 'products', 'selectedSlug'));
     }
 
-    public function show(string $slug, Request $request): View
+    public function show(string $slug, Request $request)
     {
-        $category = Category::query()->where('slug', $slug)->firstOrFail();
+        $category = Category::query()->where('slug', $slug)->first();
+        if (!$category) {
+            $redirectId = \Illuminate\Support\Facades\DB::table('su_seo_slug_redirects')
+                ->where('kind', 'category')->where('old_slug', $slug)->value('entity_id');
+            $target = $redirectId ? Category::find($redirectId) : null;
+            if ($target) return redirect()->route('frontend.categories.show', $target->slug, 301);
+            abort(404);
+        }
         $children = Category::query()->where('parent_id', $category->id)->orderBy('name')->get();
 
         $breadcrumb = [

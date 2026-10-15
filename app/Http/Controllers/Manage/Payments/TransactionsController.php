@@ -20,6 +20,7 @@ class TransactionsController extends Controller
         // ---------------
         $standardSql = "
             SELECT
+                p.id,
                 'order'                                                                     AS source,
                 'Order Payment'                                                             AS type_label,
                 COALESCE(p.reference, CONCAT('PMT-', p.id))                                AS reference,
@@ -58,6 +59,38 @@ class TransactionsController extends Controller
         $transaction = PaymentTransaction::with(['user', 'order', 'method', 'logs'])
             ->findOrFail($id);
 
-        return view('manage.payments.transactions.show', compact('transaction'));
+        $reviewer = $transaction->reviewed_by ? \App\Models\User::find($transaction->reviewed_by) : null;
+        return view('manage.payments.transactions.show', compact('transaction', 'reviewer'));
+    }
+
+    public function approve(\Illuminate\Http\Request $request, int $id)
+    {
+        $data = $request->validate(['review_notes' => ['nullable', 'string', 'max:2000']]);
+        $result = app(\App\Services\ManualPaymentService::class)->review($id, (int) auth()->id(), true, $data['review_notes'] ?? null);
+        if ($result['changed']) {
+            try { app(\App\Services\OrderEmailService::class)->sendPaymentSuccessToClient($result['order']); }
+            catch (\Throwable $exception) { \Illuminate\Support\Facades\Log::warning('Manual payment email failed', ['payment_id' => $id, 'error' => $exception->getMessage()]); }
+        }
+        return back()->with('success', $result['changed'] ? 'Payment approved and order marked paid.' : 'This payment was already approved.');
+    }
+
+    public function reject(\Illuminate\Http\Request $request, int $id)
+    {
+        $data = $request->validate(['review_notes' => ['required', 'string', 'max:2000']]);
+        $result = app(\App\Services\ManualPaymentService::class)->review($id, (int) auth()->id(), false, $data['review_notes']);
+        if ($result['changed']) {
+            try { app(\App\Services\OrderEmailService::class)->sendPaymentFailedToClient($result['order'], $data['review_notes']); }
+            catch (\Throwable $exception) { \Illuminate\Support\Facades\Log::warning('Manual payment rejection email failed', ['payment_id' => $id, 'error' => $exception->getMessage()]); }
+        }
+        return back()->with('success', $result['changed'] ? 'Payment rejected. The customer can correct and resubmit the details.' : 'This payment was already rejected.');
+    }
+
+    public function proof(int $id)
+    {
+        $payment = PaymentTransaction::findOrFail($id);
+        abort_unless($payment->is_manual && $payment->proof_path && str_starts_with($payment->proof_path, 'payment-proofs/') && !str_contains($payment->proof_path, '..'), 404);
+        $disk = \Illuminate\Support\Facades\Storage::disk('local');
+        abort_unless($disk->exists($payment->proof_path), 404);
+        return $disk->download($payment->proof_path);
     }
 }

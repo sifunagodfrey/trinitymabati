@@ -175,11 +175,16 @@ class CartController extends Controller
             session(['cart' => $sessionCart]);
         }
 
+        $analytics = $request->boolean('set_quantity') ? null : [
+            'currency' => 'KES', 'value' => (float) $price * $quantity,
+            'items' => [['item_id' => (string) $productId, 'item_name' => $product->name,
+                'item_variant' => $variantId ? (string) $variantId : '', 'price' => (float) $price, 'quantity' => $quantity]],
+        ];
         if ($request->expectsJson()) {
-            return response()->json(['success' => true, 'count' => $this->currentCount()]);
+            return response()->json(['success' => true, 'count' => $this->currentCount(), 'analytics' => $analytics]);
         }
 
-        return redirect()->back()->with('success', 'Item added to cart!');
+        return redirect()->back()->with('analytics_cart', $analytics)->with('success', 'Item added to cart!');
     }
 
     // ---------------

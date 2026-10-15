@@ -15,13 +15,17 @@ class PaymentTransaction extends Model
 
     protected $fillable = [
         'user_id', 'order_id', 'amount', 'method_id', 'status',
-        'reference', 'paid_at', 'order_type',
+        'reference', 'paid_at', 'order_type', 'is_manual', 'manual_reference', 'proof_path',
+        'payment_details', 'review_notes', 'reviewed_by', 'reviewed_at',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'is_manual' => 'boolean',
         'paid_at' => 'datetime',
-        'created_at' => 'datetime'
+        'created_at' => 'datetime',
+        'payment_details' => 'array',
+        'reviewed_at' => 'datetime'
     ];
 
     public function user()
@@ -46,6 +50,7 @@ class PaymentTransaction extends Model
 
     public function markSuccessful($receipt = null)
     {
+        if ($this->is_manual) throw new \LogicException('Manual payments must be reviewed through the manual approval workflow.');
         $this->update([
             'status'    => 'successful',
             'reference' => $receipt,
@@ -58,6 +63,7 @@ class PaymentTransaction extends Model
 
     public function markFailed()
     {
+        if ($this->is_manual) throw new \LogicException('Manual payments must be reviewed through the manual approval workflow.');
         $this->update(['status' => 'failed']);
         if ($this->order) {
             $this->order->update(['payment_status' => 'failed']);

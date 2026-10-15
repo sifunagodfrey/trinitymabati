@@ -138,6 +138,11 @@ class ProductController extends Controller
     // ---------------
     public function show(string $slug)
     {
+        if (!Product::where('slug', $slug)->where('is_active', true)->exists()) {
+            $redirectId = DB::table('su_seo_slug_redirects')->where('kind', 'product')->where('old_slug', $slug)->value('entity_id');
+            $target = $redirectId ? Product::where('is_active', true)->find($redirectId) : null;
+            if ($target) return redirect()->route('frontend.products.show', $target->slug, 301);
+        }
         $product = Product::with([
             'category', 'brand', 'label',
             'categories', 'labels',

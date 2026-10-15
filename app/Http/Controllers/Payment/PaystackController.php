@@ -107,7 +107,7 @@ class PaystackController extends Controller
     {
         $wasNotPaid = $order->payment_status !== 'paid';
 
-        PaymentTransaction::where('order_id', $order->id)
+        PaymentTransaction::where('is_manual', false)->where('order_id', $order->id)
             ->where('reference', $reference)
             ->update(['status' => 'successful', 'paid_at' => now()]);
 
@@ -155,7 +155,7 @@ class PaystackController extends Controller
     // ---------------
     protected function markFailed(Order $order, string $reference, string $reason): void
     {
-        PaymentTransaction::where('order_id', $order->id)
+        PaymentTransaction::where('is_manual', false)->where('order_id', $order->id)
             ->where('reference', $reference)
             ->update(['status' => 'failed']);
 

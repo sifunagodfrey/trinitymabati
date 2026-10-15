@@ -10,28 +10,10 @@
 <head>
 
     <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    {{-- SEO --}}
-    <meta name="description" content="@yield('meta_description', config('app.name') . ' offers convenient online shopping and delivery.')">
-    <meta name="keywords" content="@yield('meta_keywords', 'stationery, office supplies, school supplies, notebooks, pens')">
-    <meta name="author" content="{{ config('app.name') }}">
-
-    {{-- Open Graph --}}
-    <meta property="og:title" content="@yield('og_title', config('app.name'))">
-    <meta property="og:description" content="@yield('og_description', 'Shop stationery, school essentials and office supplies with convenient delivery.')">
-    <meta property="og:image" content="@yield('og_image', url('public/images/haromi-home-seo-image.jpg'))">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:site_name" content="{{ config('app.name') }}">
-
-    {{-- Twitter Card --}}
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="@yield('og_title', config('app.name'))">
-    <meta name="twitter:description" content="@yield('og_description', 'Shop stationery, school essentials and office supplies online.')">
-    <meta name="twitter:image" content="@yield('og_image', url('public/images/haromi-home-seo-image.jpg'))">
-
-    <title>@yield('title', config('app.name'))</title>
+    @include('frontend.partials.seo-head')
 
     <link rel="icon" href="{{ $branding['site_icon'] }}">
     <link rel="apple-touch-icon" href="{{ $branding['apple_touch_icon'] }}">

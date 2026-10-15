@@ -16,7 +16,7 @@
             <a href="{{ route('frontend.products') }}" class="shrink-0 hover:text-primary transition">Products</a>
             @if ($product->category)
                 <i class="fas fa-chevron-right shrink-0 text-gray-300 text-[10px]"></i>
-                <a href="{{ route('frontend.products', ['category_id' => $product->category_id]) }}" class="shrink-0 hover:text-primary transition">{{ $product->category->name }}</a>
+                <a href="{{ route('frontend.categories.show', $product->category->slug) }}" class="shrink-0 hover:text-primary transition">{{ $product->category->name }}</a>
             @endif
             <i class="fas fa-chevron-right shrink-0 text-gray-300 text-[10px]"></i>
             <span class="shrink-0 text-gray-800 font-medium">{{ $product->name }}</span>
@@ -252,6 +252,7 @@
 
                     const data = await response.json();
                     if (data.success) {
+                        if (data.analytics && window.trinityTrack) window.trinityTrack('add_to_cart', data.analytics);
                         const newItem = {
                             product_id: {{ $product->id }},
                             variant_id: this.activeVariant ? this.activeVariant.id : null,
@@ -291,7 +292,7 @@
                         <div class="flex flex-col gap-2 w-16 flex-shrink-0 max-h-[420px] overflow-y-auto scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                             @foreach ($allImages as $img)
                                 <button @click="activeImage = @js($img)" class="flex-shrink-0 w-16 h-16 rounded-[8px] border-2 overflow-hidden transition-colors duration-150" :class="activeImage === @js($img) ? 'border-secondary' : 'border-border hover:border-secondary/50'">
-                                    <img src="{{ $img }}" alt="Product thumbnail" class="w-full h-full object-cover">
+                                    <img src="{{ $img }}" alt="{{ $product->name }} thumbnail" loading="lazy" decoding="async" width="64" height="64" class="w-full h-full object-cover">
                                 </button>
                             @endforeach
                         </div>
@@ -300,7 +301,7 @@
                     {{-- Main image --}}
                     <div class="relative bg-gray-50 rounded-xl overflow-hidden flex-1 min-w-0 aspect-square">
                         <div class="absolute inset-0 flex items-center justify-center text-gray-300" aria-hidden="true"><i class="fas fa-box-open text-5xl"></i></div>
-                        <img :src="activeImage" alt="{{ $product->name }}" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-200" onerror="this.style.display='none'" @load="$el.style.display='block'" :key="activeImage">
+                        <img src="{{ $allImages[0] }}" fetchpriority="high" decoding="async" :src="activeImage" alt="{{ $product->name }}" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-200" onerror="this.style.display='none'" @load="$el.style.display='block'" :key="activeImage">
                         @if ($isFlashSale)
                             <div class="absolute top-3 left-3 bg-red-500 text-white text-[11px] font-extrabold px-3 py-1 rounded-[12px] shadow flex items-center gap-1">
                                 <i class="fas fa-bolt"></i> FLASH {{ $flashDiscount }}% OFF

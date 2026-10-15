@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Core\Faq;
+use App\Models\Core\TeamMember;
+use App\Models\Core\Partner;
 use App\Models\Manage\Products\Category;
 use App\Models\Manage\Products\Product;
 use Illuminate\View\View;
@@ -12,7 +14,7 @@ class HomeController extends Controller
 {
     public function index(): View
     {
-        $slugs = ['tile-profiles', 'corrugated-sheets', 'stone-coated-profiles', 'box-profiles'];
+        $slugs = ['tile-profiles', 'corrugated-sheets'];
 
         $mainCategories = Category::query()
             ->whereNull('parent_id')
@@ -44,6 +46,9 @@ class HomeController extends Controller
             ->limit(8)
             ->get();
 
-        return view('frontend.home.index', compact('mainCategories', 'sections', 'faqs'));
+        $teamMembers = TeamMember::published()->displayOrder()->get();
+        $partners = Partner::published()->displayOrder()->get();
+
+        return view('frontend.home.index', compact('mainCategories', 'sections', 'faqs', 'teamMembers', 'partners'));
     }
 }

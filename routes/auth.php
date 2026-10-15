@@ -23,22 +23,22 @@ if ($adminDomain) {
 
         Route::middleware('guest')->group(function () {
             Route::get('login', [AdminLoginController::class, 'showLogin'])->name('login');
-            Route::post('login', [AdminLoginController::class, 'login'])->name('login.submit');
+            Route::post('login', [AdminLoginController::class, 'login'])->middleware('throttle:storefront-auth')->name('login.submit');
         });
 
         // No auth middleware - partial session state guards these routes in the controller
         Route::get('verify-2fa', [AdminLoginController::class, 'showVerify'])->name('verify2fa');
-        Route::post('verify-2fa', [AdminLoginController::class, 'verify'])->name('verify2fa.submit');
+        Route::post('verify-2fa', [AdminLoginController::class, 'verify'])->middleware('throttle:storefront-auth')->name('verify2fa.submit');
 
         // ---------------
         // Admin forgot password - OTP-based, three-step flow
         // ---------------
         Route::get('forgot-password',          [ManageForgotPasswordController::class, 'showRequest']) ->name('forgot-password');
-        Route::post('forgot-password',         [ManageForgotPasswordController::class, 'sendCode'])    ->name('forgot-password.send');
+        Route::post('forgot-password',         [ManageForgotPasswordController::class, 'sendCode'])->middleware('throttle:storefront-auth')    ->name('forgot-password.send');
         Route::get('forgot-password/verify',   [ManageForgotPasswordController::class, 'showVerify'])  ->name('forgot-password.verify');
-        Route::post('forgot-password/verify',  [ManageForgotPasswordController::class, 'verifyCode'])  ->name('forgot-password.verify.submit');
+        Route::post('forgot-password/verify',  [ManageForgotPasswordController::class, 'verifyCode'])->middleware('throttle:storefront-auth')  ->name('forgot-password.verify.submit');
         Route::get('forgot-password/reset',    [ManageForgotPasswordController::class, 'showReset'])   ->name('forgot-password.reset');
-        Route::post('forgot-password/reset',   [ManageForgotPasswordController::class, 'resetPassword'])->name('forgot-password.reset.submit');
+        Route::post('forgot-password/reset',   [ManageForgotPasswordController::class, 'resetPassword'])->middleware('throttle:storefront-auth')->name('forgot-password.reset.submit');
 
     });
 } else {
@@ -46,22 +46,22 @@ if ($adminDomain) {
 
         Route::middleware('guest')->group(function () {
             Route::get('login', [AdminLoginController::class, 'showLogin'])->name('login');
-            Route::post('login', [AdminLoginController::class, 'login'])->name('login.submit');
+            Route::post('login', [AdminLoginController::class, 'login'])->middleware('throttle:storefront-auth')->name('login.submit');
         });
 
         // No auth middleware - partial session state guards these routes in the controller
         Route::get('verify-2fa', [AdminLoginController::class, 'showVerify'])->name('verify2fa');
-        Route::post('verify-2fa', [AdminLoginController::class, 'verify'])->name('verify2fa.submit');
+        Route::post('verify-2fa', [AdminLoginController::class, 'verify'])->middleware('throttle:storefront-auth')->name('verify2fa.submit');
 
         // ---------------
         // Admin forgot password - OTP-based, three-step flow
         // ---------------
         Route::get('forgot-password',          [ManageForgotPasswordController::class, 'showRequest']) ->name('forgot-password');
-        Route::post('forgot-password',         [ManageForgotPasswordController::class, 'sendCode'])    ->name('forgot-password.send');
+        Route::post('forgot-password',         [ManageForgotPasswordController::class, 'sendCode'])->middleware('throttle:storefront-auth')    ->name('forgot-password.send');
         Route::get('forgot-password/verify',   [ManageForgotPasswordController::class, 'showVerify'])  ->name('forgot-password.verify');
-        Route::post('forgot-password/verify',  [ManageForgotPasswordController::class, 'verifyCode'])  ->name('forgot-password.verify.submit');
+        Route::post('forgot-password/verify',  [ManageForgotPasswordController::class, 'verifyCode'])->middleware('throttle:storefront-auth')  ->name('forgot-password.verify.submit');
         Route::get('forgot-password/reset',    [ManageForgotPasswordController::class, 'showReset'])   ->name('forgot-password.reset');
-        Route::post('forgot-password/reset',   [ManageForgotPasswordController::class, 'resetPassword'])->name('forgot-password.reset.submit');
+        Route::post('forgot-password/reset',   [ManageForgotPasswordController::class, 'resetPassword'])->middleware('throttle:storefront-auth')->name('forgot-password.reset.submit');
 
     });
 }
@@ -70,28 +70,28 @@ Route::middleware('guest')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])
         ->name('register');
 
-    Route::post('register', [RegisteredUserController::class, 'store']);
+    Route::post('register', [RegisteredUserController::class, 'store'])->middleware('throttle:storefront-auth');
 
     Route::get('register/verify', [RegisteredUserController::class, 'showVerify'])
         ->name('register.verify');
 
-    Route::post('register/verify', [RegisteredUserController::class, 'verify'])
+    Route::post('register/verify', [RegisteredUserController::class, 'verify'])->middleware('throttle:storefront-auth')
         ->name('register.verify.submit');
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 
-    Route::post('login', [AuthenticatedSessionController::class, 'store']);
+    Route::post('login', [AuthenticatedSessionController::class, 'store'])->middleware('throttle:storefront-auth');
 
     // ---------------
     // Client forgot password - OTP-based, three-step flow
     // ---------------
     Route::get('forgot-password',         [ForgotPasswordController::class, 'showRequest'])   ->name('password.request');
-    Route::post('forgot-password',        [ForgotPasswordController::class, 'sendCode'])      ->name('password.email');
+    Route::post('forgot-password',        [ForgotPasswordController::class, 'sendCode'])->middleware('throttle:storefront-auth')      ->name('password.email');
     Route::get('forgot-password/verify',  [ForgotPasswordController::class, 'showVerify'])    ->name('password.verify');
-    Route::post('forgot-password/verify', [ForgotPasswordController::class, 'verifyCode'])    ->name('password.verify.submit');
+    Route::post('forgot-password/verify', [ForgotPasswordController::class, 'verifyCode'])->middleware('throttle:storefront-auth')    ->name('password.verify.submit');
     Route::get('forgot-password/reset',   [ForgotPasswordController::class, 'showReset'])     ->name('password.do-reset');
-    Route::post('forgot-password/reset',  [ForgotPasswordController::class, 'resetPassword']) ->name('password.do-reset.submit');
+    Route::post('forgot-password/reset',  [ForgotPasswordController::class, 'resetPassword'])->middleware('throttle:storefront-auth') ->name('password.do-reset.submit');
 });
 
 // ---------------
@@ -99,7 +99,7 @@ Route::middleware('guest')->group(function () {
 // Outside guest middleware - partial session state guards access in the controller
 // ---------------
 Route::get('login/verify-2fa', [AuthenticatedSessionController::class, 'showVerify'])->name('login.verify2fa');
-Route::post('login/verify-2fa', [AuthenticatedSessionController::class, 'verify'])->name('login.verify2fa.submit');
+Route::post('login/verify-2fa', [AuthenticatedSessionController::class, 'verify'])->middleware('throttle:storefront-auth')->name('login.verify2fa.submit');
 
 Route::middleware('auth')->group(function () {
     Route::get('verify-email', EmailVerificationPromptController::class)
@@ -110,13 +110,13 @@ Route::middleware('auth')->group(function () {
         ->name('verification.verify');
 
     Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
-        ->middleware('throttle:6,1')
+        ->middleware('throttle:storefront-auth')
         ->name('verification.send');
 
     Route::get('confirm-password', [ConfirmablePasswordController::class, 'show'])
         ->name('password.confirm');
 
-    Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
+    Route::post('confirm-password', [ConfirmablePasswordController::class, 'store'])->middleware('throttle:storefront-auth');
 
     Route::put('password', [PasswordController::class, 'update'])->name('password.update');
 

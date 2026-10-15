@@ -40,6 +40,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \Illuminate\Support\Facades\RateLimiter::for('storefront-auth', fn ($request) =>
+            \Illuminate\Cache\RateLimiting\Limit::perMinute(6)->by(hash('sha256', $request->ip() . '|' . $request->path()))
+        );
+        \App\Models\Manage\Products\Product::observe(\App\Observers\SeoSlugObserver::class);
+        \App\Models\Manage\Products\Category::observe(\App\Observers\SeoSlugObserver::class);
+        $this->app['router']->pushMiddlewareToGroup('web', \App\Http\Middleware\StorefrontProtection::class);
+        View::composer(['frontend.layouts.app', 'frontend.layouts.home'], function ($view) {
+            $view->with('seo', app(\App\Services\Seo\SeoService::class)->metadata($view->getData()));
+        });
+
         // Read the storefront name from su_settings. The .env APP_NAME remains
         // the fallback while the database is unavailable during installation.
         try {

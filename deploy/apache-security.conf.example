@@ -1,0 +1,26 @@
+# EXAMPLE ONLY: merge into the site's Apache VirtualHost configuration.
+# Replace /ABSOLUTE/PATH/TO/TRINITY with the actual project path.
+# The project currently uses its root as public_path(). Keep existing rewrites.
+
+<Directory "/ABSOLUTE/PATH/TO/TRINITY">
+    Options -Indexes
+    <FilesMatch "(?i)^(\.env(?:\..*)?|artisan|composer\.(?:json|lock)|package(?:-lock)?\.json|phpunit\.xml(?:\.dist)?|vite\.config\..*|.*\.(?:sql|sqlite|sqlite3|zip|log|bak))$">
+        Require all denied
+    </FilesMatch>
+</Directory>
+
+# Protect source/private paths. Do not block public uploads or storage symlinks.
+<DirectoryMatch "^/ABSOLUTE/PATH/TO/TRINITY/(app|bootstrap|config|database|resources|routes|platform|tests|vendor|node_modules|storage/app/private|storage/framework|storage/logs|\.git)(/|$)">
+    Require all denied
+</DirectoryMatch>
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css application/javascript application/json application/xml image/svg+xml
+</IfModule>
+
+# Only fingerprinted build artifacts receive immutable caching.
+<Directory "/ABSOLUTE/PATH/TO/TRINITY/build/assets">
+    <IfModule mod_headers.c>
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </IfModule>
+</Directory>

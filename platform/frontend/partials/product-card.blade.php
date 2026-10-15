@@ -101,7 +101,7 @@
     {{-- Image: flat, no rounding, light gray backdrop --}}
     <span class="relative block bg-background w-full overflow-hidden" style="aspect-ratio: 1 / 1;">
         @if ($pImage)
-            <img src="{{ $pImage }}" alt="{{ $pName }}" loading="lazy"
+            <img src="{{ $pImage }}" alt="{{ $pName }}" loading="lazy" decoding="async"
                 class="absolute inset-0 w-full h-full object-contain group-hover:scale-105 transition-transform duration-500">
         @else
             <span class="absolute inset-0 flex items-center justify-center">

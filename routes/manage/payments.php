@@ -15,6 +15,9 @@ Route::middleware(['auth'])
             // Transactions
             Route::get('/transactions', [TransactionsController::class, 'index'])->name('transactions.index');
             Route::get('/transactions/{id}', [TransactionsController::class, 'show'])->name('transactions.show');
+            Route::post('/transactions/{id}/approve', [TransactionsController::class, 'approve'])->whereNumber('id')->name('transactions.approve');
+            Route::post('/transactions/{id}/reject', [TransactionsController::class, 'reject'])->whereNumber('id')->name('transactions.reject');
+            Route::get('/transactions/{id}/proof', [TransactionsController::class, 'proof'])->whereNumber('id')->name('transactions.proof');
 
             // Payment Methods
             Route::get('/methods', [MethodsController::class, 'index'])->name('methods.index');

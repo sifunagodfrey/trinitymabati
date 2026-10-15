@@ -154,6 +154,11 @@ class OrdersController extends Controller
             'shipping_status' => 'nullable|in:' . implode(',', self::SHIPPING_STATUSES),
         ]);
 
+        if ($request->input('payment_status') === 'paid' && $order->payment_status !== 'paid'
+            && \App\Models\Payment\PaymentTransaction::where('order_id', $order->id)->where('is_manual', true)->exists()) {
+            return back()->withErrors(['payment_status' => 'Approve this manual payment under Payments → Transactions so the payment and approval history stay in sync.']);
+        }
+
         // Capture old statuses before update
         $oldStatuses = [
             'status'          => $order->status,

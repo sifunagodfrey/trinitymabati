@@ -52,6 +52,24 @@ Route::middleware(['auth'])
                 Route::delete('/{kind}/{id}', [\App\Http\Controllers\Manage\Content\ClientStoriesController::class, 'destroy'])->name('destroy');
             });
 
+            Route::prefix('team')->as('team.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Manage\Content\TeamMembersController::class, 'index'])->name('index');
+                Route::get('/create', [\App\Http\Controllers\Manage\Content\TeamMembersController::class, 'create'])->name('create');
+                Route::post('/', [\App\Http\Controllers\Manage\Content\TeamMembersController::class, 'store'])->name('store');
+                Route::get('/{id}/edit', [\App\Http\Controllers\Manage\Content\TeamMembersController::class, 'edit'])->whereNumber('id')->name('edit');
+                Route::put('/{id}', [\App\Http\Controllers\Manage\Content\TeamMembersController::class, 'update'])->whereNumber('id')->name('update');
+                Route::delete('/{id}', [\App\Http\Controllers\Manage\Content\TeamMembersController::class, 'destroy'])->whereNumber('id')->name('destroy');
+            });
+
+            Route::prefix('partners')->as('partners.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Manage\Content\PartnersController::class, 'index'])->name('index');
+                Route::get('/create', [\App\Http\Controllers\Manage\Content\PartnersController::class, 'create'])->name('create');
+                Route::post('/', [\App\Http\Controllers\Manage\Content\PartnersController::class, 'store'])->name('store');
+                Route::get('/{id}/edit', [\App\Http\Controllers\Manage\Content\PartnersController::class, 'edit'])->whereNumber('id')->name('edit');
+                Route::put('/{id}', [\App\Http\Controllers\Manage\Content\PartnersController::class, 'update'])->whereNumber('id')->name('update');
+                Route::delete('/{id}', [\App\Http\Controllers\Manage\Content\PartnersController::class, 'destroy'])->whereNumber('id')->name('destroy');
+            });
+
             // ---------------
             // FAQs
             // ---------------
