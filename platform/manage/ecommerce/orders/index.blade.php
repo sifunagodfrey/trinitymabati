@@ -4,6 +4,8 @@
 
 @section('content')
 
+    @php $canDelete = auth()->user()->hasRole('super_admin') || auth()->user()->hasRole('admin'); @endphp
+
     {{-- ---------------
     -- Breadcrumb & Page Header
     -- --------------- --}}
@@ -75,11 +77,19 @@
         </form>
 
         {{-- Orders Table --}}
+        <form id="bulk-delete-form" method="POST" action="{{ route('manage.ecommerce.orders.bulk-destroy') }}">
+        @csrf
+        @if ($canDelete)
+            @include('manage.partials.bulk-delete', ['noun' => 'orders', 'warning' => 'Their items, payment records and history will be deleted too.'])
+        @endif
         <div class="overflow-hidden rounded-[12px] border border-border bg-surface shadow-sm">
             <div class="overflow-x-auto">
                 <table class="min-w-[960px] divide-y divide-border text-sm">
                     <thead class="bg-background text-left text-xs uppercase tracking-wide text-muted">
                         <tr>
+                            @if ($canDelete)
+                                <th class="w-10 px-4 py-3"><input type="checkbox" class="bulk-check-all" aria-label="Select all orders"></th>
+                            @endif
                             <th class="px-4 py-3">Order Code</th>
                             <th class="px-4 py-3">Customer</th>
                             <th class="px-4 py-3 text-center">Items</th>
@@ -99,6 +109,9 @@
                                 $shipColors = ['pending'=>'bg-amber-100 text-amber-800','shipped'=>'bg-blue-100 text-blue-800','in_transit'=>'bg-purple-100 text-purple-800','delivered'=>'bg-emerald-100 text-emerald-800','cancelled'=>'bg-rose-100 text-rose-800'];
                             @endphp
                             <tr class="hover:bg-slate-50 cursor-pointer" onclick="window.location='{{ route('manage.ecommerce.orders.show', $order->id) }}'">
+                                @if ($canDelete)
+                                    <td class="px-4 py-4" onclick="event.stopPropagation()"><input type="checkbox" name="ids[]" value="{{ $order->id }}" class="bulk-check" aria-label="Select order"></td>
+                                @endif
                                 <td class="px-4 py-4"><span class="font-mono text-xs font-semibold text-black">{{ $order->order_code ?? '#' . $order->id }}</span></td>
                                 <td class="px-4 py-4">
                                     @if ($order->user)
@@ -117,7 +130,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="9" class="px-4 py-12 text-center text-sm text-muted">
+                            <tr><td colspan="{{ $canDelete ? 10 : 9 }}" class="px-4 py-12 text-center text-sm text-muted">
                                 <div class="flex flex-col items-center gap-3"><i class="fa-solid fa-box-open text-3xl text-slate-300"></i><span>No orders found.</span>
                                 @if (request()->hasAny(['search', 'status', 'payment_status']))<a href="{{ route('manage.ecommerce.orders.index') }}" class="text-xs text-primary hover:underline">Clear filters</a>@endif</div>
                              </td></tr>
@@ -126,9 +139,10 @@
                 </table>
             </div>
         </div>
+        </form>
 
         <div class="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <p class="text-sm text-muted">Showing {{ $orders->firstItem() ?? 0 }} – {{ $orders->lastItem() ?? 0 }} of {{ $orders->total() }} orders</p>
+            <p class="text-sm text-muted">Showing {{ $orders->firstItem() ?? 0 }} â€“ {{ $orders->lastItem() ?? 0 }} of {{ $orders->total() }} orders</p>
             <div>{{ $orders->links() }}</div>
         </div>
 

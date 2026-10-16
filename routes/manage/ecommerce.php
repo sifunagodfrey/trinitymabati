@@ -26,6 +26,12 @@ Route::middleware(['auth'])
                 Route::get('/',             [OrdersController::class, 'index'])->name('index');
                 Route::get('/{id}',         [OrdersController::class, 'show'])->name('show');
                 Route::post('/{id}/status', [OrdersController::class, 'updateStatus'])->name('update-status');
+
+                // Deleting is limited to admins (used to clear dummy data)
+                Route::middleware('role:super_admin,admin')->group(function () {
+                    Route::post('/bulk-delete', [OrdersController::class, 'bulkDestroy'])->name('bulk-destroy');
+                    Route::delete('/{id}',      [OrdersController::class, 'destroy'])->name('destroy');
+                });
             });
 
             // ---------------
@@ -70,6 +76,12 @@ Route::middleware(['auth'])
                 Route::get('/{id}/message',            [CustomersController::class, 'message'])->name('message');
                 Route::post('/{id}/send-message',      [CustomersController::class, 'sendMessage'])->name('send-message');
                 Route::post('/{id}/toggle-status',     [CustomersController::class, 'toggleStatus'])->name('toggle-status');
+
+                // Deleting is limited to admins (used to clear dummy data)
+                Route::middleware('role:super_admin,admin')->group(function () {
+                    Route::post('/bulk-delete',        [CustomersController::class, 'bulkDestroy'])->name('bulk-destroy');
+                    Route::delete('/{id}',             [CustomersController::class, 'destroy'])->name('destroy');
+                });
             });
 
             // ---------------

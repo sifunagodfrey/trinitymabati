@@ -504,8 +504,8 @@
             </div>
     </section>
 
-    @if((isset($partners) && $partners->isNotEmpty()) || (isset($associations) && $associations->isNotEmpty()))
-        @include('frontend.partners.home-rail', ['partners' => $partners ?? collect(), 'associations' => $associations ?? collect()])
+    @if (isset($partners) && $partners->isNotEmpty())
+        @include('frontend.partners.home-rail', ['items' => $partners, 'heading' => 'Our Partners', 'id' => 'partners', 'seeAll' => true, 'bg' => 'bg-white'])
     @endif
 
     <section class="bg-white py-14 sm:py-20" aria-labelledby="how-to-order-heading">
@@ -645,6 +645,10 @@
             </div>
         </section>
     @endforeach
+
+    @if (isset($associations) && $associations->isNotEmpty())
+        @include('frontend.partners.home-rail', ['items' => $associations, 'heading' => 'Our Associations', 'id' => 'associations', 'seeAll' => false, 'bg' => 'bg-[#FAF5F3]'])
+    @endif
 
     @if(isset($teamMembers) && $teamMembers->isNotEmpty())
         @include('frontend.team.home-rail', ['members' => $teamMembers])

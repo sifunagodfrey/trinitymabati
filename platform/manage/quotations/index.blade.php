@@ -4,6 +4,8 @@
 
 @section('content')
 
+    @php $canDelete = auth()->user()->hasPermission('manage_quotations'); @endphp
+
     <div class="mb-6">
         <nav class="text-sm text-muted mb-4" aria-label="Breadcrumb">
             <ol class="inline-flex items-center gap-2">
@@ -58,7 +60,7 @@
                 <div class="relative w-full sm:w-auto">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-muted text-xs"></i>
                     <input type="search" name="search" value="{{ request('search') }}"
-                        placeholder="Search code or customer…"
+                        placeholder="Search code or customerâ€¦"
                         class="rounded-[12px] border border-border bg-white pl-8 pr-4 py-2 text-sm text-black outline-none transition focus:border-primary w-full sm:w-56">
                 </div>
 
@@ -69,10 +71,20 @@
             </form>
         </div>
 
+        <form id="bulk-delete-form" method="POST" action="{{ route('manage.quotations.bulk-destroy') }}">
+        @csrf
+        @if ($canDelete)
+            <div class="px-5 pt-4">
+                @include('manage.partials.bulk-delete', ['noun' => 'quotations', 'warning' => 'Their line items will be deleted too.'])
+            </div>
+        @endif
         <div class="overflow-x-auto">
             <table class="w-full text-sm min-w-[840px]">
                 <thead class="bg-slate-50 border-b border-border">
                     <tr>
+                        @if ($canDelete)
+                            <th class="w-10 px-5 py-3"><input type="checkbox" class="bulk-check-all" aria-label="Select all quotations"></th>
+                        @endif
                         <th class="px-5 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wide">Code</th>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wide">Customer</th>
                         <th class="px-5 py-3 text-left text-xs font-semibold text-muted uppercase tracking-wide">Prepared By</th>
@@ -85,12 +97,15 @@
                 <tbody class="divide-y divide-border">
                     @forelse ($quotations as $quotation)
                         <tr class="hover:bg-slate-50 transition">
+                            @if ($canDelete)
+                                <td class="px-5 py-3"><input type="checkbox" name="ids[]" value="{{ $quotation->id }}" class="bulk-check" aria-label="Select quotation"></td>
+                            @endif
                             <td class="px-5 py-3 text-black font-medium">{{ $quotation->quotation_code }}</td>
                             <td class="px-5 py-3 text-black">
-                                {{ trim(($quotation->customer_first_name ?? $quotation->customer->first_name ?? '') . ' ' . ($quotation->customer_last_name ?? $quotation->customer->last_name ?? '')) ?: '—' }}
+                                {{ trim(($quotation->customer_first_name ?? $quotation->customer->first_name ?? '') . ' ' . ($quotation->customer_last_name ?? $quotation->customer->last_name ?? '')) ?: 'â€”' }}
                             </td>
                             <td class="px-5 py-3 text-muted">
-                                {{ trim(($quotation->preparedBy->first_name ?? '') . ' ' . ($quotation->preparedBy->last_name ?? '')) ?: '—' }}
+                                {{ trim(($quotation->preparedBy->first_name ?? '') . ' ' . ($quotation->preparedBy->last_name ?? '')) ?: 'â€”' }}
                             </td>
                             <td class="px-5 py-3 text-black font-medium">{{ number_format($quotation->total, 2) }}</td>
                             <td class="px-5 py-3">
@@ -119,7 +134,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-5 py-10 text-center text-sm text-muted">
+                            <td colspan="{{ $canDelete ? 8 : 7 }}" class="px-5 py-10 text-center text-sm text-muted">
                                 No quotations found.
                                 {{ request('status') || request('search') ? 'Try adjusting your filters.' : 'Create one to get started.' }}
                             </td>
@@ -128,6 +143,7 @@
                 </tbody>
             </table>
         </div>
+        </form>
 
         @if ($quotations->hasPages())
             <div class="px-5 py-4 border-t border-border">

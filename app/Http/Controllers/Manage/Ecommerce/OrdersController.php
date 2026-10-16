@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Manage\Ecommerce;
 use App\Http\Controllers\Controller;
 use App\Models\Manage\Ecommerce\Order;
 use App\Services\OrderEmailService;
+use App\Services\RecordPurger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -156,7 +157,7 @@ class OrdersController extends Controller
 
         if ($request->input('payment_status') === 'paid' && $order->payment_status !== 'paid'
             && \App\Models\Payment\PaymentTransaction::where('order_id', $order->id)->where('is_manual', true)->exists()) {
-            return back()->withErrors(['payment_status' => 'Approve this manual payment under Payments → Transactions so the payment and approval history stay in sync.']);
+            return back()->withErrors(['payment_status' => 'Approve this manual payment under Payments â†’ Transactions so the payment and approval history stay in sync.']);
         }
 
         // Capture old statuses before update
@@ -231,5 +232,50 @@ class OrdersController extends Controller
 
         return redirect()->back()
             ->with('success', 'Order status updated successfully.');
+    }
+
+    // ---------------
+    // Permanently delete one order with its items, payments and history
+    // ---------------
+    public function destroy(string $id, RecordPurger $purger): RedirectResponse
+    {
+        $order = Order::findOrFail($id);
+        $code  = $order->order_code ?? ('#' . $order->id);
+
+        try {
+            $purger->purgeOrders([$order->id]);
+        } catch (\Throwable $e) {
+            Log::error('Order delete failed', ['id' => $id, 'error' => $e->getMessage()]);
+
+            return redirect()->route('manage.ecommerce.orders.show', $id)
+                ->with('error', 'Could not delete this order: ' . $e->getMessage());
+        }
+
+        return redirect()->route('manage.ecommerce.orders.index')
+            ->with('success', 'Order ' . $code . ' was deleted.');
+    }
+
+    // ---------------
+    // Permanently delete the selected orders
+    // ---------------
+    public function bulkDestroy(Request $request, RecordPurger $purger): RedirectResponse
+    {
+        $data = $request->validate([
+            'ids'   => 'required|array|min:1',
+            'ids.*' => 'integer',
+        ]);
+
+        $ids = Order::whereIn('id', $data['ids'])->pluck('id')->all();
+
+        try {
+            $count = $purger->purgeOrders($ids);
+        } catch (\Throwable $e) {
+            Log::error('Bulk order delete failed', ['error' => $e->getMessage()]);
+
+            return back()->with('error', 'Could not delete the selected orders: ' . $e->getMessage());
+        }
+
+        return redirect()->route('manage.ecommerce.orders.index')
+            ->with('success', $count . ' order(s) were deleted.');
     }
 }

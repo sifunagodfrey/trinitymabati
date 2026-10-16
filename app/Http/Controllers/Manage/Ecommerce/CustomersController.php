@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Manage\Ecommerce\Order;
 use App\Models\Manage\System\SystemMessage;
 use App\Models\User;
+use App\Services\RecordPurger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class CustomersController extends Controller
@@ -108,5 +110,56 @@ class CustomersController extends Controller
 
         return redirect()->route('manage.ecommerce.customers.show', $id)
             ->with('success', 'Customer status changed to ' . ucfirst($newStatus) . '.');
+    }
+
+    // ---------------
+    // Permanently delete one customer plus their orders, quotations and other data
+    // ---------------
+    public function destroy(string $id, RecordPurger $purger): RedirectResponse
+    {
+        $customer = User::whereHas('role', fn ($q) => $q->where('slug', 'customer'))
+            ->findOrFail($id);
+
+        $name = trim($customer->first_name . ' ' . $customer->last_name);
+
+        try {
+            $purger->purgeCustomers([$customer->id]);
+        } catch (\Throwable $e) {
+            Log::error('Customer delete failed', ['id' => $id, 'error' => $e->getMessage()]);
+
+            return redirect()->route('manage.ecommerce.customers.show', $id)
+                ->with('error', 'Could not delete this customer: ' . $e->getMessage());
+        }
+
+        return redirect()->route('manage.ecommerce.customers.index')
+            ->with('success', 'Customer ' . $name . ' and all their data were deleted.');
+    }
+
+    // ---------------
+    // Permanently delete the selected customers
+    // ---------------
+    public function bulkDestroy(Request $request, RecordPurger $purger): RedirectResponse
+    {
+        $data = $request->validate([
+            'ids'   => 'required|array|min:1',
+            'ids.*' => 'integer',
+        ]);
+
+        // Only genuine customer accounts - never staff
+        $ids = User::whereHas('role', fn ($q) => $q->where('slug', 'customer'))
+            ->whereIn('id', $data['ids'])
+            ->pluck('id')
+            ->all();
+
+        try {
+            $count = $purger->purgeCustomers($ids);
+        } catch (\Throwable $e) {
+            Log::error('Bulk customer delete failed', ['error' => $e->getMessage()]);
+
+            return back()->with('error', 'Could not delete the selected customers: ' . $e->getMessage());
+        }
+
+        return redirect()->route('manage.ecommerce.customers.index')
+            ->with('success', $count . ' customer(s) and their data were deleted.');
     }
 }

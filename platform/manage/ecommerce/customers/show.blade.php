@@ -4,6 +4,8 @@
 
 @section('content')
 
+    @php $canDelete = auth()->user()->hasRole('super_admin') || auth()->user()->hasRole('admin'); @endphp
+
     {{-- ---------------
     -- Breadcrumb & Page Header
     -- --------------- --}}
@@ -61,6 +63,19 @@
                         </button>
                     @endif
                 </form>
+
+                @if ($canDelete)
+                    <form method="POST" action="{{ route('manage.ecommerce.customers.destroy', $customer->id) }}"
+                          onsubmit="return confirm('Permanently delete this customer together with their orders, quotations and all other data? This cannot be undone.')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit"
+                            class="inline-flex items-center gap-2 rounded-[12px] border border-rose-200 bg-white px-4 py-2.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50">
+                            <i class="fa-solid fa-trash"></i>
+                            Delete
+                        </button>
+                    </form>
+                @endif
             </div>
         </div>
     </div>

@@ -4,6 +4,8 @@
 
 @section('content')
 
+    @php $canDelete = auth()->user()->hasRole('super_admin') || auth()->user()->hasRole('admin'); @endphp
+
     {{-- ---------------
     -- Breadcrumb & Page Header
     -- --------------- --}}
@@ -89,11 +91,19 @@
         {{-- ---------------
         -- Customers Table
         -- --------------- --}}
+        <form id="bulk-delete-form" method="POST" action="{{ route('manage.ecommerce.customers.bulk-destroy') }}">
+        @csrf
+        @if ($canDelete)
+            @include('manage.partials.bulk-delete', ['noun' => 'customers', 'warning' => 'Their orders, quotations and all other account data will be deleted too.'])
+        @endif
         <div class="overflow-hidden rounded-[12px] border border-border bg-surface shadow-sm">
             <div class="overflow-x-auto">
                 <table class="min-w-[720px] divide-y divide-border text-sm">
                     <thead class="bg-background text-left text-xs uppercase tracking-wide text-muted">
                         <tr>
+                            @if ($canDelete)
+                                <th class="w-10 px-4 py-3"><input type="checkbox" class="bulk-check-all" aria-label="Select all customers"></th>
+                            @endif
                             <th class="px-4 py-3">Name</th>
                             <th class="px-4 py-3">Email</th>
                             <th class="px-4 py-3">Phone</th>
@@ -115,6 +125,11 @@
                                 ];
                             @endphp
                             <tr class="hover:bg-slate-50 cursor-pointer" onclick="window.location='{{ route('manage.ecommerce.customers.show', $customer->id) }}'"  >
+                                @if ($canDelete)
+                                    <td class="px-4 py-4" onclick="event.stopPropagation()">
+                                        <input type="checkbox" name="ids[]" value="{{ $customer->id }}" class="bulk-check" aria-label="Select customer">
+                                    </td>
+                                @endif
                                 <td class="px-4 py-4">
                                     <div class="font-medium text-black">
                                         {{ $customer->first_name }} {{ $customer->last_name }}
@@ -141,7 +156,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-4 py-12 text-center text-sm text-muted">
+                                <td colspan="{{ $canDelete ? 7 : 6 }}" class="px-4 py-12 text-center text-sm text-muted">
                                     <div class="flex flex-col items-center gap-3">
                                         <i class="fa-solid fa-users text-3xl text-slate-300"></i>
                                         <span>No customers found. Try adjusting your filters.</span>
@@ -157,13 +172,14 @@
                 </table>
             </div>
         </div>
+        </form>
 
         {{-- ---------------
         -- Pagination
         -- --------------- --}}
         <div class="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p class="text-sm text-muted">
-                Showing {{ $customers->firstItem() ?? 0 }} – {{ $customers->lastItem() ?? 0 }}
+                Showing {{ $customers->firstItem() ?? 0 }} â€“ {{ $customers->lastItem() ?? 0 }}
                 of {{ $customers->total() }} customers
             </p>
             <div>{{ $customers->links() }}</div>

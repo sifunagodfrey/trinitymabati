@@ -4,6 +4,8 @@
 
 @section('content')
 
+    @php $canDelete = auth()->user()->hasPermission('manage_quotations'); @endphp
+
     <div class="mb-6">
         <nav class="text-sm text-muted mb-4" aria-label="Breadcrumb">
             <ol class="inline-flex items-center gap-2">
@@ -44,6 +46,19 @@
                             class="inline-flex items-center gap-2 rounded-[12px] bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:bg-primary-dark">
                             <i class="fa-solid fa-right-left"></i>
                             Convert to Order
+                        </button>
+                    </form>
+                @endif
+
+                @if ($canDelete)
+                    <form method="POST" action="{{ route('manage.quotations.destroy', $quotation->id) }}"
+                          onsubmit="return confirm('Permanently delete this quotation and its items? This cannot be undone.')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit"
+                            class="inline-flex items-center gap-2 rounded-[12px] border border-rose-200 bg-white px-4 py-2.5 text-sm font-medium text-rose-700 transition hover:bg-rose-50">
+                            <i class="fa-solid fa-trash"></i>
+                            Delete
                         </button>
                     </form>
                 @endif
@@ -166,7 +181,7 @@
             <div class="bg-background border border-border rounded-[12px] p-6 shadow-sm">
                 <h2 class="text-base font-semibold text-black mb-4">Customer</h2>
                 <p class="text-sm text-black font-medium">
-                    {{ trim(($quotation->customer_first_name ?? $quotation->customer->first_name ?? '') . ' ' . ($quotation->customer_last_name ?? $quotation->customer->last_name ?? '')) ?: '—' }}
+                    {{ trim(($quotation->customer_first_name ?? $quotation->customer->first_name ?? '') . ' ' . ($quotation->customer_last_name ?? $quotation->customer->last_name ?? '')) ?: 'â€”' }}
                 </p>
                 <p class="text-sm text-muted">{{ $quotation->customer_email ?? $quotation->customer->email ?? '' }}</p>
                 <p class="text-sm text-muted">{{ $quotation->customer_phone ?? $quotation->customer->phone ?? '' }}</p>

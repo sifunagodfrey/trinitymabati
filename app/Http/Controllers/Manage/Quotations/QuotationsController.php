@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Services\QuotationEmailService;
+use App\Services\RecordPurger;
 use Illuminate\Support\Facades\Log;
 
 class QuotationsController extends Controller
@@ -300,10 +301,44 @@ class QuotationsController extends Controller
     // ---------------
     // Delete a quotation and its items
     // ---------------
-    public function destroy(string $id)
+    public function destroy(string $id, RecordPurger $purger)
     {
-        Quotation::findOrFail($id)->delete();
+        $quotation = Quotation::findOrFail($id);
 
-        return redirect()->route('manage.quotations.index')->with('success', 'Quotation deleted.');
+        try {
+            $purger->purgeQuotations([$quotation->id]);
+        } catch (\Throwable $e) {
+            Log::error('Quotation delete failed', ['id' => $id, 'error' => $e->getMessage()]);
+
+            return redirect()->route('manage.quotations.show', $id)
+                ->with('error', 'Could not delete this quotation: ' . $e->getMessage());
+        }
+
+        return redirect()->route('manage.quotations.index')
+            ->with('success', 'Quotation ' . $quotation->quotation_code . ' deleted.');
+    }
+
+    // ---------------
+    // Delete the selected quotations
+    // ---------------
+    public function bulkDestroy(Request $request, RecordPurger $purger)
+    {
+        $data = $request->validate([
+            'ids'   => 'required|array|min:1',
+            'ids.*' => 'integer',
+        ]);
+
+        $ids = Quotation::whereIn('id', $data['ids'])->pluck('id')->all();
+
+        try {
+            $count = $purger->purgeQuotations($ids);
+        } catch (\Throwable $e) {
+            Log::error('Bulk quotation delete failed', ['error' => $e->getMessage()]);
+
+            return back()->with('error', 'Could not delete the selected quotations: ' . $e->getMessage());
+        }
+
+        return redirect()->route('manage.quotations.index')
+            ->with('success', $count . ' quotation(s) deleted.');
     }
 }
