@@ -58,6 +58,20 @@
             </div>
         </div>
 
+        <div class="mb-6" x-data="{ show: false }">
+            <label class="block text-sm font-medium mb-2" for="password">Password</label>
+            <div class="relative">
+                <input id="password" :type="show ? 'text' : 'password'" name="password" minlength="8" maxlength="255"
+                    autocomplete="new-password" placeholder="Leave blank to auto-generate"
+                    class="w-full rounded-[8px] border border-border bg-white px-4 py-3 pr-12">
+                <button type="button" @click="show = !show" tabindex="-1" aria-label="Show or hide password"
+                    class="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-muted hover:text-black">
+                    <i class="fa-solid" :class="show ? 'fa-eye-slash' : 'fa-eye'"></i>
+                </button>
+            </div>
+            <p class="mt-2 text-xs text-muted">At least 8 characters. Leave blank and a random password is generated and emailed to the user.</p>
+        </div>
+
         <div class="flex justify-end gap-3 pt-4 border-t">
             <a href="{{ route('manage.system-users.index') }}" class="rounded-[8px] border px-5 py-3 text-sm">Cancel</a>
             <button type="submit" class="rounded-[8px] bg-primary px-5 py-3 text-sm font-semibold text-white">Create User</button>

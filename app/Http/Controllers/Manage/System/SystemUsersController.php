@@ -58,9 +58,11 @@ class SystemUsersController extends Controller
             'phone'      => 'nullable|string|max:20',
             'role_id'    => 'required|exists:su_roles,id',
             'status'     => 'required|in:active,pending,suspended',
+            'password'   => 'nullable|string|min:8|max:255',
         ]);
 
-        $password = Str::random(10);
+        // Admin-chosen password, or a random one when the field is left blank
+        $password = $request->filled('password') ? $request->password : Str::random(10);
         $hashedPassword = Hash::make($password);
 
         // Convert checkbox to string status
@@ -110,7 +112,7 @@ class SystemUsersController extends Controller
     }
 
     // ---------------
-    // Update user – tracks changes and sends email with diff
+    // Update user â€“ tracks changes and sends email with diff
     // ---------------
     public function update(Request $request, string $id)
     {
@@ -123,6 +125,7 @@ class SystemUsersController extends Controller
             'phone'      => 'nullable|string|max:20',
             'role_id'    => 'required|exists:su_roles,id',
             'status'     => 'required|in:active,pending,suspended',
+            'password'   => 'nullable|string|min:8|max:255',
         ]);
 
         // Convert checkbox to string status
@@ -138,14 +141,21 @@ class SystemUsersController extends Controller
             'status'     => ucfirst($user->status),
         ];
 
-        // Update user
-        $user->update([
+        // Update user - the password is only touched when a new one was typed in
+        $data = [
             'first_name' => $request->first_name,
             'last_name'  => $request->last_name,
             'email'      => $request->email,
             'phone'      => $request->phone,
             'status'     => $request->status,
-        ]);
+        ];
+
+        $passwordChanged = $request->filled('password');
+        if ($passwordChanged) {
+            $data['password'] = Hash::make($request->password);
+        }
+
+        $user->update($data);
 
         $user->roles()->sync([$request->role_id]);
         $user->unsetRelation('role');
@@ -185,6 +195,11 @@ class SystemUsersController extends Controller
             }
         }
 
+        // Never email the password itself - just flag that it was changed
+        if ($passwordChanged) {
+            $changes['Password'] = ['old' => '********', 'new' => 'Changed by an administrator'];
+        }
+
         // Send update email with changes (only if there are any changes)
         if (!empty($changes)) {
             try {
@@ -194,10 +209,10 @@ class SystemUsersController extends Controller
             }
         }
 
-        $this->logAction('Updated user: ' . $user->name . ' (' . $user->email . ')');
+        $this->logAction('Updated user: ' . $user->name . ' (' . $user->email . ')' . ($passwordChanged ? ' - password changed' : ''));
 
         return redirect()->route('manage.system-users.index')
-            ->with('success', 'User updated successfully.');
+            ->with('success', $passwordChanged ? 'User updated and password changed.' : 'User updated successfully.');
     }
 
     // ---------------
