@@ -1,7 +1,14 @@
 {{-- --------------- --}}
-{{-- One heading + manual snap rail (same behaviour as the category rails) --}}
+{{-- One heading + multi-row manual snap rail (same controls as the category rails) --}}
 {{-- --------------- --}}
-<div class="trinity-rail" role="group" aria-labelledby="home-{{ $id }}-heading"
+{{-- --------------- --}}
+{{-- Rows: capped by the number of images so no empty rows are left --}}
+{{-- --------------- --}}
+@php
+    $rowsMobile  = min($mobileRows ?? 2, $items->count());
+    $rowsDesktop = min(2, $items->count());
+@endphp
+<div class="trinity-rail {{ !empty($firstOnMobile) ? 'trinity-rail--first-mobile' : '' }}" role="group" aria-labelledby="home-{{ $id }}-heading"
      x-data="{
          canPrev: false,
          canNext: false,
@@ -30,9 +37,9 @@
             class="absolute left-0 top-1/2 z-10 hidden sm:flex h-10 w-10 -translate-x-1/3 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white shadow-md hover:border-primary hover:text-primary"><i
                 class="fas fa-chevron-left" aria-hidden="true"></i></button>
         <div x-ref="rail" @scroll.passive="update()" tabindex="0" aria-label="{{ $heading }}, swipe or scroll horizontally"
-            class="trinity-rail-scroller trinity-rail--{{ $mode }} flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            class="trinity-rail-scroller trinity-rail--{{ $mode }} trinity-rows-m{{ $rowsMobile }} trinity-rows-d{{ $rowsDesktop }}">
             @foreach($items as $item)
-                <div class="trinity-rail-item snap-start">@include('frontend.partials.partner-card', ['partner' => $item])</div>
+                <div class="trinity-rail-item">@include('frontend.partials.partner-card', ['partner' => $item])</div>
             @endforeach
         </div>
         <button type="button" @click="move(1)" x-show="canNext" style="display:none" aria-label="Next {{ strtolower($heading) }}"
