@@ -7,7 +7,13 @@
         @media(min-width:1024px) { .trinity-team-rail-item { flex-basis:calc((100% - 64px) / 4.5); } }
     </style>
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="mb-6 flex items-center justify-between gap-4"><h2 id="home-team-heading" class="text-2xl font-semibold text-primary sm:text-3xl">Our Team</h2><a href="{{ route('frontend.team') }}" class="shrink-0 text-sm font-semibold text-primary hover:underline">See all <span aria-hidden="true">→</span><span class="sr-only"> team members</span></a></div>
+        <div class="mb-6 flex items-center justify-between gap-4">
+            <div class="min-w-0">
+                <h2 id="home-team-heading" class="text-2xl font-semibold text-primary sm:text-3xl">Our Team</h2>
+                <p class="mt-3 text-sm leading-relaxed text-gray-500">Meet the people behind our commitment to quality roofing.</p>
+            </div>
+            <a href="{{ route('frontend.team') }}" class="shrink-0 text-sm font-semibold text-primary hover:underline">See all <span aria-hidden="true">→</span><span class="sr-only"> team members</span></a>
+        </div>
         <div class="relative">
             <button type="button" @click="move(-1)" aria-label="Previous team members" class="absolute -left-3 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white text-primary shadow-md"><i class="fas fa-chevron-left" aria-hidden="true"></i></button>
             <div class="trinity-team-rail" x-ref="teamRail" tabindex="0" aria-label="Our team, scroll horizontally">

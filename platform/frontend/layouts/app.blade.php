@@ -24,6 +24,7 @@
     {{-- Assets --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @include('partials.branding')
+    @include('frontend.partners.styles')
 
     {{-- Primary-coloured scrollbar at the browser's default width (kept inline so it applies regardless of the build) --}}
     <style>

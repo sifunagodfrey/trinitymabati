@@ -131,6 +131,7 @@ Route::get('/client-projects', fn () => redirect()->route('frontend.project-gall
 Route::get('/client-projects/{slug}', [\App\Http\Controllers\Frontend\ClientStoriesController::class, 'project'])->name('frontend.projects.show');
 
 Route::get('/partners', [\App\Http\Controllers\Frontend\PartnerController::class, 'index'])->name('frontend.partners');
+Route::get('/associations', [\App\Http\Controllers\Frontend\PartnerController::class, 'associations'])->name('frontend.associations');
 Route::get('/our-team', [\App\Http\Controllers\Frontend\TeamController::class, 'index'])->name('frontend.team');
 Route::get('/project-gallery', [\App\Http\Controllers\Frontend\ClientStoriesController::class, 'projects'])->name('frontend.project-gallery');
 

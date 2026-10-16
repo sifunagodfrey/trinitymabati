@@ -1,71 +1,93 @@
-{{-- ---------------
-     Home logo section: centered heading, borderless logos beneath it.
-     Mobile: 2-row scroll rail (2 columns visible). Desktop: centered wrapping grid, 3 per row.
-     The "See all" tile (when enabled) is the last item, i.e. at the end of the scroll / list.
-     Variants ('variant' param):
-       centered (default) - heading centered above borderless logos
-       split              - heading on the left, logos on the right separated by thin cross lines (desktop)
-     Usage: @include('frontend.partners.home-rail', ['items' => $partners, 'heading' => 'Our Partners',
-            'id' => 'partners', 'seeAll' => true, 'bg' => 'bg-white', 'variant' => 'centered'])
---------------- --}}
+{{-- A single row at every breakpoint. Partners: 4 desktop columns; associations: 3.
+     Native scrolling works without JavaScript. Alpine adds controls and homepage autoplay. --}}
 @php
-    $items  = $items ?? collect();
-    $bg     = $bg ?? 'bg-white';
+    $items = $items ?? collect();
+    $isAssociation = ($variant ?? 'centered') === 'split';
     $seeAll = $seeAll ?? false;
-    $split  = ($variant ?? 'centered') === 'split';
-    $total  = $items->count() + ($seeAll ? 1 : 0);
-    $rows   = max(1, min(2, $total));
-    $lastRowStart = intdiv($total - 1, 3) * 3; // first index of the final desktop row (3 per row)
-    $cellClass = fn (int $i) => 'trinity-logo-cell' . ($i % 3 === 2 ? ' is-last-col' : '') . ($i >= $lastRowStart ? ' is-last-row' : '');
+    $isPage = $isPage ?? false;
+    $headingTag = $isPage ? 'h1' : 'h2';
+    $directoryRoute = $isAssociation ? 'frontend.associations' : 'frontend.partners';
+    $description = $isAssociation
+        ? 'Building stronger connections across our industry.'
+        : 'Working together to bring quality to every project.';
 @endphp
-@if ($items->isNotEmpty())
-    <section class="{{ $bg }} py-12 sm:py-16" aria-labelledby="home-{{ $id }}-heading">
-        <style>
-            /* Mobile / tablet: 2-row rail, 2 columns visible (3 from sm), swipe sideways */
-            .trinity-logo-rail { --visible:2; display:grid; grid-auto-flow:column; grid-auto-columns:calc(100% / var(--visible));
-                grid-template-rows:repeat(var(--rows, 2), auto);
-                overflow-x:auto; scroll-snap-type:x mandatory; scroll-behavior:smooth; scrollbar-width:none; }
-            .trinity-logo-rail::-webkit-scrollbar { display:none; }
-            @media (min-width:640px) { .trinity-logo-rail { --visible:3; } }
-            .trinity-logo-cell { display:flex; align-items:center; justify-content:center; aspect-ratio:3/2; padding:12px; scroll-snap-align:start; min-width:0; }
-            .trinity-logo-cell img { display:block; max-width:100%; max-height:100%; object-fit:contain; }
-            .trinity-logo-more { flex-direction:column; gap:6px; text-align:center; font-weight:600; color:var(--color-primary, #b91c1c); text-decoration:none; }
-            .trinity-logo-more:hover { text-decoration:underline; }
-            /* Desktop: centered wrapping grid, 3 per row, last row centered */
-            @media (min-width:1024px) {
-                .trinity-logo-rail { display:flex; flex-wrap:wrap; justify-content:center; overflow:visible; }
-                .trinity-logo-cell { flex:0 0 33.3333%; aspect-ratio:auto; height:120px; padding:24px 32px; }
-                /* Split variant: left-aligned grid with thin lines between logos only (no outer border) */
-                .trinity-split .trinity-logo-rail { justify-content:flex-start; }
-                .trinity-split .trinity-logo-cell { border-right:1px solid #e5e7eb; border-bottom:1px solid #e5e7eb; }
-                .trinity-split .trinity-logo-cell.is-last-col { border-right:0; }
-                .trinity-split .trinity-logo-cell.is-last-row { border-bottom:0; }
+@if ($items->isNotEmpty() || $isPage)
+<section class="trinity-network {{ !$isPage ? 'trinity-network--home' : '' }} {{ $isAssociation ? 'trinity-network--associations' : '' }}" aria-labelledby="{{ $id }}-heading"
+    data-autoplay="{{ $isPage ? 'false' : 'true' }}"
+    x-data="{
+        canPrev: false, canNext: false,
+        paused: false, touching: false, timer: null,
+        init() {
+            if (this.$el.dataset.autoplay !== 'true') return;
+            this.timer = setInterval(() => {
+                if (this.paused || this.touching || document.hidden || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+                this.move(1);
+            }, 3000);
+        },
+        destroy() { if (this.timer) clearInterval(this.timer); },
+        update() {
+            const rail = this.$refs.rail;
+            if (!rail) return;
+            this.canPrev = rail.scrollLeft > 4;
+            this.canNext = rail.scrollLeft + rail.clientWidth &lt; rail.scrollWidth - 4;
+        },
+        move(direction) {
+            const rail = this.$refs.rail;
+            if (!rail || rail.scrollWidth &lt;= rail.clientWidth + 4) return;
+            const card = rail.firstElementChild;
+            if (!card) return;
+            const step = card.getBoundingClientRect().width + (parseFloat(getComputedStyle(rail).columnGap) || 0);
+            const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+            if (direction > 0 &amp;&amp; rail.scrollLeft + rail.clientWidth >= rail.scrollWidth - 8) {
+                rail.scrollTo({ left: 0, behavior });
+            } else {
+                rail.scrollBy({ left: direction * step, behavior });
             }
-        </style>
-        <div x-data="{
-                canPrev: false, canNext: false,
-                update() { const r = this.$refs.rail; this.canPrev = r.scrollLeft > 4; this.canNext = r.scrollLeft + r.clientWidth < r.scrollWidth - 4; },
-                move(dir) { const r = this.$refs.rail; const c = r.firstElementChild; r.scrollBy({ left: dir * (c ? c.offsetWidth : r.clientWidth), behavior: 'smooth' }); }
-            }" x-init="$nextTick(() => update())" @resize.window="update()"
-            class="mx-auto px-4 sm:px-6 lg:px-8 {{ $split ? 'trinity-split max-w-7xl lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-center lg:gap-14' : 'max-w-4xl' }}">
-            <h2 id="home-{{ $id }}-heading" class="text-3xl font-extrabold text-primary sm:text-4xl {{ $split ? 'mb-6 lg:mb-0' : 'mb-8 text-center' }}">{{ $heading }}</h2>
-            <div class="relative min-w-0">
-                <button type="button" @click="move(-1)" x-show="canPrev" style="display:none" aria-label="Previous {{ strtolower($heading) }}"
-                    class="absolute left-0 top-1/2 z-10 hidden h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white shadow-md hover:border-primary hover:text-primary sm:flex lg:hidden"><i class="fas fa-chevron-left" aria-hidden="true"></i></button>
-                <div x-ref="rail" @scroll.passive="update()" tabindex="0" aria-label="{{ $heading }}, swipe or scroll horizontally"
-                    class="trinity-logo-rail" style="--rows:{{ $rows }};">
-                    @foreach ($items as $item)
-                        <div class="{{ $cellClass($loop->index) }}"><img src="{{ asset($item->image) }}" alt="{{ $item->name }}" loading="lazy"></div>
-                    @endforeach
-                    @if ($seeAll)
-                        <a href="{{ route('frontend.partners') }}" class="{{ $cellClass($items->count()) }} trinity-logo-more">
-                            <span class="text-sm sm:text-base">See all</span><i class="fas fa-arrow-right" aria-hidden="true"></i>
-                        </a>
-                    @endif
-                </div>
-                <button type="button" @click="move(1)" x-show="canNext" style="display:none" aria-label="Next {{ strtolower($heading) }}"
-                    class="absolute right-0 top-1/2 z-10 hidden h-10 w-10 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white shadow-md hover:border-primary hover:text-primary sm:flex lg:hidden"><i class="fas fa-chevron-right" aria-hidden="true"></i></button>
+        }
+    }" x-init="$nextTick(() => update())" @resize.window.debounce.100ms="$nextTick(() => update())"
+    @mouseenter="paused = true" @mouseleave="paused = $el.contains(document.activeElement)"
+    @focusin="paused = true" @focusout="paused = $el.matches(':hover') || $el.contains($event.relatedTarget)"
+    @touchstart.passive="touching = true" @touchend.passive="touching = false" @touchcancel.passive="touching = false">
+    <div class="trinity-network__inner">
+        <header class="trinity-network__header">
+            <div class="trinity-network__intro">
+                @if ($isPage)
+                <span class="trinity-network__eyebrow">{{ $isAssociation ? 'Industry connections' : 'Stronger together' }}</span>
+                @endif
+                <{{ $headingTag }} id="{{ $id }}-heading" class="trinity-network__title">{{ $heading }}</{{ $headingTag }}>
+                <p class="trinity-network__description">{{ $description }}</p>
             </div>
-        </div>
-    </section>
+            @if ($items->isNotEmpty())
+            <div class="trinity-network__actions">
+                @if ($seeAll)
+                    <a href="{{ route($directoryRoute) }}" class="trinity-network__link">View all {{ $isAssociation ? 'associations' : 'partners' }} <span aria-hidden="true">&rarr;</span></a>
+                @endif
+                <div class="trinity-network__controls" x-show="canPrev || canNext" style="display:none">
+                    <button type="button" class="trinity-network__button" @click="move(-1)" :disabled="!canPrev" aria-controls="{{ $id }}-rail" aria-label="Previous {{ $isAssociation ? 'associations' : 'partners' }}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg>
+                    </button>
+                    <button type="button" class="trinity-network__button" @click="move(1)" :disabled="!canNext" aria-controls="{{ $id }}-rail" aria-label="Next {{ $isAssociation ? 'associations' : 'partners' }}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg>
+                    </button>
+                </div>
+            </div>
+            @endif
+        </header>
+        @if ($items->isNotEmpty())
+            <div id="{{ $id }}-rail" class="trinity-network__rail" x-ref="rail" @scroll.passive="update()" tabindex="0" role="region" aria-labelledby="{{ $id }}-heading" @if ($isPage) aria-describedby="{{ $id }}-hint" @endif>
+                @foreach ($items as $item)
+                    @include('frontend.partials.partner-card', ['partner' => $item])
+                @endforeach
+            </div>
+            @if ($isPage)
+            <p id="{{ $id }}-hint" class="trinity-network__hint">Swipe or scroll to explore. Use the arrow keys when the row is focused.</p>
+            @endif
+        @else
+            <p class="trinity-network__empty">Our {{ $isAssociation ? 'associations' : 'partners' }} will be featured here soon.</p>
+        @endif
+        @if ($isPage && method_exists($items, 'links'))
+            <div class="trinity-network__pagination">{{ $items->links() }}</div>
+        @endif
+    </div>
+</section>
 @endif

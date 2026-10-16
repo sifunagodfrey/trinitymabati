@@ -15,4 +15,9 @@ class PartnerController extends Controller
         $partners = Partner::published()->association(false)->displayOrder()->paginate(24);
         return view('frontend.partners.index', compact('partners'));
     }
+    public function associations()
+    {
+        $partners = Partner::published()->association()->displayOrder()->paginate(24);
+        return view('frontend.partners.index', ['partners' => $partners, 'isAssociation' => true]);
+    }
 }
