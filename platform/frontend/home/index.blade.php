@@ -647,7 +647,7 @@
     @endforeach
 
     @if (isset($associations) && $associations->isNotEmpty())
-        @include('frontend.partners.home-rail', ['items' => $associations, 'heading' => 'Our Associations', 'id' => 'associations', 'seeAll' => false, 'bg' => 'bg-[#FAF5F3]'])
+        @include('frontend.partners.home-rail', ['items' => $associations, 'heading' => 'Our Associations', 'id' => 'associations', 'seeAll' => false, 'bg' => 'bg-[#FAF5F3]', 'variant' => 'split'])
     @endif
 
     @if(isset($teamMembers) && $teamMembers->isNotEmpty())
