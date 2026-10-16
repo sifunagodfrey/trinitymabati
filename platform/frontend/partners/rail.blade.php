@@ -47,3 +47,8 @@
                 class="fas fa-chevron-right" aria-hidden="true"></i></button>
     </div>
 </div>
+
+
+ALTER TABLE `su_partners`
+    ADD COLUMN `is_association` TINYINT(1) NOT NULL DEFAULT 0 AFTER `is_published`,
+    ADD INDEX `su_partners_is_association_index` (`is_association`);
