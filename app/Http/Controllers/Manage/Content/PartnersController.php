@@ -43,10 +43,12 @@ class PartnersController extends Controller
             'image' => [$partner->image ? 'nullable' : 'required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:1000000'],
             'is_published' => ['nullable', 'boolean'],
+            'is_association' => ['nullable', 'boolean'],
         ]);
         unset($data['image']);
         $data['name'] = trim($data['name']);
         $data['is_published'] = $request->boolean('is_published');
+        $data['is_association'] = $request->boolean('is_association');
         $data['sort_order'] = (int) ($data['sort_order'] ?? 0);
         $oldImage = $partner->image;
         $newImage = null;

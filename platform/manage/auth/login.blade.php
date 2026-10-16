@@ -19,7 +19,7 @@
         -- Left Panel: Image with overlay
         -- --------------- --}}
         <div class="hidden lg:block lg:w-1/2 h-full relative">
-            <img src="{{ url('public/images/trinity-mabati-factory-main-banner-image.jpg') }}" alt="{{ config('app.name') }}"
+            <img src="{{ url('public/images/trinity-mabati-product-5.webp') }}" alt="{{ config('app.name') }}"
                 class="absolute inset-0 h-full w-full object-cover">
             <div class="absolute inset-0"
                 style="background: linear-gradient(180deg, rgba(15,26,20,0.15) 0%, rgba(15,26,20,0.75) 100%);"></div>

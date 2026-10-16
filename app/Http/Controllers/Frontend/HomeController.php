@@ -47,8 +47,9 @@ class HomeController extends Controller
             ->get();
 
         $teamMembers = TeamMember::published()->displayOrder()->get();
-        $partners = Partner::published()->displayOrder()->get();
+        $partners = Partner::published()->association(false)->displayOrder()->get();
+        $associations = Partner::published()->association()->displayOrder()->get();
 
-        return view('frontend.home.index', compact('mainCategories', 'sections', 'faqs', 'teamMembers', 'partners'));
+        return view('frontend.home.index', compact('mainCategories', 'sections', 'faqs', 'teamMembers', 'partners', 'associations'));
     }
 }

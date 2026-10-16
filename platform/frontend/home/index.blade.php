@@ -504,8 +504,8 @@
             </div>
     </section>
 
-    @if(isset($partners) && $partners->isNotEmpty())
-        @include('frontend.partners.home-rail', ['partners' => $partners])
+    @if((isset($partners) && $partners->isNotEmpty()) || (isset($associations) && $associations->isNotEmpty()))
+        @include('frontend.partners.home-rail', ['partners' => $partners ?? collect(), 'associations' => $associations ?? collect()])
     @endif
 
     <section class="bg-white py-14 sm:py-20" aria-labelledby="how-to-order-heading">

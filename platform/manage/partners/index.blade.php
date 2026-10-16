@@ -13,6 +13,7 @@
                 @if($partner->image)<img src="{{ asset($partner->image) }}" alt="{{ $partner->name }}" style="aspect-ratio:2/1;width:100%;object-fit:cover;">@endif
                 <div class="space-y-3 p-5"><h2 class="font-semibold text-gray-900">{{ $partner->name }}</h2>
                     <p class="text-sm text-gray-500">{{ $partner->is_published ? 'Published' : 'Draft' }} · Order {{ $partner->sort_order }}</p>
+                    @if($partner->is_association) &middot; Association @endif
                     <div class="flex items-center gap-3 border-t pt-3">
                         <a href="{{ route('manage.content.partners.edit', $partner->id) }}" class="rounded-lg border px-4 py-2 text-sm font-semibold">Edit</a>
                         <form method="POST" action="{{ route('manage.content.partners.destroy', $partner->id) }}" onsubmit="return confirm('Delete this partner?')">@csrf @method('DELETE')<button type="submit" class="rounded-lg border border-red-200 px-4 py-2 text-sm text-red-700">Delete</button></form>

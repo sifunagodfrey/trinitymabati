@@ -7,6 +7,10 @@
 <div><label for="partner-name" class="mb-2 block text-sm font-semibold">Partner name *</label><input id="partner-name" name="name" maxlength="160" required value="{{ old('name', $partner->name) }}" class="w-full rounded-lg border px-3 py-2.5"></div>
 <div><label for="partner-image" class="mb-2 block text-sm font-semibold">Partner image {{ $partner->image ? '(leave empty to keep current image)' : '*' }}</label><input id="partner-image" name="image" type="file" accept="image/jpeg,image/png,image/webp" @required(!$partner->image) class="block w-full text-sm"><p class="mt-2 text-xs text-gray-500">JPG, PNG or WebP, up to 4 MB. Use a 2:1 image; images fill and crop to the card.</p>@if($partner->image)<img src="{{ asset($partner->image) }}" alt="Current partner image" class="mt-3 rounded-lg" style="width:240px;aspect-ratio:2/1;object-fit:cover;">@endif</div>
 <div><label for="partner-order" class="mb-2 block text-sm font-semibold">Display order</label><input id="partner-order" type="number" name="sort_order" min="0" max="1000000" value="{{ old('sort_order', $partner->sort_order ?? 0) }}" class="w-full rounded-lg border px-3 py-2.5"></div>
+{{-- --------------- --}}
+{{-- Association filter --}}
+{{-- --------------- --}}
+<label class="flex items-center gap-2"><input type="checkbox" name="is_association" value="1" @checked(old('is_association', $partner->is_association ?? false))> This is an association (show under "Our Associations")</label>
 <label class="flex items-center gap-2"><input type="checkbox" name="is_published" value="1" @checked(old('is_published', $partner->is_published ?? false))> Publish on website</label><button type="submit" class="rounded-lg bg-primary px-7 py-3 font-semibold text-white transition hover:opacity-90">Save partner</button>
 </form></div>
 @endsection
