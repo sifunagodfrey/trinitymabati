@@ -31,7 +31,7 @@
     {{-- LOGO --}}
     <div class="h-16 flex items-center justify-center border-b border-white/10 px-3">
         <a href="{{ route('manage.dashboard.index') }}" x-show="!collapsed" class="flex items-center">
-            <img src="{{ $branding['logo_white'] }}" alt="{{ config('app.name') }} Admin" class="h-9 w-auto">
+            <img src="{{ $branding['logo_white'] }}" alt="{{ config('app.name') }} Admin" class="h-14 w-auto">
         </a>
         <a href="{{ route('manage.dashboard.index') }}" x-show="collapsed">
             <img src="{{ $branding['site_icon'] }}" alt="{{ config('app.name') }} Admin" class="h-8 w-auto">
