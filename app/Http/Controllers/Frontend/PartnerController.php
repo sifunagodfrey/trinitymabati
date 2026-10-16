@@ -9,7 +9,10 @@ class PartnerController extends Controller
 {
     public function index()
     {
-        $partners = Partner::published()->displayOrder()->paginate(24);
+        // ---------------
+        // Partners page lists regular partners only (associations are excluded)
+        // ---------------
+        $partners = Partner::published()->association(false)->displayOrder()->paginate(24);
         return view('frontend.partners.index', compact('partners'));
     }
 }
