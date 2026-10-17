@@ -60,7 +60,7 @@
                 @foreach (['contact_email', 'contact_phone', 'contact_whatsapp', 'contact_address'] as $key)
                     <div>
                         <label for="{{ $key }}" class="block text-sm font-medium text-black mb-1">{{ $fields[$key]['label'] }}</label>
-                        <input type="text" id="{{ $key }}" name="{{ $key }}"
+                        <input type="{{ $key === 'contact_phone' ? 'tel' : 'text' }}" id="{{ $key }}" name="{{ $key }}"
                                value="{{ old($key, $fields[$key]['value']) }}"
                                class="w-full rounded-[8px] border border-border bg-background px-4 py-2.5 text-sm focus:border-primary focus:ring-primary">
                         <p class="mt-1 text-xs text-muted">{{ $fields[$key]['help'] }}</p>
@@ -70,17 +70,17 @@
         </div>
 
         <div class="bg-background border border-border rounded-[12px] p-6 shadow-sm mb-6">
-            <h2 class="text-lg font-semibold text-black mb-1">Branch Contacts</h2>
-            <p class="mb-5 text-sm text-muted">Manage the two branch names and phone numbers displayed on the Contact Us page.</p>
+            <h2 class="text-lg font-semibold text-black mb-1">Offices &amp; Branches</h2>
+            <p class="mb-5 text-sm text-muted">Manage all three office locations shown on Contact Us, About Us and in the footer.</p>
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                @foreach (['nairobi' => 'Nairobi Branch', 'migori' => 'Migori Branch'] as $branchKey => $branchTitle)
+                @foreach (['nairobi' => 'Nairobi Branch', 'corporate' => 'Corporate Office', 'migori' => 'Migori Branch'] as $branchKey => $branchTitle)
                     <fieldset class="min-w-0 rounded-lg border border-border p-4">
                         <legend class="px-2 text-sm font-semibold text-black">{{ $branchTitle }}</legend>
                         @foreach (['name', 'address', 'phone'] as $part)
                             @php $key = 'branch_' . $branchKey . '_' . $part; @endphp
                             <div class="mb-4 last:mb-0">
                                 <label for="{{ $key }}" class="mb-1 block text-sm font-medium text-black">{{ $fields[$key]['label'] }}</label>
-                                <input type="text" id="{{ $key }}" name="{{ $key }}" required
+                                <input type="text" id="{{ $key }}" name="{{ $key }}" @required(!($branchKey === 'corporate' && $part === 'phone'))
                                     value="{{ old($key, $fields[$key]['value']) }}"
                                     class="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm focus:border-primary focus:ring-primary">
                                 <p class="mt-1 text-xs text-muted">{{ $fields[$key]['help'] }}</p>

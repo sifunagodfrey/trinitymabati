@@ -105,33 +105,26 @@
             <h4 class="text-white text-sm font-semibold uppercase tracking-wider" style="font-family: var(--font-ui);">
                 Get in Touch</h4>
             <ul class="mt-4 space-y-3 text-sm text-white/70">
-                @if ($site['address'] ?? null)
-                    <li class="flex items-start gap-3">
-                        <i class="fas fa-location-dot mt-1 text-primary"></i>
-                        <span>{{ $site['address'] }}</span>
-                    </li>
-                @endif
                 @if ($site['phone'] ?? null)
                     <li class="flex items-center gap-3">
-                        <i class="fas fa-phone-alt text-primary"></i>
-                        <a href="{{ $site['phone_href'] }}"
-                            class="hover:text-white transition">{{ $site['phone'] }}</a>
+                        <i class="fas fa-phone-alt text-primary" aria-hidden="true"></i>
+                        <a href="{{ $site['phone_href'] }}" class="hover:text-white transition" aria-label="Call our call center">Call Center: {{ $site['phone'] }}</a>
                     </li>
                 @endif
                 @if ($site['email'] ?? null)
                     <li class="flex items-center gap-3">
-                        <i class="fas fa-envelope text-primary"></i>
-                        <a href="mailto:{{ $site['email'] }}"
-                            class="hover:text-white transition">{{ $site['email'] }}</a>
+                        <i class="fas fa-envelope text-primary" aria-hidden="true"></i>
+                        <a href="mailto:{{ $site['email'] }}" class="hover:text-white transition" style="overflow-wrap:anywhere;">{{ $site['email'] }}</a>
                     </li>
                 @endif
-                @if ($site['whatsapp_url'] ?? null)
-                    <li class="flex items-center gap-3">
-                        <i class="fab fa-whatsapp text-primary"></i>
-                        <a href="{{ $site['whatsapp_url'] }}" target="_blank" rel="noopener"
-                            class="hover:text-white transition">Chat on WhatsApp</a>
-                    </li>
-                @endif
+                @foreach (($site['branches'] ?? []) as $branch)
+                    @if (!empty($branch['address']))
+                        <li class="flex items-start gap-3">
+                            <i class="fas fa-location-dot mt-1 text-primary" aria-hidden="true"></i>
+                            <span>{{ $branch['address'] }}</span>
+                        </li>
+                    @endif
+                @endforeach
             </ul>
         </div>
     </div>

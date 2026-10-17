@@ -180,40 +180,6 @@
                 </div>
 
                 {{-- ---------------
-                -- Brands Filter
-                -- --------------- --}}
-                @if ($brands->isNotEmpty())
-                    <div class="bg-white border border-border rounded-[12px] p-4">
-                        <h4 class="text-xs font-bold text-text uppercase tracking-wide mb-3">Brand</h4>
-                        <div class="space-y-2 max-h-52 overflow-y-auto pr-1">
-                            @foreach ($brands as $brand)
-                                @php
-                                    $isActive  = request('brand_id') == $brand->id;
-                                    $filterUrl = $isActive
-                                        ? route('frontend.products', request()->except(['brand_id', 'page']))
-                                        : route('frontend.products', array_merge(request()->except(['brand_id', 'page']), ['brand_id' => $brand->id]));
-                                @endphp
-                                <a href="{{ $filterUrl }}"
-                                    class="flex items-center justify-between gap-2 group cursor-pointer">
-                                    <div class="flex items-center gap-2">
-                                        <span class="w-4 h-4 rounded flex-shrink-0 border-2 flex items-center justify-center transition
-                                            {{ $isActive ? 'bg-primary border-primary' : 'border-gray-300 group-hover:border-primary' }}">
-                                            @if ($isActive)
-                                                <i class="fas fa-check text-white text-[8px]"></i>
-                                            @endif
-                                        </span>
-                                        <span class="text-xs text-gray-600 group-hover:text-primary transition leading-tight">
-                                            {{ $brand->name }}
-                                        </span>
-                                    </div>
-                                    <span class="text-[10px] text-muted flex-shrink-0">{{ $brand->products_count }}</span>
-                                </a>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
-
-                {{-- ---------------
                 -- Labels Filter
                 -- --------------- --}}
                 @if ($labels->isNotEmpty())
@@ -332,28 +298,6 @@
                                 @endforeach
                             </div>
                         </div>
-
-                        {{-- Brands --}}
-                        @if ($brands->isNotEmpty())
-                            <div class="bg-white border border-border rounded-[12px] p-4">
-                                <h4 class="text-xs font-bold text-text uppercase tracking-wide mb-3">Brand</h4>
-                                <div class="grid grid-cols-2 gap-2">
-                                    @foreach ($brands as $brand)
-                                        @php
-                                            $isActive  = request('brand_id') == $brand->id;
-                                            $filterUrl = $isActive
-                                                ? route('frontend.products', request()->except(['brand_id', 'page']))
-                                                : route('frontend.products', array_merge(request()->except(['brand_id', 'page']), ['brand_id' => $brand->id]));
-                                        @endphp
-                                        <a href="{{ $filterUrl }}"
-                                            class="text-xs px-3 py-1.5 rounded-[12px] border transition text-center
-                                            {{ $isActive ? 'bg-primary text-white border-primary' : 'border-border text-gray-600 hover:border-primary hover:text-primary' }}">
-                                            {{ $brand->name }}
-                                        </a>
-                                    @endforeach
-                                </div>
-                            </div>
-                        @endif
 
                         {{-- Labels --}}
                         @if ($labels->isNotEmpty())

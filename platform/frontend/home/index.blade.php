@@ -1,9 +1,11 @@
 @extends('frontend.layouts.app')
 
 @section('title', 'Trinity Mabati Factory | Quality Roofing Sheets in Kenya')
-@section('meta_description', 'Trinity Mabati Factory delivers genuine, KEBS-certified metal roofing sheets with an ironclad 15-year written warranty directly to your construction site.')
+@section('meta_description', 'Trinity Mabati Factory delivers genuine, KEBS-certified metal roofing sheets with an
+    ironclad 15-year written warranty directly to your construction site.')
 @section('og_title', 'Trinity Mabati Factory')
-@section('og_description', 'Trinity Mabati Factory delivers genuine, KEBS-certified metal roofing sheets with an ironclad 15-year written warranty directly to your construction site.')
+@section('og_description', 'Trinity Mabati Factory delivers genuine, KEBS-certified metal roofing sheets with an
+    ironclad 15-year written warranty directly to your construction site.')
 @section('og_image', url('public/images/trinity-mabati-home-seo.jpg'))
 
 @section('content')
@@ -61,7 +63,8 @@
                         class="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3.5 text-sm font-bold text-white transition hover:brightness-110">Explore
                         Our Mabati <i class="fas fa-arrow-right"></i></a>
                     <a href="{{ route('frontend.quotation.index') }}"
-                        class="hidden items-center justify-center rounded-lg border-2 border-white bg-transparent px-6 py-3 text-sm font-bold text-white transition hover:bg-white hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:inline-flex">Get a Quote</a>
+                        class="hidden items-center justify-center rounded-lg border-2 border-white bg-transparent px-6 py-3 text-sm font-bold text-white transition hover:bg-white hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:inline-flex">Get
+                        a Quote</a>
                 </div>
             </div>
         </div>
@@ -215,7 +218,13 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <h3 class="truncate text-sm font-bold text-gray-900">Sue Wahome</h3>
-                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>4 reviews</span><span aria-hidden="true">·</span><span class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img" aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i></span></p>
+                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>4
+                                        reviews</span><span aria-hidden="true">·</span><span
+                                        class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img"
+                                        aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i
+                                            class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star"
+                                            aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i
+                                            class="fas fa-star" aria-hidden="true"></i></span></p>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="22" height="22"
                                 role="img" aria-label="Google" class="shrink-0">
@@ -242,7 +251,13 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <h3 class="truncate text-sm font-bold text-gray-900">Iven</h3>
-                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>1 review</span><span aria-hidden="true">·</span><span class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img" aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i></span></p>
+                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>1
+                                        review</span><span aria-hidden="true">·</span><span
+                                        class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img"
+                                        aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i
+                                            class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star"
+                                            aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i
+                                            class="fas fa-star" aria-hidden="true"></i></span></p>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="22" height="22"
                                 role="img" aria-label="Google" class="shrink-0">
@@ -269,7 +284,13 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <h3 class="truncate text-sm font-bold text-gray-900">Safari na Simon Mungai</h3>
-                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>35 reviews</span><span aria-hidden="true">·</span><span class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img" aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i></span></p>
+                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500">
+                                    <span>35 reviews</span><span aria-hidden="true">·</span><span
+                                        class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img"
+                                        aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i
+                                            class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star"
+                                            aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i
+                                            class="fas fa-star" aria-hidden="true"></i></span></p>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="22" height="22"
                                 role="img" aria-label="Google" class="shrink-0">
@@ -296,7 +317,13 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <h3 class="truncate text-sm font-bold text-gray-900">Sarah Musyimi</h3>
-                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>42 reviews</span><span aria-hidden="true">·</span><span class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img" aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i></span></p>
+                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500">
+                                    <span>42 reviews</span><span aria-hidden="true">·</span><span
+                                        class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img"
+                                        aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i
+                                            class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star"
+                                            aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i
+                                            class="fas fa-star" aria-hidden="true"></i></span></p>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="22" height="22"
                                 role="img" aria-label="Google" class="shrink-0">
@@ -323,7 +350,13 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <h3 class="truncate text-sm font-bold text-gray-900">Chinku Travels</h3>
-                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>105 reviews</span><span aria-hidden="true">·</span><span class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img" aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i></span></p>
+                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500">
+                                    <span>105 reviews</span><span aria-hidden="true">·</span><span
+                                        class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img"
+                                        aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i
+                                            class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star"
+                                            aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i
+                                            class="fas fa-star" aria-hidden="true"></i></span></p>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="22" height="22"
                                 role="img" aria-label="Google" class="shrink-0">
@@ -350,7 +383,13 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <h3 class="truncate text-sm font-bold text-gray-900">Mercy Daniel</h3>
-                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>5 reviews</span><span aria-hidden="true">·</span><span class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img" aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i></span></p>
+                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>5
+                                        reviews</span><span aria-hidden="true">·</span><span
+                                        class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img"
+                                        aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i
+                                            class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star"
+                                            aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i
+                                            class="fas fa-star" aria-hidden="true"></i></span></p>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="22" height="22"
                                 role="img" aria-label="Google" class="shrink-0">
@@ -377,7 +416,13 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <h3 class="truncate text-sm font-bold text-gray-900">Wakio Kanyi</h3>
-                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>2 reviews</span><span aria-hidden="true">·</span><span class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img" aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i></span></p>
+                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>2
+                                        reviews</span><span aria-hidden="true">·</span><span
+                                        class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img"
+                                        aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i
+                                            class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star"
+                                            aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i
+                                            class="fas fa-star" aria-hidden="true"></i></span></p>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="22" height="22"
                                 role="img" aria-label="Google" class="shrink-0">
@@ -403,7 +448,13 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <h3 class="truncate text-sm font-bold text-gray-900">Ndiema Kwemoi</h3>
-                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>1 review</span><span aria-hidden="true">·</span><span class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img" aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i></span></p>
+                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>1
+                                        review</span><span aria-hidden="true">·</span><span
+                                        class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img"
+                                        aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i
+                                            class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star"
+                                            aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i
+                                            class="fas fa-star" aria-hidden="true"></i></span></p>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="22" height="22"
                                 role="img" aria-label="Google" class="shrink-0">
@@ -431,7 +482,13 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <h3 class="truncate text-sm font-bold text-gray-900">Sylvester Junior</h3>
-                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>1 review</span><span aria-hidden="true">·</span><span class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img" aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i></span></p>
+                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>1
+                                        review</span><span aria-hidden="true">·</span><span
+                                        class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img"
+                                        aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i
+                                            class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star"
+                                            aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i
+                                            class="fas fa-star" aria-hidden="true"></i></span></p>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="22" height="22"
                                 role="img" aria-label="Google" class="shrink-0">
@@ -457,7 +514,13 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <h3 class="truncate text-sm font-bold text-gray-900">Wambui Mugo</h3>
-                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>3 reviews</span><span aria-hidden="true">·</span><span class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img" aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i></span></p>
+                                <p class="mt-0.5 flex items-center gap-1.5 whitespace-nowrap text-xs text-gray-500"><span>3
+                                        reviews</span><span aria-hidden="true">·</span><span
+                                        class="inline-flex items-center gap-0.5" style="color: #fbbc04;" role="img"
+                                        aria-label="5 out of 5 stars"><i class="fas fa-star" aria-hidden="true"></i><i
+                                            class="fas fa-star" aria-hidden="true"></i><i class="fas fa-star"
+                                            aria-hidden="true"></i><i class="fas fa-star" aria-hidden="true"></i><i
+                                            class="fas fa-star" aria-hidden="true"></i></span></p>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="22" height="22"
                                 role="img" aria-label="Google" class="shrink-0">
@@ -505,7 +568,13 @@
     </section>
 
     @if (isset($partners) && $partners->isNotEmpty())
-        @include('frontend.partners.home-rail', ['items' => $partners, 'heading' => 'Our Partners', 'id' => 'partners', 'seeAll' => true, 'bg' => 'bg-white'])
+        @include('frontend.partners.home-rail', [
+            'items' => $partners,
+            'heading' => 'Our Partners',
+            'id' => 'partners',
+            'seeAll' => true,
+            'bg' => 'bg-white',
+        ])
     @endif
 
     <section class="bg-white py-14 sm:py-20" aria-labelledby="how-to-order-heading">
@@ -565,7 +634,8 @@
                         aria-label="{{ $group['heading'] }} products, scroll horizontally"
                         class="flex snap-x snap-mandatory items-start sm:items-stretch gap-3 overflow-x-auto scroll-smooth pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4">
                         @foreach ($products as $product)
-                            <div class="flex trinity-mobile-product-rail-item shrink-0 snap-start flex-col sm:w-[32%] lg:w-[23%]">
+                            <div
+                                class="flex trinity-mobile-product-rail-item shrink-0 snap-start flex-col sm:w-[32%] lg:w-[23%]">
                                 @include('frontend.partials.product-card', ['product' => $product])
                             </div>
                         @endforeach
@@ -597,7 +667,8 @@
                     both commercial and residential projects.</p>
                 <p class="mt-4 text-base leading-8 text-gray-700">Our inventory serves all trades as well as the general
                     public across Kenya. You can visit us at our main outlets in <strong>Nairobi</strong> and
-                    <strong>Migori</strong> for dedicated service and expert advice.</p>
+                    <strong>Migori</strong> for dedicated service and expert advice.
+                </p>
             </div>
             <img src="{{ url('public/images/trinity-mabati-product-5.webp') }}"
                 alt="Trinity Mabati Factory roofing products" loading="lazy"
@@ -625,7 +696,8 @@
                         aria-label="{{ $group['heading'] }} products, scroll horizontally"
                         class="flex snap-x snap-mandatory items-start sm:items-stretch gap-3 overflow-x-auto scroll-smooth pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4">
                         @foreach ($products as $product)
-                            <div class="flex trinity-mobile-product-rail-item shrink-0 snap-start flex-col sm:w-[32%] lg:w-[23%]">
+                            <div
+                                class="flex trinity-mobile-product-rail-item shrink-0 snap-start flex-col sm:w-[32%] lg:w-[23%]">
                                 @include('frontend.partials.product-card', ['product' => $product])
                             </div>
                         @endforeach
@@ -647,10 +719,17 @@
     @endforeach
 
     @if (isset($associations) && $associations->isNotEmpty())
-        @include('frontend.partners.home-rail', ['items' => $associations, 'heading' => 'Our Associations', 'id' => 'associations', 'seeAll' => true, 'bg' => 'bg-[#FAF5F3]', 'variant' => 'split'])
+        @include('frontend.partners.home-rail', [
+            'items' => $associations,
+            'heading' => 'Our Associations',
+            'id' => 'associations',
+            'seeAll' => true,
+            'bg' => 'bg-[#FAF5F3]',
+            'variant' => 'split',
+        ])
     @endif
 
-    @if(isset($teamMembers) && $teamMembers->isNotEmpty())
+    @if (isset($teamMembers) && $teamMembers->isNotEmpty())
         @include('frontend.team.home-rail', ['members' => $teamMembers])
     @endif
 
@@ -658,7 +737,7 @@
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="mx-auto mb-10 max-w-2xl text-center">
                 <h2 id="home-faq-heading" class="text-3xl font-extrabold text-primary sm:text-4xl">Frequently Asked
-                    Question</h2>
+                    Questions</h2>
             </div>
             <div class="grid items-start gap-5 lg:grid-cols-2">
                 <details
@@ -721,21 +800,24 @@
 @endsection
 
 @push('scripts')
-<script>
-(function () {
-    function startHeroVideo() {
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || navigator.connection?.saveData) return;
-        const selector = window.matchMedia('(min-width: 768px)').matches
-            ? 'video[data-video-src].md\\:block' : 'video[data-video-src].md\\:hidden';
-        const video = document.querySelector(selector);
-        if (!video) return;
-        video.src = video.dataset.videoSrc;
-        video.load();
-        const play = video.play();
-        if (play && play.catch) play.catch(function () {});
-    }
-    if (document.readyState === 'complete') startHeroVideo();
-    else window.addEventListener('load', startHeroVideo, {once: true});
-})();
-</script>
+    <script>
+        (function() {
+            function startHeroVideo() {
+                if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || navigator.connection?.saveData)
+                    return;
+                const selector = window.matchMedia('(min-width: 768px)').matches ?
+                    'video[data-video-src].md\\:block' : 'video[data-video-src].md\\:hidden';
+                const video = document.querySelector(selector);
+                if (!video) return;
+                video.src = video.dataset.videoSrc;
+                video.load();
+                const play = video.play();
+                if (play && play.catch) play.catch(function() {});
+            }
+            if (document.readyState === 'complete') startHeroVideo();
+            else window.addEventListener('load', startHeroVideo, {
+                once: true
+            });
+        })();
+    </script>
 @endpush

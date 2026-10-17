@@ -79,13 +79,18 @@ class Setting extends Model
             'address'      => $value('contact_address'),
             'branches' => [
                 [
-                    'name' => array_key_exists('branch_nairobi_name', $all) ? trim((string) $all['branch_nairobi_name']) : 'Nairobi Outlet',
-                    'address' => array_key_exists('branch_nairobi_address', $all) ? trim((string) $all['branch_nairobi_address']) : 'Enterprise Road, B. Binico Enterprises, Nairobi, Kenya.',
+                    'name' => array_key_exists('branch_nairobi_name', $all) ? trim((string) $all['branch_nairobi_name']) : 'Nairobi Branch',
+                    'address' => array_key_exists('branch_nairobi_address', $all) ? trim((string) $all['branch_nairobi_address']) : 'GM, Enterprise Road B, Nairobi.',
                     'phone' => array_key_exists('branch_nairobi_phone', $all) ? trim((string) $all['branch_nairobi_phone']) : '+254 740 550 105',
                 ],
                 [
-                    'name' => array_key_exists('branch_migori_name', $all) ? trim((string) $all['branch_migori_name']) : 'Migori Outlet',
-                    'address' => array_key_exists('branch_migori_address', $all) ? trim((string) $all['branch_migori_address']) : 'Kimaiga, next to Dolion Hotel',
+                    'name' => array_key_exists('branch_corporate_name', $all) ? trim((string) $all['branch_corporate_name']) : 'Corporate Office',
+                    'address' => array_key_exists('branch_corporate_address', $all) ? trim((string) $all['branch_corporate_address']) : 'Pili Trade Center, opposite Hilton Hotel, Mombasa Road, Nairobi.',
+                    'phone' => array_key_exists('branch_corporate_phone', $all) ? trim((string) $all['branch_corporate_phone']) : '',
+                ],
+                [
+                    'name' => array_key_exists('branch_migori_name', $all) ? trim((string) $all['branch_migori_name']) : 'Migori Branch',
+                    'address' => array_key_exists('branch_migori_address', $all) ? trim((string) $all['branch_migori_address']) : 'Next to Dolion Hotel, Migori.',
                     'phone' => array_key_exists('branch_migori_phone', $all) ? trim((string) $all['branch_migori_phone']) : '+254 796 593 842',
                 ],
             ],

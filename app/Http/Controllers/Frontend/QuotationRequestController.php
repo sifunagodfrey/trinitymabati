@@ -4,24 +4,70 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Models\Manage\Products\Product;
-use App\Models\Manage\Products\ProductVariant;
 use App\Models\Manage\Quotations\Quotation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use App\Services\QuotationEmailService;
+use App\Services\StockAvailability;
 class QuotationRequestController extends Controller
 {
+    private array $productCache = [];
+
+    private function product(int $id): Product
+    {
+        return $this->productCache[$id] ??= Product::where('is_active', 1)
+            ->with(['variants.variantAttributes.attribute', 'variants.variantAttributes.attributeValue'])->findOrFail($id);
+    }
+
+    private function configuration(Product $product): array
+    {
+        $groups = [];
+        $variants = [];
+        if ($product->is_variant) {
+            foreach ($product->variants as $variant) {
+                $rate = $variant->sale_price ?? $variant->price ?? $product->sale_price ?? $product->price;
+                if (!StockAvailability::isAvailable($variant->stock_quantity) || (float) $rate <= 0) continue;
+                $attributes = [];
+                foreach ($variant->variantAttributes as $selection) {
+                    if (!$selection->attribute || !$selection->attributeValue) continue;
+                    $id = (string) $selection->attribute_id;
+                    $value = (string) $selection->attributeValue->value;
+                    $attributes[$id] = $value;
+                    if (!isset($groups[$id])) $groups[$id] = ['id' => $id, 'name' => $selection->attribute->name, 'values' => []];
+                    if (!in_array($value, $groups[$id]['values'], true)) $groups[$id]['values'][] = $value;
+                }
+                $variants[] = ['id' => $variant->id, 'label' => $variant->variant_code ?: 'Option ' . $variant->id, 'attributes' => (object) $attributes];
+            }
+        }
+        return ['attributes' => array_values($groups), 'variants' => $variants];
+    }
+
+    private function present(array $items): array
+    {
+        foreach ($items as &$item) {
+            $product = $this->product((int) $item['product_id']);
+            $item['configuration'] = $this->configuration($product);
+            $item['image_url'] = $product->thumbnail ? asset($product->thumbnail) : null;
+        }
+        unset($item);
+        return $items;
+    }
+
     private function resolve(int $productId, ?int $variantId, $metres, int $quantity): array
     {
-        $product = Product::where('is_active', 1)->findOrFail($productId);
+        $product = $this->product($productId);
         if ($quantity < 1 || $quantity > 10000) throw ValidationException::withMessages(['quantity' => 'Quantity must be between 1 and 10,000.']);
         $variant = null;
         if ($product->is_variant) {
-            if (!$variantId) throw ValidationException::withMessages(['variant_id' => 'Please select gauge and finish.']);
-            $variant = ProductVariant::where('product_id', $product->id)->findOrFail($variantId);
+            if (!$variantId) throw ValidationException::withMessages(['variant_id' => 'Please select the product options.']);
+            $variant = $product->variants->firstWhere('id', $variantId);
+            if (!$variant) throw ValidationException::withMessages(['variant_id' => 'This option does not belong to this product.']);
         } elseif ($variantId) {
             throw ValidationException::withMessages(['variant_id' => 'This product has no variants.']);
+        }
+        if (!StockAvailability::isAvailable($variant ? $variant->stock_quantity : $product->stock_quantity)) {
+            throw ValidationException::withMessages(['product_id' => 'This product option is currently unavailable.']);
         }
         $lengthEnabled = (bool) $product->allow_custom_length;
         $length = $lengthEnabled ? (float) $metres : null;
@@ -31,9 +77,11 @@ class QuotationRequestController extends Controller
         $rate = (float) (($variant?->sale_price !== null) ? $variant->sale_price : ($variant?->price ?? $product->sale_price ?? $product->price));
         if ($rate <= 0) throw ValidationException::withMessages(['product_id' => 'Price is not available for this selection.']);
         $labels = [];
+        $selectedAttributes = [];
         if ($variant) {
-            $variant->load('variantAttributes.attribute', 'variantAttributes.attributeValue');
+            $variant->loadMissing('variantAttributes.attribute', 'variantAttributes.attributeValue');
             foreach ($variant->variantAttributes as $attribute) {
+                if ($attribute->attribute && $attribute->attributeValue) $selectedAttributes[(string) $attribute->attribute_id] = (string) $attribute->attributeValue->value;
                 $labels[] = ($attribute->attribute?->name ?? 'Option') . ' ' . ($attribute->attributeValue?->value ?? '');
             }
         }
@@ -45,6 +93,7 @@ class QuotationRequestController extends Controller
             'name' => $name,
             'product_name' => $product->name,
             'options' => implode(' · ', $labels),
+            'selected_attributes' => (object) $selectedAttributes,
             'metres' => $length,
             'length_enabled' => $lengthEnabled,
             'rate' => round($rate, 2),
@@ -67,30 +116,49 @@ class QuotationRequestController extends Controller
 
     public function index(Request $request)
     {
-        return view('frontend.quotation.index', ['items' => $this->basket($request)]);
+        return view('frontend.quotation.index', ['items' => $this->present($this->basket($request))]);
     }
 
     public function search(Request $request)
     {
         $term = trim((string)$request->query('q', ''));
-        if ($term === '') return response()->json(['results' => []]);
         $products = Product::query()->where('is_active', 1)
             ->when($term !== '', fn($q) => $q->where('name', 'like', '%' . str_replace(['%', '_'], ['\%', '\_'], $term) . '%'))
+            ->where(function ($query) {
+                $query->where(function ($simple) {
+                    $simple->where('is_variant', 0)
+                        ->whereRaw('COALESCE(sale_price, price, 0) > 0')
+                        ->where(fn($stock) => $stock->whereNull('stock_quantity')->orWhere('stock_quantity', '>', 0));
+                })->orWhere(function ($variable) {
+                    $variable->where('is_variant', 1)->whereHas('variants', function ($variants) {
+                        $variants->whereRaw('COALESCE(su_product_variants.sale_price, su_product_variants.price, su_products.sale_price, su_products.price, 0) > 0')
+                            ->where(fn($stock) => $stock->whereNull('stock_quantity')->orWhere('stock_quantity', '>', 0));
+                    });
+                });
+            })
             ->with(['variants.variantAttributes.attribute', 'variants.variantAttributes.attributeValue'])
-            ->orderByDesc('id')->limit(5)->get();
+            ->orderByDesc('id')->limit(8)->get();
         $options = [];
         foreach ($products as $product) {
-            $variants = $product->is_variant ? $product->variants : collect([null]);
-            foreach ($variants as $variant) {
-                if ($product->is_variant && (!$variant || !\App\Services\StockAvailability::isAvailable($variant->stock_quantity))) continue;
-                $length = $product->allow_custom_length ? 3 : null;
-                try {
-                    $candidate = $this->resolve($product->id, $variant?->id, $length, 1);
-                    $candidate['name'] = $product->name . ($candidate['options'] ? ' · ' . $candidate['options'] : '') . ($length !== null ? ' · 3 Metres' : '');
-                    $options[] = $candidate;
-                    if (count($options) >= 5) break 2;
-                } catch (\Throwable $e) { continue; }
+            $this->productCache[$product->id] = $product;
+            $configuration = $this->configuration($product);
+            $variantId = null;
+            if ($product->is_variant) {
+                $available = collect($configuration['variants']);
+                $preferred = $available->first(function ($variant) use ($product, $configuration) {
+                    foreach ($configuration['attributes'] as $attribute) {
+                        $slug = \Illuminate\Support\Str::slug($attribute['name']);
+                        $desired = match ($slug) { 'gauge' => $product->default_gauge, 'finish' => $product->default_finish, default => null };
+                        if ($desired && strcasecmp((string) ($variant['attributes']->{$attribute['id']} ?? ''), (string) $desired) !== 0) return false;
+                    }
+                    return true;
+                }) ?? $available->first();
+                if (!$preferred) continue;
+                $variantId = $preferred['id'];
             }
+            $length = $product->allow_custom_length ? max(0.1, min(30, (float) ($product->default_length_m ?? 1))) : null;
+            $options[] = ['product_id' => $product->id, 'product_name' => $product->name,
+                'variant_id' => $variantId, 'metres' => $length];
         }
         return response()->json(['results' => $options]);
     }
@@ -107,38 +175,46 @@ class QuotationRequestController extends Controller
         unset($item);
         if (!$found) $items[] = $candidate;
         $request->session()->put('trinity_quote', $items);
-        return response()->json(['ok' => true, 'count' => count($items)]);
+        return response()->json(['ok' => true, 'count' => count($items), 'items' => $this->present($items)]);
     }
 
     public function update(Request $request)
     {
-        $data = $request->validate(['key' => 'required|string|max:150', 'quantity' => 'required|integer|min:1|max:10000', 'metres' => 'nullable']);
+        $data = $request->validate(['key' => 'required|string|max:150', 'quantity' => 'required|integer|min:1|max:10000', 'metres' => 'nullable', 'variant_id' => 'nullable|integer']);
         $items = $this->basket($request);
+        $target = collect($items)->firstWhere('key', $data['key']);
+        if (!$target) return response()->json(['message' => 'Quotation item not found.'], 404);
+        $variantId = array_key_exists('variant_id', $data) ? $data['variant_id'] : $target['variant_id'];
+        $candidate = $this->resolve((int) $target['product_id'], $variantId !== null ? (int) $variantId : null,
+            $data['metres'] ?? $target['metres'], (int) $data['quantity']);
+        // Remove the old configuration first, then merge matching configurations
+        // independently of their order in the basket.
         $updated = [];
-        $found = false;
         foreach ($items as $item) {
-            if ($item['key'] !== $data['key']) { $updated[$item['key']] = $item; continue; }
-            $found = true;
-            $candidate = $this->resolve((int)$item['product_id'], $item['variant_id'], $data['metres'] ?? $item['metres'], (int)$data['quantity']);
-            if (isset($updated[$candidate['key']])) $candidate['quantity'] = min(10000, $candidate['quantity'] + $updated[$candidate['key']]['quantity']);
-            $updated[$candidate['key']] = $candidate;
+            if ($item['key'] === $target['key']) continue;
+            if ($item['key'] === $candidate['key']) {
+                $candidate['quantity'] = min(10000, $candidate['quantity'] + $item['quantity']);
+                continue;
+            }
+            $updated[] = $item;
         }
-        if (!$found) return response()->json(['message' => 'Quotation item not found.'], 404);
-        $request->session()->put('trinity_quote', array_values($updated));
-        return response()->json(['ok' => true]);
+        $updated[] = $candidate;
+        $request->session()->put('trinity_quote', $updated);
+        return response()->json(['ok' => true, 'items' => $this->present($updated)]);
     }
 
     public function remove(Request $request)
     {
         $key = $request->validate(['key' => 'required|string'])['key'];
-        $request->session()->put('trinity_quote', array_values(array_filter($this->basket($request), fn($item) => $item['key'] !== $key)));
-        return response()->json(['ok' => true]);
+        $items = array_values(array_filter($this->basket($request), fn($item) => $item['key'] !== $key));
+        $request->session()->put('trinity_quote', $items);
+        return response()->json(['ok' => true, 'items' => $this->present($items)]);
     }
 
     public function submit(Request $request)
     {
         $data = $request->validate([
-            'first_name' => 'required|string|max:100', 'last_name' => 'required|string|max:100',
+            'first_name' => 'required|string|max:100', 'last_name' => 'nullable|string|max:100',
             'phone' => ['required','regex:/^\+?[0-9 ]{9,16}$/'], 'email' => 'nullable|email|max:190',
         ]);
         $items = $this->basket($request);
@@ -148,7 +224,7 @@ class QuotationRequestController extends Controller
             foreach ($items as $item) $subtotal += $item['unit_price'] * $item['quantity'];
             $quote = Quotation::create([
                 'quotation_code' => Quotation::generateCode(), 'user_id' => $request->user()?->id,
-                'customer_first_name' => $data['first_name'], 'customer_last_name' => $data['last_name'],
+                'customer_first_name' => $data['first_name'], 'customer_last_name' => $data['last_name'] ?? null,
                 'customer_phone' => $data['phone'], 'customer_email' => $data['email'] ?? null,
                 'status' => 'sent', 'subtotal' => round($subtotal, 2), 'tax' => 0,
                 'discount' => 0, 'total' => round($subtotal, 2), 'currency' => 'KES',

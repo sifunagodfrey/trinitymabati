@@ -365,16 +365,15 @@
                         {{-- Left: price info --}}
                         <div>
                             <div class="flex items-baseline flex-wrap gap-2">
-                                <span class="text-2xl md:text-3xl font-extrabold text-secondary" x-text="displayPrice === null ? '—' : fmtPrice(displayPrice)">@price($variantMinPrice ?? ($basePrice > 0 ? $basePrice : ($bulkMinPrice ?? 0)))</span>
+                                <span class="text-2xl md:text-3xl font-extrabold text-primary" x-text="displayPrice === null ? '—' : fmtPrice(displayPrice)">@price($variantMinPrice ?? ($basePrice > 0 ? $basePrice : ($bulkMinPrice ?? 0)))</span>
                                 @if ($product->is_variant && $variantMinPrice !== null && $variantMinPrice != $variantMaxPrice)
-                                    <span class="text-xl text-muted font-normal" x-show="showPriceRange"> – </span>
-                                    <span class="text-2xl md:text-3xl font-extrabold text-secondary" x-show="showPriceRange" x-text="fmtPrice(variantMaxPrice)">@price($variantMaxPrice)</span>
+                                    <span class="text-xl text-primary font-normal" x-show="showPriceRange"> – </span>
+                                    <span class="text-2xl md:text-3xl font-extrabold text-primary" x-show="showPriceRange" x-text="fmtPrice(variantMaxPrice)">@price($variantMaxPrice)</span>
                                 @endif
                                 @if ($bulkMinPrice !== null && $basePrice == 0 && $bulkTiersJson->count() > 1)
-                                    <span class="text-xl text-muted font-normal" x-show="showBulkPriceRange"> – </span>
-                                    <span class="text-2xl md:text-3xl font-extrabold text-secondary" x-show="showBulkPriceRange" x-text="fmtPrice(bulkMaxPrice)">@price($bulkTiersJson->max('price_per_unit'))</span>
+                                    <span class="text-xl text-primary font-normal" x-show="showBulkPriceRange"> – </span>
+                                    <span class="text-2xl md:text-3xl font-extrabold text-primary" x-show="showBulkPriceRange" x-text="fmtPrice(bulkMaxPrice)">@price($bulkTiersJson->max('price_per_unit'))</span>
                                 @endif
-                                <span class="text-xs text-muted">per sheet</span>
                                 <span class="text-sm text-muted line-through" x-show="(isOnSale || selectedBulkTier) && !showPriceRange && !showBulkPriceRange" x-text="fmtPrice(displayOriginal)"></span>
                                 <span class="text-xs font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded" x-show="isOnSale && !selectedBulkTier && !showPriceRange && !showBulkPriceRange">Save {{ $saleDiscount }}%</span>
                                 <span class="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded flex items-center gap-1" x-show="selectedBulkTier && !showPriceRange"><i class="fas fa-layer-group text-[10px]"></i><span x-text="selectedBulkTier ? 'Bulk: ' + selectedBulkTier.min_quantity + (selectedBulkTier.max_quantity ? '–' + selectedBulkTier.max_quantity : '+') + ' units' : ''"></span></span>
@@ -388,7 +387,6 @@
                                     <i class="fas fa-layer-group text-[9px]"></i> Select a bulk tier below for the exact unit price
                                 </p>
                             @endif
-                            <p class="text-[11px] mt-1 {{ $product->is_vat_exempt ? 'text-green-600' : 'text-muted' }}">{{ $product->is_vat_exempt ? 'VAT Exempt' : 'Price includes VAT' }}</p>
                         </div>
 
                         {{-- Right: quantity stepper --}}
@@ -480,26 +478,20 @@
                         <button type="button" @click="addToCart()"
                             :disabled="addingToCart || unavailableCombination || ({{ $product->allow_custom_length ? 'true' : 'false' }} && !validSheetLength) || ({{ $product->is_variant ? 'true' : 'false' }} && !activeVariant)"
                             class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3.5 text-sm font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
-                            <i class="fas fa-shopping-cart" aria-hidden="true"></i>
                             <span x-text="addingToCart ? 'Adding...' : 'Add to Cart'"></span>
                         </button>
                     </template>
                     <template x-if="isInCart">
                         <a href="{{ route('frontend.cart') }}"
                             class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3.5 text-sm font-bold text-white transition hover:opacity-90">
-                            <i class="fas fa-shopping-cart" aria-hidden="true"></i> View Cart
+                            View Cart
                         </a>
                     </template>
                     <button type="button" @click="addToQuote()"
                         :disabled="addingToCart || unavailableCombination || ({{ $product->allow_custom_length ? 'true' : 'false' }} && !validSheetLength) || ({{ $product->is_variant ? 'true' : 'false' }} && !activeVariant)"
                         class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border-2 border-primary px-4 py-3.5 text-sm font-bold text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50">
-                        <i class="fas fa-file-invoice" aria-hidden="true"></i> Get a Quote
+                        Get a Quote
                     </button>
-                </div>
-
-                {{-- Share --}}
-                <div class="flex items-center gap-4">
-                    <button class="flex items-center gap-1.5 text-xs text-muted hover:text-secondary transition"><i class="fas fa-share-alt"></i> Share</button>
                 </div>
             </div>
         </div>

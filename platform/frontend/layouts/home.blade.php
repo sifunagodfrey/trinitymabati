@@ -41,7 +41,7 @@
     {{-- Page scripts --}}
     @stack('scripts')
 
-    @include('frontend.partials.whatsapp-float')
+    @include('frontend.partials.whatsapp-chat')
     {{-- @include('frontend.partials.bottom-nav') --}}
     @include('frontend.partials.cart-runtime')
 </body>

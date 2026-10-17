@@ -68,38 +68,49 @@
 
             <div class="contact-grid">
 
-                {{-- Left: Nairobi, Migori, and general contact cards --}}
+                {{-- Left: call center, email, Nairobi and Migori locations --}}
                 <div class="grid gap-4 self-start">
+                    @if (!empty($site['phone']))
+                        <section class="rounded-[4px] border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+                            <div class="flex items-start gap-4">
+                                <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-[4px] bg-red-50 text-primary"><i class="fas fa-headset text-lg" aria-hidden="true"></i></span>
+                                <div class="min-w-0">
+                                    <h2 class="text-lg font-bold text-gray-900">Call Center</h2>
+                                    <p class="mt-2 text-sm leading-6 text-gray-600">Call us for sales and support.</p>
+                                    <a href="{{ $site['phone_href'] }}" class="mt-2 inline-block text-base font-bold text-primary hover:underline">{{ $site['phone'] }}</a>
+                                </div>
+                            </div>
+                        </section>
+                    @endif
+                    @if (!empty($site['email']))
+                        <section class="rounded-[4px] border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+                            <div class="flex items-start gap-4">
+                                <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-[4px] bg-red-50 text-primary"><i class="fas fa-envelope text-lg" aria-hidden="true"></i></span>
+                                <div class="min-w-0">
+                                    <h2 class="text-lg font-bold text-gray-900">Email</h2>
+                                    <a href="mailto:{{ $site['email'] }}" class="mt-2 inline-block text-sm text-primary hover:underline" style="overflow-wrap:anywhere;">{{ $site['email'] }}</a>
+                                </div>
+                            </div>
+                        </section>
+                    @endif
                     @foreach (($site['branches'] ?? []) as $branch)
-                        @if (!empty($branch['name']) && !empty($branch['phone']))
+                        @if (!empty($branch['name']) && !empty($branch['address']))
                             <section class="rounded-[4px] border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
                                 <div class="flex items-start gap-4">
-                                    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-[4px] bg-red-50 text-primary"><i class="fas fa-mobile-screen-button text-lg" aria-hidden="true"></i></span>
+                                    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-[4px] bg-red-50 text-primary"><i class="fas fa-location-dot text-lg" aria-hidden="true"></i></span>
                                     <div class="min-w-0">
                                         <h2 class="text-lg font-bold text-gray-900">{{ $branch['name'] }}</h2>
                                         @if (!empty($branch['address']))
                                             <p class="mt-2 text-sm leading-6 text-gray-600">{{ $branch['address'] }}</p>
                                         @endif
-                                        <a href="tel:{{ preg_replace('/[^0-9+]/', '', $branch['phone']) }}" class="mt-2 inline-block text-base font-bold text-primary hover:underline">{{ $branch['phone'] }}</a>
+                                        @if (!empty($branch['phone']))
+                                            <a href="tel:{{ preg_replace('/[^0-9+]/', '', $branch['phone']) }}" class="mt-2 inline-block text-base font-bold text-primary hover:underline">{{ $branch['phone'] }}</a>
+                                        @endif
                                     </div>
                                 </div>
                             </section>
                         @endif
                     @endforeach
-                    <section class="rounded-[4px] border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-                        <h2 class="text-lg font-bold text-gray-900">Other Ways to Reach Us</h2>
-                        <div class="mt-4 space-y-4 text-sm">
-                            @if (!empty($site['whatsapp_url']))
-                                <a href="{{ $site['whatsapp_url'] }}" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3 text-gray-700 hover:text-primary"><i class="fab fa-whatsapp w-5 text-lg text-green-600" aria-hidden="true"></i><span>Chat with us on WhatsApp</span></a>
-                            @endif
-                            @if (!empty($site['email']))
-                                <a href="mailto:{{ $site['email'] }}" class="flex items-center gap-3 break-all text-gray-700 hover:text-primary"><i class="fas fa-envelope w-5 text-primary" aria-hidden="true"></i><span>{{ $site['email'] }}</span></a>
-                            @endif
-                            @if (!empty($site['address']))
-                                <div class="flex items-center gap-3 text-gray-700"><i class="fas fa-location-dot w-5 text-primary" aria-hidden="true"></i><span>{{ $site['address'] }}</span></div>
-                            @endif
-                        </div>
-                    </section>
                 </div>
 
                 {{-- ===============================

@@ -1,7 +1,7 @@
 @extends('frontend.layouts.app')
 
 @section('title', 'About Us | Trinity Mabati Factory')
-@section('meta_description', 'Learn about Trinity Mabati Factory, a Kenyan roofing sheet supplier with over 5 years of experience and outlets in Nairobi and Migori.')
+@section('meta_description', 'Learn about Trinity Mabati Factory, a Kenyan roofing sheet supplier with over 5 years of experience and three offices across Nairobi and Migori.')
 @section('og_title', 'About Trinity Mabati Factory')
 @section('og_description', 'Quality roofing sheets and dedicated service across Kenya.')
 
@@ -32,7 +32,7 @@
             <h2 class="mt-3 text-3xl font-bold leading-tight text-gray-900 sm:text-4xl">Built around quality and exceptional service</h2>
             <div class="mt-6 space-y-5 text-base leading-relaxed text-gray-600">
                 <p><strong>Trinity Mabati Factory</strong> is a leading supplier in the roofing sheet industry, built on over 5 years of experience providing quality products and exceptional service. We are committed to supplying high-grade roofing sheet products tailored for both commercial and residential projects.</p>
-                <p>Our inventory serves all trades as well as the general public across Kenya. You can visit us at our main outlets in <strong>Nairobi</strong> and <strong>Migori</strong> for dedicated service and expert advice.</p>
+                <p>Our inventory serves all trades as well as the general public across Kenya. Visit our <strong>Nairobi Branch</strong>, <strong>Corporate Office in Nairobi</strong>, or <strong>Migori Branch</strong> for dedicated service and expert advice.</p>
             </div>
         </div>
         <div class="aspect-[4/3] overflow-hidden rounded-[4px] bg-gray-100">
@@ -61,36 +61,36 @@
     </div>
 </section>
 
+@if ($teamMembers->isNotEmpty())
+    @include('frontend.team.home-rail', ['members' => $teamMembers])
+@endif
+
 <section class="bg-white py-14 sm:py-20">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>
                 <p class="text-sm font-bold uppercase tracking-widest text-primary">Find us</p>
-                <h2 class="mt-2 text-3xl font-bold text-gray-900">Our Outlets</h2>
+                <h2 class="mt-2 text-3xl font-bold text-gray-900">Our Offices &amp; Branches</h2>
             </div>
             <a href="{{ route('frontend.contact') }}" class="font-semibold text-primary hover:underline">Contact Us <i class="fas fa-arrow-right ml-1" aria-hidden="true"></i></a>
         </div>
-        <div class="grid gap-5 md:grid-cols-2">
-            <div class="rounded-[4px] border border-gray-200 p-6 sm:p-8">
-                <div class="flex items-start gap-4">
-                    <i class="fas fa-location-dot mt-1 text-xl text-primary" aria-hidden="true"></i>
-                    <div>
-                        <h3 class="text-xl font-bold text-gray-900">Nairobi Outlet</h3>
-                        <p class="mt-2 text-gray-600">Enterprise Road, B. Binico Enterprises, Nairobi, Kenya.</p>
-                        <a class="mt-3 inline-flex items-center gap-2 font-semibold text-primary hover:underline" href="tel:+254740550105"><i class="fas fa-mobile-screen-button" aria-hidden="true"></i> +254 740 550 105</a>
+        <div class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            @foreach (($site['branches'] ?? []) as $branch)
+                @if (!empty($branch['name']) && !empty($branch['address']))
+                    <div class="rounded-[4px] border border-gray-200 p-6 sm:p-8">
+                        <div class="flex items-start gap-4">
+                            <i class="fas fa-location-dot mt-1 text-xl text-primary" aria-hidden="true"></i>
+                            <div class="min-w-0">
+                                <h3 class="text-xl font-bold text-gray-900">{{ $branch['name'] }}</h3>
+                                <p class="mt-2 text-gray-600">{{ $branch['address'] }}</p>
+                                @if (!empty($branch['phone']))
+                                    <a class="mt-3 inline-flex items-center gap-2 font-semibold text-primary hover:underline" href="tel:{{ preg_replace('/[^0-9+]/', '', $branch['phone']) }}"><i class="fas fa-mobile-screen-button" aria-hidden="true"></i> {{ $branch['phone'] }}</a>
+                                @endif
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-            <div class="rounded-[4px] border border-gray-200 p-6 sm:p-8">
-                <div class="flex items-start gap-4">
-                    <i class="fas fa-location-dot mt-1 text-xl text-primary" aria-hidden="true"></i>
-                    <div>
-                        <h3 class="text-xl font-bold text-gray-900">Migori Outlet</h3>
-                        <p class="mt-2 text-gray-600">Kimaiga, next to Dolion Hotel</p>
-                        <a class="mt-3 inline-flex items-center gap-2 font-semibold text-primary hover:underline" href="tel:+254796593842"><i class="fas fa-mobile-screen-button" aria-hidden="true"></i> +254 796 593 842</a>
-                    </div>
-                </div>
-            </div>
+                @endif
+            @endforeach
         </div>
     </div>
 </section>

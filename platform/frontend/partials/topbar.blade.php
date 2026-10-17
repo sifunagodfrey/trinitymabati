@@ -1,6 +1,6 @@
 @php
-    $nairobiPhone = trim((string) \App\Models\Core\Setting::get('branch_nairobi_phone', ''));
-    $migoriPhone = trim((string) \App\Models\Core\Setting::get('branch_migori_phone', ''));
+    $callCenterPhone = trim((string) ($site['phone'] ?? ''));
+    $nairobiPhone = trim((string) ($site['branches'][0]['phone'] ?? ''));
     $supportEmail = trim((string) \App\Models\Core\Setting::get('contact_email', ''));
     $topSocials = collect($site['socials'] ?? [])
         ->filter()
@@ -11,24 +11,24 @@
     <div class="mx-auto flex min-h-10 max-w-7xl items-center justify-between gap-4 px-4 py-2 text-[13px] font-medium sm:px-6 sm:text-sm lg:px-8"
         style="font-weight: 500;">
         <div class="flex w-full min-w-0 items-center justify-between gap-x-2 gap-y-2 sm:w-auto sm:flex-wrap sm:justify-start sm:gap-x-5">
-            @if ($nairobiPhone !== '')
-                <a href="tel:{{ preg_replace('/[^+0-9]/', '', $nairobiPhone) }}"
+            @if ($callCenterPhone !== '')
+                <a href="{{ $site['phone_href'] }}"
                     class="inline-flex items-center gap-2 whitespace-nowrap hover:text-white/80"
-                    aria-label="Call Nairobi outlet">
+                    aria-label="Call our call center at {{ $callCenterPhone }}">
                     <i class="fas fa-phone-alt fa-flip-horizontal text-xs sm:text-sm" aria-hidden="true"></i>
-                    <span>{{ $nairobiPhone }}</span>
+                    <span>{{ $callCenterPhone }}</span>
                 </a>
             @endif
 
-            @if ($migoriPhone !== '')
-                @if ($nairobiPhone !== '')
+            @if ($nairobiPhone !== '')
+                @if ($callCenterPhone !== '')
                     <span class="hidden text-white/60 sm:inline" aria-hidden="true">|</span>
                 @endif
-                <a href="tel:{{ preg_replace('/[^+0-9]/', '', $migoriPhone) }}"
-                    class="ml-auto inline-flex items-center gap-2 whitespace-nowrap hover:text-white/80 sm:ml-0"
-                    aria-label="Call Migori outlet">
+                <a href="tel:{{ preg_replace('/[^+0-9]/', '', $nairobiPhone) }}"
+                    class="inline-flex items-center gap-2 whitespace-nowrap hover:text-white/80"
+                    aria-label="Call Nairobi branch at {{ $nairobiPhone }}">
                     <i class="fas fa-phone-alt fa-flip-horizontal text-xs sm:text-sm" aria-hidden="true"></i>
-                    <span>{{ $migoriPhone }}</span>
+                    <span>{{ $nairobiPhone }}</span>
                 </a>
             @endif
 
@@ -41,7 +41,7 @@
             </button>
 
             @if ($supportEmail !== '')
-                @if ($nairobiPhone !== '' || $migoriPhone !== '')
+                @if ($callCenterPhone !== '' || $nairobiPhone !== '')
                     <span class="hidden text-white/60 sm:inline" aria-hidden="true">|</span>
                 @endif
                 <a href="mailto:{{ $supportEmail }}"

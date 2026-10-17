@@ -68,6 +68,7 @@
     @stack('scripts')
 
     {{-- @include('frontend.partials.bottom-nav') --}}
+    @include('frontend.partials.whatsapp-chat')
     @include('frontend.partials.cart-runtime')
 </body>
 

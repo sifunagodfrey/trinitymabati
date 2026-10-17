@@ -34,7 +34,8 @@ Route::get('/', [HomeController::class, 'index'])
 
 // About
 Route::get('/about', function () {
-    return view('frontend.about.index');
+    $teamMembers = \App\Models\Core\TeamMember::published()->displayOrder()->get();
+    return view('frontend.about.index', compact('teamMembers'));
 })->name('frontend.about');
 
 // Blog
